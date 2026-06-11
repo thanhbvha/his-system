@@ -1,6 +1,6 @@
 # KẾ HOẠCH DỰ ÁN HIS — Chi Tiết Đầy Đủ
 
-> **Cập nhật:** 2026-06-10  
+> **Cập nhật:** 2026-06-11  
 > **Kiến trúc:** Modular Monolith  
 > **Team:** Solo Developer  
 > **Interface:** Web (bệnh nhân) + Desktop Wails (nhân viên/bác sĩ)  
@@ -256,6 +256,62 @@ notification_logs { template_id, recipient, status, sent_at }
 - TOTP MFA: compatible Google Authenticator
 - Device fingerprint trong session
 
+### JWT — AES-GCM Encrypted Payload
+
+JWT **không dùng HS256/RS256 thuần túy**. Payload sẽ được **encrypt bằng AES-GCM** trước khi ký, theo flow:
+
+```
+┌─────────────────────────────────────────────────────────┐
+│                  JWT ISSUE FLOW                         │
+│                                                         │
+│  Claims (JSON)                                          │
+│    └──► AES-GCM Encrypt (KEY từ env/KMS)               │
+│            └──► Base64URL(ciphertext + nonce + tag)     │
+│                    └──► JWT Payload field: "enc"        │
+│                            └──► Sign bằng HMAC-SHA256   │
+│                                    └──► JWT string      │
+└─────────────────────────────────────────────────────────┘
+
+┌─────────────────────────────────────────────────────────┐
+│                  JWT VERIFY FLOW                        │
+│                                                         │
+│  JWT string                                             │
+│    └──► Verify HMAC-SHA256 signature                    │
+│            └──► Decode payload → lấy "enc" field        │
+│                    └──► AES-GCM Decrypt                 │
+│                            └──► Claims (JSON)           │
+└─────────────────────────────────────────────────────────┘
+```
+
+**Thông số kỹ thuật AES-GCM cho JWT:**
+
+| Tham số | Giá trị |
+|---------|---------|
+| Algorithm | AES-256-GCM |
+| Key size | 256-bit (32 bytes) |
+| Nonce (IV) | 96-bit (12 bytes), random mỗi lần encrypt |
+| Auth Tag | 128-bit (16 bytes) |
+| Key source | `JWT_ENCRYPTION_KEY` từ env / KMS |
+| Key rotation | Hỗ trợ `kid` (key ID) để rotate key không logout user |
+
+**Lý do chọn AES-GCM:**
+- **Authenticated Encryption**: tích hợp integrity check (GCM auth tag), chống tampering mà không cần HMAC riêng cho payload
+- **Hiệu năng**: nhanh hơn AES-CBC + HMAC (1 pass thay vì 2)
+- **Confidentiality**: payload opaque với client — claims (role, permission, MFA status) không bị decode bởi browser/client
+- **Nonce unique**: mỗi token có nonce ngẫu nhiên 96-bit → không bao giờ reuse ciphertext
+
+**Go implementation package:** `crypto/aes` + `crypto/cipher` (standard library, không dùng third-party)
+
+```go
+// pkg/crypto/aes_gcm.go
+func EncryptAESGCM(plaintext []byte, key []byte) ([]byte, error)
+func DecryptAESGCM(ciphertext []byte, key []byte) ([]byte, error)
+
+// pkg/auth/jwt.go
+func IssueAccessToken(claims Claims) (string, error)  // encrypt payload → sign
+func VerifyAccessToken(token string) (Claims, error)   // verify sig → decrypt
+```
+
 ### RBAC Roles
 
 | Role | Quyền chính |
@@ -269,11 +325,56 @@ notification_logs { template_id, recipient, status, sent_at }
 | RECEPTIONIST | Đặt lịch, check-in, thu ngân |
 | ACCOUNTANT | Xem hóa đơn, báo cáo tài chính |
 
-### Data Security
-- TLS 1.3 cho tất cả kết nối
-- AES-256 field-level encryption: CCCD, số BHYT, SĐT
-- PII masking trong log
-- Backup daily + point-in-time recovery
+### Data Security — AES-GCM Field-Level Encryption
+
+**Tất cả thuật toán encryption trong hệ thống đều dùng AES-256-GCM**, bao gồm field-level encryption cho PII:
+
+**Các trường được encrypt at rest:**
+
+| Trường | Bảng | Lý do |
+|--------|------|-------|
+| `cccd_number` | `patients` | Định danh quốc gia (CCCD/CMND) |
+| `bhyt_number` | `patient_insurance` | Số thẻ BHYT |
+| `phone_number` | `patients`, `patient_contacts` | SĐT cá nhân |
+| `email` | `users`, `patients` | Email |
+| `address_detail` | `patients` | Địa chỉ chi tiết |
+| `mfa_secret` | `mfa_secrets` | TOTP seed |
+| `bank_account` | `payment_methods` | Thông tin thanh toán |
+
+**Thông số kỹ thuật AES-GCM cho Field Encryption:**
+
+| Tham số | Giá trị |
+|---------|---------|
+| Algorithm | AES-256-GCM |
+| Key size | 256-bit (32 bytes) |
+| Nonce (IV) | 96-bit (12 bytes), random per record |
+| Auth Tag | 128-bit (16 bytes) |
+| Storage format | `base64(nonce \| ciphertext \| tag)` trong TEXT column |
+| Key source | `FIELD_ENCRYPTION_KEY` từ env / KMS |
+| Searchable fields | Lưu thêm `HMAC-SHA256(plaintext, search_key)` để tìm kiếm exact-match |
+
+**Lưu ý Searchable Encryption:**
+```
+SĐT được lưu 2 cột:
+  phone_encrypted  TEXT  — AES-GCM ciphertext (lưu trữ)
+  phone_hmac       TEXT  — HMAC-SHA256(phone, SEARCH_KEY) (tìm kiếm)
+→ Query: WHERE phone_hmac = HMAC(input)
+```
+
+**Go implementation:**
+```go
+// pkg/crypto/field_cipher.go
+type FieldCipher struct { key []byte }
+func (f *FieldCipher) Encrypt(plaintext string) (string, error)
+func (f *FieldCipher) Decrypt(ciphertext string) (string, error)
+func (f *FieldCipher) HMAC(value string) string  // cho searchable fields
+```
+
+**Các biện pháp bổ sung:**
+- TLS 1.3 cho tất cả kết nối (in-transit)
+- PII masking trong log (zerolog hook)
+- Backup daily + point-in-time recovery (backup cũng được encrypt)
+- Key rotation: AES key có thể rotate — re-encrypt batch job chạy offline
 
 ---
 
