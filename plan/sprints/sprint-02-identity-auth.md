@@ -1,8 +1,71 @@
 # Sprint 2 — Identity & Auth (Tuần 3–4)
 
 > **Mục tiêu:** Hoàn thiện hệ thống xác thực: JWT AES-GCM, RBAC, TOTP MFA cho Desktop; OTP SĐT cho Web.
-> **Prerequisite:** Sprint 1 hoàn thành, `pkg/crypto` pass test.
+> **Prerequisite:** Sprint 1 hoàn thành ✅ — xem chi tiết tại `plan/report_sprint1.md`
 > **Kết thúc sprint:** Desktop login được + MFA; Web đăng ký/đăng nhập bằng OTP; Admin quản lý user.
+
+---
+
+## ✅ Nền tảng từ Sprint 1 (Đã sẵn sàng — KHÔNG cần làm lại)
+
+> Những items dưới đây đã được bàn giao từ Sprint 1 và **có thể sử dụng ngay** trong Sprint 2.
+
+### Backend — Đã có
+
+| Thành phần | File / Package | Ghi chú |
+|------------|---------------|---------|
+| **AES-GCM Encrypt/Decrypt** | `backend/pkg/crypto/aes_gcm.go` | Coverage ≥95%, unit test PASS |
+| **FieldCipher (email, phone, CCCD)** | `backend/pkg/crypto/field_cipher.go` | `Encrypt()`, `Decrypt()`, `HMAC()` |
+| **Load crypto keys từ env** | `backend/pkg/crypto/config.go` | `FIELD_ENCRYPTION_KEY`, `FIELD_HMAC_KEY` |
+| **Redis Client** | `go-common/redis` (native) | Pool, health check, Set/Get/Del/SetNX built-in |
+| **Queue (Redis Streams)** | `go-common/queue` | Consumer Groups, DLQ, Retry, Batch |
+| **Database Pool** | `backend/pkg/database/postgres.go` | pgxpool với MaxConns config |
+| **Structured Logger** | `go-common/logger` | PII masking, async |
+| **AppError types** | `backend/pkg/errors/errors.go` | 401, 403, 404, 409, 422, 429, 500 |
+| **Response wrapper** | `backend/pkg/response/response.go` | `OK()`, `Fail()`, `OKWithMeta()` |
+| **Middleware: Recover** | `backend/pkg/middleware/recover.go` | Panic → 500 JSON |
+| **Middleware: Request Logger** | `backend/pkg/middleware/logger.go` | method, path, status, duration |
+| **Rate Limiter (global)** | `cmd/api/main.go` | 100 req/min/IP, trả 429 JSON |
+| **CORS** | `cmd/api/main.go` | Whitelist `localhost:5173` |
+| **Request ID** | `cmd/api/main.go` | UUID v4 mỗi request |
+| **SafeGo** | `backend/pkg/utils/safego.go` | Goroutine an toàn, bắt panic |
+| **Schema DB** | `migrations/postgres/` | Bảng `users`, `roles`, `permissions`, `user_roles`, `role_permissions`, `refresh_tokens`, `mfa_secrets`, `login_attempts`, `device_registry`, `departments` đã tồn tại |
+| **Seed data** | `migrations/postgres/seed/` | 6 roles, permissions cơ bản, user `admin` |
+| **WebSocket Manager** | `go-common/websocket` | Sharding, PubSub cross-node — dùng cho real-time notification Sprint 2+ |
+| **Swagger + ReDoc** | `GET /docs/tool`, `GET /docs` | Tự động nhận route mới khi có `swag init` |
+| **Prometheus Metrics** | `GET /metrics` | Sẽ tự track auth endpoints mới |
+| **OpenTelemetry** | `backend/pkg/telemetry/tracer.go` | Auto-span cho mọi request qua `otelfiber` |
+
+### Desktop — Đã có
+
+| Thành phần | File | Ghi chú |
+|------------|------|---------|
+| **Wails app shell** | `desktop/main.go`, `desktop/app.go` | Wails v2, cửa sổ native chạy OK |
+| **API Client (stub)** | `desktop/frontend/src/lib/apiClient.ts` | Axios, Bearer interceptor — **cần hoàn thiện signature logic** |
+| **TanStack Query** | `desktop/frontend/src/lib/queryClient.ts` | staleTime 5m, retry 2 |
+| **authStore** | `desktop/frontend/src/store/authStore.ts` | `token`, `user`, `role`, `setAuth`, `clearAuth` |
+| **uiStore** | `desktop/frontend/src/store/uiStore.ts` | `sidebarOpen`, `toggleSidebar` |
+| **RoleLayout** | `desktop/frontend/src/layouts/RoleLayout.tsx` | Dynamic sidebar theo role — **cần thêm route pages thực** |
+| **ProtectedRoute** | `desktop/frontend/src/components/ProtectedRoute.tsx` | Redirect `/login` nếu không có token |
+| **i18n VI/EN** | `desktop/frontend/src/i18n/` | Language switcher hoạt động |
+| **Ant Design theme** | `desktop/frontend/src/main.tsx` | Primary Blue `#1677ff` |
+
+### Web — Đã có
+
+| Thành phần | File | Ghi chú |
+|------------|------|---------|
+| **Vite + React shell** | `web/src/` | Build thành công `~114KB` |
+| **API Client (stub)** | `web/src/lib/apiClient.ts` | Axios + Bearer + auto-clearAuth on 401 — **cần hoàn thiện refresh logic** |
+| **authStore** | `web/src/store/authStore.ts` | `token`, `patient`, `setAuth`, `clearAuth` |
+| **bookingStore** | `web/src/store/bookingStore.ts` | Multi-step booking state (step 1→4) |
+| **PublicLayout** | `web/src/layouts/PublicLayout.tsx` | Header + Footer, Language Switcher |
+| **AuthLayout** | `web/src/layouts/AuthLayout.tsx` | Nav: Book, My Appointments, Results |
+| **ProtectedRoute** | `web/src/components/ProtectedRoute.tsx` | Redirect `/login` nếu không có token |
+| **LoginPage (stub)** | `web/src/pages/LoginPage.tsx` | Hiện là Mock — **cần replace bằng OTP flow** |
+| **RegisterPage (stub)** | `web/src/pages/RegisterPage.tsx` | "Coming soon" — **cần implement** |
+| **shadcn/ui** | `web/src/components/ui/` | Button đã có; cần thêm Input, Form, OTP components |
+| **Dev Proxy** | `web/vite.config.ts` | `/api` → `http://localhost:8080` — dùng được ngay |
+| **i18n VI/EN** | `web/src/i18n/` | vi.json, en.json — **cần bổ sung keys cho auth flow** |
 
 ---
 
