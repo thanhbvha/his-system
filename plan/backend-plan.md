@@ -1,7 +1,7 @@
 # HIS BACKEND PLAN — Go Fiber API
 
 > **Cập nhật:** 2026-06-11
-> **Stack:** Go (Fiber v2) · PostgreSQL 15 · MongoDB 7 · Redis 7 · NATS JetStream · MinIO
+> **Stack:** Go (Fiber v2) · PostgreSQL 15 · MongoDB 7 · Redis 7 · Redis Stream · MinIO
 > **Kiến trúc:** Modular Monolith + DDD
 
 **Tài liệu liên quan:**
@@ -21,7 +21,7 @@
  identity patient appt  visit  lis  billing ...
     │      │      │      │      │      │
 ┌───▼──────▼──────▼──────▼──────▼──────▼──────────┐
-│  PostgreSQL │ MongoDB │ Redis │ NATS │ MinIO      │
+│  PostgreSQL │ MongoDB │ Redis │ MinIO      │
 └────────────────────────────────────────────────-─┘
 ```
 
@@ -31,7 +31,7 @@
 his-system/
 ├── cmd/
 │   ├── api/            # HTTP server entry point
-│   ├── worker/         # NATS consumer worker
+│   ├── worker/         # Redis Stream consumer worker
 │   └── migrate/        # DB migration runner
 ├── internal/
 │   ├── shared/         # errors, events, valueobjects
@@ -48,14 +48,14 @@ his-system/
 │   ├── inventory/      # Drug & supply warehouse
 │   ├── billing/        # Invoice, payment
 │   ├── inpatient/      # Ward, bed, admission
-│   ├── notification/   # SMS, Email (NATS consumer)
-│   └── audit/          # Audit log (NATS → MongoDB)
+│   ├── notification/   # SMS, Email (Redis Stream consumer)
+│   └── audit/          # Audit log (Redis Stream → MongoDB)
 ├── pkg/
 │   ├── crypto/         # AES-GCM encrypt/decrypt
 │   ├── auth/           # JWT issue/verify
 │   ├── database/       # PG + Mongo factories
 │   ├── cache/          # Redis wrapper
-│   ├── messaging/      # NATS JetStream wrapper
+│   ├── messaging/      # Redis Stream wrapper
 │   ├── storage/        # MinIO/S3 wrapper
 │   └── logger/         # Zerolog structured logging
 ├── migrations/         # SQL files (numbered)
@@ -384,7 +384,7 @@ GET    /api/v1/audit/logs              → audit trail (Admin only)
 
 ---
 
-## 5. EVENT-DRIVEN (NATS JetStream)
+## 5. EVENT-DRIVEN (Redis Stream)
 
 ```
 HIS.PATIENT.*     → PatientRegistered, PatientUpdated, PatientMerged
@@ -415,11 +415,10 @@ HIS.NOTIFICATION.* → NotificationRequested
 ```yaml
 services:
   api:        # Go (air hot-reload)
-  worker:     # NATS consumer
+  worker:     # Redis Stream consumer
   postgres:   # PostgreSQL 15
   mongodb:    # MongoDB 7
   redis:      # Redis 7
-  nats:       # NATS JetStream
   minio:      # Object storage
   jaeger:     # Distributed tracing
   prometheus:
@@ -463,7 +462,7 @@ testify/mockery  — Testing + mocks
 
 ### Sprint 1 (Tuần 1–2): Foundation
 - [ ] Init Go module, Fiber v2, Air hot-reload
-- [ ] Docker Compose: PG, Mongo, Redis, NATS, MinIO
+- [ ] Docker Compose: PG, Mongo, Redis, MinIO
 - [ ] DB connection factories (pgxpool, mongo driver, redis)
 - [ ] Zerolog + OpenTelemetry setup
 - [ ] golang-migrate + migration scripts
@@ -541,7 +540,7 @@ testify/mockery  — Testing + mocks
 - [ ] Dispensing record
 - [ ] `internal/inventory`: Warehouse, Stock, Transactions
 - [ ] Stock deduction on dispense (atomic transaction)
-- [ ] Low stock alert event → NATS
+- [ ] Low stock alert event → Redis Stream
 
 > 🔗 **Desktop cần:** prescription APIs, drug search, dispensing APIs
 > ⚠️ **NOTE:** Stock deduction phải atomic (PG transaction) để tránh race condition.
@@ -550,7 +549,7 @@ testify/mockery  — Testing + mocks
 - [ ] `internal/billing`: Price catalog, Invoice auto-create on VisitClosed
 - [ ] Payment: cash, transfer (manual record)
 - [ ] Invoice PDF generation (chromedp)
-- [ ] `internal/notification`: NATS consumer worker
+- [ ] `internal/notification`: Redis Stream consumer worker
 - [ ] SMS gateway (VNPT/Twilio)
 - [ ] Email (SMTP/SendGrid)
 - [ ] Triggers: appointment reminder, lab result ready
@@ -560,7 +559,7 @@ testify/mockery  — Testing + mocks
 > ⚠️ **NOTE:** Invoice auto-create trigger từ `VisitClosed` event — phải idempotent (dùng visit_id làm unique key).
 
 ### Sprint 8 (Tuần 15–16): Audit, Dashboard, Polish
-- [ ] `internal/audit`: NATS consumer → MongoDB audit_logs
+- [ ] `internal/audit`: Redis Stream consumer → MongoDB audit_logs
 - [ ] Reporting APIs: revenue, patient count, top services
 - [ ] Report snapshot worker
 - [ ] Integration test suite (testify + httptest)

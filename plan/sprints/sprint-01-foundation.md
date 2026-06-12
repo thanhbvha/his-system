@@ -9,14 +9,14 @@
 
 ### Khởi tạo project
 - [ ] `go mod init his-system`
-- [ ] Cài Fiber v2, zerolog, pgxpool, mongo-driver, redis client, NATS client
+- [ ] Cài Fiber v2, pgxpool, mongo-driver, và `github.com/thanhbvha/go-common` (cung cấp logger, redis, queue, websocket high-performance)
 - [ ] Cấu trúc thư mục theo plan: `cmd/`, `internal/`, `pkg/`
 - [ ] `Makefile` với targets: `dev`, `migrate`, `test`, `lint`, `swag`, `build`
 
 ### Infrastructure (Docker Compose)
 - [ ] `docker-compose.yml` với các service:
   - `postgres:15`, `mongodb:7`, `redis:7`
-  - `nats` (JetStream enabled)
+  - `redis_stream` (JetStream enabled)
   - `minio`, `jaeger`, `prometheus`, `grafana`
 - [ ] Volume + network config
 - [ ] Health check cho từng service
@@ -52,10 +52,12 @@
 
 ### Core Framework
 - [ ] `pkg/database/` — pgxpool factory, mongo client factory
-- [ ] `pkg/cache/` — Redis wrapper (Set, Get, Del, SetEX)
-- [ ] `pkg/messaging/` — NATS JetStream wrapper (Publish, Subscribe)
+- [ ] Tích hợp `github.com/thanhbvha/go-common`:
+  - `logger`: Structured logging hiệu năng cao (bổ sung PII masking hook)
+  - `redis`: Caching layer, connection pool
+  - `queue`: Message queue (Redis Stream wrapper)
+  - `websocket`: Quản lý WS connections, broadcast
 - [ ] `pkg/storage/` — MinIO wrapper (Upload, Download, Delete)
-- [ ] `pkg/logger/` — Zerolog structured logger với PII masking hook
 - [ ] Base error types (`pkg/errors/`): NotFound, Validation, Unauthorized, Conflict
 - [ ] Response wrapper: `{ success, data, error, meta }`
 - [ ] Pagination helper: `{ page, limit, total, items }`
@@ -64,7 +66,7 @@
 ### Observability
 - [ ] OpenTelemetry setup → Jaeger exporter
 - [ ] Prometheus middleware cho Fiber (latency, status code metrics)
-- [ ] Zerolog → stdout (Docker log driver → Loki sau)
+- [ ] `go-common/logger` → stdout (Docker log driver → Loki sau)
 
 ### API Foundation
 - [ ] `GET /health` — liveness check

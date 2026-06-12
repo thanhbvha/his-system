@@ -120,7 +120,7 @@ GET  /api/v1/icd10/search       [DOCTOR]
   response: list { code, description_vi, category }
 ```
 
-### NATS Events
+### Redis Stream Events
 - [ ] `HIS.VISIT.VisitStarted` — audit worker ghi log
 - [ ] `HIS.VISIT.LabOrderCreated` — LIS module sẽ lắng nghe (Sprint 5)
 - [ ] `HIS.VISIT.VisitClosed` → billing worker tạo invoice (Sprint 7)
@@ -201,4 +201,4 @@ GET  /api/v1/icd10/search       [DOCTOR]
 - [ ] Vitals form nhập và lưu thành công
 - [ ] ICD-10 search API trả đúng kết quả
 - [ ] Visit orders API tạo thành công
-- [ ] NATS events publish đúng: VisitStarted, LabOrderCreated
+- [ ] Redis Stream events publish đúng: VisitStarted, LabOrderCreated

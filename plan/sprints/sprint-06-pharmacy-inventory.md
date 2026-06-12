@@ -107,7 +107,7 @@ GET  /api/v1/inventory/transactions     [ADMIN, PHARMACIST]
   query: drug_id, from, to
 ```
 
-### NATS Events
+### Redis Stream Events
 - [ ] Sau dispense: check stock → nếu < min → publish `HIS.INVENTORY.LowStockAlert`
 - [ ] audit worker log prescription events
 
@@ -189,7 +189,7 @@ GET  /api/v1/inventory/transactions     [ADMIN, PHARMACIST]
 | Drug interaction | Query tất cả cặp từ DB | Realtime check khi thêm thuốc | Hiển thị khi review đơn |
 | Stock deduction | Atomic PG transaction | — | Xử lý lỗi stock thiếu |
 | FEFO lot selection | Trả lots sorted by expiry_date ASC | — | Auto-select lot đầu tiên |
-| Low stock alert | NATS event sau dispense | — | Badge cảnh báo trong Inventory |
+| Low stock alert | Redis Stream event sau dispense | — | Badge cảnh báo trong Inventory |
 
 ## DEFINITION OF DONE
 

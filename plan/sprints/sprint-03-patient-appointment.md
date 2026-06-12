@@ -71,7 +71,7 @@ PUT  /api/v1/patients/me/insurance       [PATIENT]
 > ⚠️ **NOTE:** `/patients/:id` cho staff xem đầy đủ PII (decrypt).
 > `/patients/me` cho patient chỉ trả masked. Backend phải enforce theo JWT role.
 
-### NATS Event
+### Redis Stream Event
 - [ ] Publish `HIS.PATIENT.PatientRegistered` khi tạo mới
 - [ ] Publish `HIS.PATIENT.PatientUpdated` khi cập nhật
 
@@ -129,7 +129,7 @@ DELETE /api/v1/appointments/:id         [PATIENT, RECEPTIONIST]
   → Publish AppointmentCancelled
 ```
 
-### NATS Events
+### Redis Stream Events
 - [ ] `HIS.APPOINTMENT.AppointmentScheduled` → notification worker gửi SMS xác nhận
 - [ ] `HIS.APPOINTMENT.AppointmentCancelled` → notification worker gửi SMS thông báo
 - [ ] `HIS.APPOINTMENT.AppointmentConfirmed` → notification worker gửi SMS confirm
@@ -237,7 +237,7 @@ DELETE /api/v1/appointments/:id         [PATIENT, RECEPTIONIST]
 | PII search | HMAC internally | Search modal debounce | — |
 | PII display | Decrypt cho staff, Masked cho patient | Full PII cho Receptionist/Doctor | Masked trong account |
 | Slot conflict | SELECT FOR UPDATE + 409 | Hiển thị error rõ ràng | Hiển thị error + refetch slots |
-| SMS sau booking | NATS → notification worker | — | Bệnh nhân nhận SMS |
+| SMS sau booking | Redis Stream → notification worker | — | Bệnh nhân nhận SMS |
 | Public endpoints | `/public/*` không cần auth | — | Landing page + Booking step 1–2 |
 
 ## DEFINITION OF DONE
@@ -251,4 +251,4 @@ DELETE /api/v1/appointments/:id         [PATIENT, RECEPTIONIST]
 - [ ] Web: booking flow 4 bước hoạt động end-to-end
 - [ ] Web: my-appointments hiển thị và hủy được
 - [ ] SMS xác nhận lịch hẹn gửi thành công (hoặc mock)
-- [ ] NATS events được publish đúng
+- [ ] Redis Stream events được publish đúng

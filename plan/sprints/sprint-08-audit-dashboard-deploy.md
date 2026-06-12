@@ -8,10 +8,10 @@
 
 ## BACKEND
 
-### Module `internal/audit` (NATS Worker)
+### Module `internal/audit` (Redis Stream Worker)
 
 **Audit Worker:**
-- [ ] Subscribe **TẤT CẢ** NATS subjects: `HIS.>`
+- [ ] Subscribe **TẤT CẢ** Redis Stream subjects: `HIS.>`
 - [ ] Mỗi event → ghi vào MongoDB `audit_logs`:
   ```js
   {

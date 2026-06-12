@@ -19,7 +19,7 @@
 | Web App (Patient) | React + Vite + TypeScript |
 | Database | PostgreSQL 15 (giao dịch) + MongoDB 7 (tài liệu y tế) |
 | Cache / Session | Redis 7 |
-| Message Queue | NATS JetStream |
+| Message Queue | Redis Stream |
 | Object Storage | MinIO (DICOM, tài liệu) |
 | Logging | Zerolog → Loki |
 | Tracing | OpenTelemetry → Jaeger |
@@ -47,7 +47,7 @@
       identity patient appt  visit  lis  billing ...
          │      │      │      │      │      │
      ┌───▼──────▼──────▼──────▼──────▼──────▼─────────┐
-     │  PostgreSQL │ MongoDB │ Redis │ NATS │ MinIO     │
+     │  PostgreSQL │ MongoDB │ Redis │ MinIO      │
      └─────────────────────────────────────────────────┘
 ```
 
@@ -57,7 +57,7 @@
 his-system/
 ├── cmd/
 │   ├── api/            # HTTP server entry point
-│   ├── worker/         # NATS consumer worker
+│   ├── worker/         # Redis Stream consumer worker
 │   └── migrate/        # DB migration runner
 ├── internal/
 │   ├── shared/         # Cross-cutting: errors, events, valueobjects
@@ -74,12 +74,12 @@ his-system/
 │   ├── inventory/      # Drug & supply warehouse
 │   ├── billing/        # Invoice, payment, insurance
 │   ├── inpatient/      # Ward, bed, admission
-│   ├── notification/   # SMS, Email, Push (NATS consumer)
-│   └── audit/          # Audit log (NATS consumer → MongoDB)
+│   ├── notification/   # SMS, Email, Push (Redis Stream consumer)
+│   └── audit/          # Audit log (Redis Stream consumer → MongoDB)
 ├── pkg/
 │   ├── database/       # PG + Mongo connection factories
 │   ├── cache/          # Redis wrapper
-│   ├── messaging/      # NATS JetStream wrapper
+│   ├── messaging/      # Redis Stream wrapper
 │   ├── storage/        # MinIO/S3 wrapper
 │   └── logger/         # Zerolog structured logging
 ├── web/                # React+Vite patient web app
@@ -378,7 +378,7 @@ func (f *FieldCipher) HMAC(value string) string  // cho searchable fields
 
 ---
 
-## 4. EVENT-DRIVEN (NATS JetStream)
+## 4. EVENT-DRIVEN (Redis Stream)
 
 ### Streams & Events
 
@@ -503,12 +503,11 @@ i18next
 ```yaml
 services:
   api:        # Go app (air hot-reload)
-  worker:     # NATS consumer
+  worker:     # Redis Stream consumer
   web:        # React Vite (patient web)
   postgres:   # PostgreSQL 15
   mongodb:    # MongoDB 7
   redis:      # Redis 7
-  nats:       # NATS JetStream
   minio:      # Object storage
   jaeger:     # Distributed tracing
   prometheus: # Metrics
@@ -547,7 +546,7 @@ Alerts:   Grafana alerting → Telegram/Email
 #### Sprint 1 (Tuần 1–2): Foundation
 **Backend:**
 - [ ] Init Go module, Fiber, Air hot-reload
-- [ ] Docker Compose: PG, Mongo, Redis, NATS, MinIO
+- [ ] Docker Compose: PG, Mongo, Redis, MinIO
 - [ ] DB connection factories (pgxpool, mongo driver, redis)
 - [ ] Zerolog + OpenTelemetry setup
 - [ ] golang-migrate + migration scripts
@@ -670,7 +669,7 @@ Alerts:   Grafana alerting → Telegram/Email
 - [ ] Auto-create invoice on visit close
 - [ ] Payment methods: cash, transfer (manual)
 - [ ] Invoice PDF generation (chromedp)
-- [ ] `internal/notification`: NATS consumer worker
+- [ ] `internal/notification`: Redis Stream consumer worker
 - [ ] SMS gateway integration (VNPT/Twilio)
 - [ ] Email (SMTP/SendGrid)
 - [ ] Notification triggers: appointment reminder, result ready
@@ -685,7 +684,7 @@ Alerts:   Grafana alerting → Telegram/Email
 
 #### Sprint 8 (Tuần 15–16): Audit, Dashboard, Polish
 **Backend:**
-- [ ] `internal/audit`: NATS consumer → MongoDB audit_logs
+- [ ] `internal/audit`: Redis Stream consumer → MongoDB audit_logs
 - [ ] Reporting API: revenue summary, patient count, top services
 - [ ] Report snapshot worker
 - [ ] Integration test suite (testify + httptest)

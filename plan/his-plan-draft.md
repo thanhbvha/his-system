@@ -18,7 +18,7 @@ Database:
 
 Message Queue:
 
-* NATS JetStream
+* Redis Stream
 
 Desktop:
 
@@ -501,7 +501,7 @@ report_snapshots
 
 Queue
 
-NATS
+Redis Stream
 
 Topic
 
@@ -746,7 +746,7 @@ InvoiceCreated
 
 Event Bus
 
-NATS JetStream
+Redis Stream
 
 ---
 

@@ -31,7 +31,7 @@
 - [ ] Query: `GetInvoiceByVisit`, `GetInvoicesByPatient`, `GetPaymentHistory`
 
 > ⚠️ **NOTE:** `CreateInvoiceCommand` phải **idempotent** — nếu `VisitClosed` event bị gửi 2 lần
-> (NATS at-least-once delivery), invoice chỉ được tạo 1 lần.
+> (Redis Stream at-least-once delivery), invoice chỉ được tạo 1 lần.
 > Dùng `INSERT ... ON CONFLICT (visit_id) DO NOTHING`.
 
 ### Invoice PDF Generation
@@ -72,7 +72,7 @@ GET  /api/v1/patients/me/invoices        [PATIENT - Web]
 
 ---
 
-### Module `internal/notification` (NATS Worker)
+### Module `internal/notification` (Redis Stream Worker)
 
 **Notification Worker (`cmd/worker/main.go`):**
 - [ ] Subscribe các subjects sau:
@@ -96,7 +96,7 @@ GET  /api/v1/patients/me/invoices        [PATIENT - Web]
 > ⚠️ **NOTE:** Provider không config → fallback sang mock (log). KHÔNG panic.
 > Implement retry: nếu gửi fail → retry 3 lần với delay 5s, 10s, 30s.
 
-### NATS Events
+### Redis Stream Events
 - [ ] `HIS.BILLING.InvoiceCreated` — publish sau khi tạo invoice thành công
 - [ ] `HIS.BILLING.PaymentReceived` — publish sau khi thu tiền
 
@@ -166,8 +166,8 @@ GET  /api/v1/patients/me/invoices        [PATIENT - Web]
 | Event | Trigger | Backend Action | Client Effect |
 |-------|---------|----------------|---------------|
 | `VisitClosed` | Doctor kết thúc khám | Billing worker tạo invoice | Receptionist thấy invoice mới |
-| `InvoiceCreated` | Billing worker | Publish NATS event | — |
-| `PaymentReceived` | Receptionist thu tiền | NATS event | — |
+| `InvoiceCreated` | Billing worker | Publish Redis Stream event | — |
+| `PaymentReceived` | Receptionist thu tiền | Redis Stream event | — |
 | `AppointmentScheduled` | Bệnh nhân đặt lịch (Web) | SMS xác nhận | Bệnh nhân nhận SMS |
 | `LabResultVerified` | Lab Tech verify | SMS thông báo | Bệnh nhân nhận SMS + xem trên Web |
 

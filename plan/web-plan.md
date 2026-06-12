@@ -470,5 +470,5 @@ web/
 | 3 | Visit closed | Doctor close visit trên Desktop | Invoice tạo tự động, bệnh nhân xem được |
 | 4 | Appointment cancelled (by staff) | Receptionist hủy lịch trên Desktop | Bệnh nhân nhận SMS + thấy status "Đã hủy" |
 
-> ⚠️ **NOTE:** Các dependency này đều thông qua backend events (NATS) + notification worker.
+> ⚠️ **NOTE:** Các dependency này đều thông qua backend events (Redis Stream) + notification worker.
 > Web không cần real-time connection — SMS/email notification là đủ cho Phase 1.

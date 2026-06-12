@@ -130,7 +130,7 @@ GET  /api/v1/lab/results/:id             [LAB_TECH, DOCTOR, PATIENT (nếu verif
 > **Trước verify:** `GET /patients/me/lab-results` KHÔNG trả về order này.
 > Backend phải filter `status = VERIFIED` nghiêm ngặt.
 
-### NATS Events
+### Redis Stream Events
 - [ ] `HIS.LIS.SampleCollected` — audit log
 - [ ] `HIS.LIS.LabResultVerified` → notification worker gửi SMS "Kết quả xét nghiệm đã có"
 
@@ -239,7 +239,7 @@ GET  /api/v1/lab/results/:id             [LAB_TECH, DOCTOR, PATIENT (nếu verif
 | Vấn đề | Backend | Desktop (Lab Tech) | Web (Patient) |
 |--------|---------|-------------------|---------------|
 | Lab result gating | Filter `status=VERIFIED` trong patient endpoint | Lab Tech click "Verify" | Kết quả xuất hiện sau verify |
-| SMS notification | NATS → notification worker | Hiện thông báo "SMS đã gửi" | Bệnh nhân nhận SMS |
+| SMS notification | Redis Stream → notification worker | Hiện thông báo "SMS đã gửi" | Bệnh nhân nhận SMS |
 | EMR versioning | Append-only history | Auto-save SOAP | — |
 | Attachment | MinIO upload | Form upload file | — |
 
