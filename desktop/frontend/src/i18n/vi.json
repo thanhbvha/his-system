@@ -1,0 +1,13 @@
+{
+  "common": {
+    "loading": "Đang tải...",
+    "error": "Đã xảy ra lỗi",
+    "comingSoon": "Tính năng đang phát triển",
+    "logout": "Đăng xuất"
+  },
+  "nav": {
+    "dashboard": "Tổng quan",
+    "patients": "Bệnh nhân",
+    "appointments": "Lịch hẹn"
+  }
+}

@@ -23,10 +23,10 @@ func DecryptAESGCM(ciphertext, key []byte) ([]byte, error)
 
 **Yêu cầu kỹ thuật:**
 
-- [ ] Nonce: **96-bit random** mỗi lần encrypt (dùng `crypto/rand`)
-- [ ] Output format: `nonce(12B) || ciphertext || tag(16B)` → encode base64 URL-safe (no padding)
-- [ ] Key: 256-bit (32 bytes), load từ env `FIELD_ENCRYPTION_KEY` (base64 encoded)
-- [ ] Trả về lỗi rõ ràng nếu key không đúng kích thước
+- [x] Nonce: **96-bit random** mỗi lần encrypt (dùng `crypto/rand`)
+- [x] Output format: `nonce(12B) || ciphertext || tag(16B)` → encode base64 URL-safe (no padding)
+- [x] Key: 256-bit (32 bytes), load từ env `FIELD_ENCRYPTION_KEY` (base64 encoded)
+- [x] Trả về lỗi rõ ràng nếu key không đúng kích thước
 
 ---
 
@@ -73,7 +73,7 @@ phone, _ := cipher.Decrypt(patient.PhoneEncrypted)
 
 File: `pkg/crypto/crypto_test.go`
 
-- [ ] **AES-GCM tests:**
+- [x] **AES-GCM tests:**
   ```go
   // Round-trip: EncryptAESGCM → DecryptAESGCM trả về plaintext gốc
   TestEncryptDecryptRoundTrip(t *testing.T)
@@ -88,7 +88,7 @@ File: `pkg/crypto/crypto_test.go`
   TestTamperedCiphertextDetected(t *testing.T)
   ```
 
-- [ ] **FieldCipher tests:**
+- [x] **FieldCipher tests:**
   ```go
   // HMAC của cùng input luôn trả về cùng output (deterministic)
   TestHMACIsDeterministic(t *testing.T)
@@ -100,13 +100,13 @@ File: `pkg/crypto/crypto_test.go`
   TestEncryptEmptyString(t *testing.T)
   ```
 
-- [ ] Chạy test: `go test ./pkg/crypto/... -v -cover` → **coverage ≥ 95%**
+- [x] Chạy test: `go test ./pkg/crypto/... -v -cover` → **coverage ≥ 95%**
 
 ---
 
 ## 4. Config & Key Management
 
-- [ ] Load key từ environment trong `pkg/crypto/config.go`:
+- [x] Load key từ environment trong `pkg/crypto/config.go`:
   ```go
   func LoadFieldCipherFromEnv() (*FieldCipher, error) {
       encKey  := os.Getenv("FIELD_ENCRYPTION_KEY")  // base64
@@ -114,7 +114,7 @@ File: `pkg/crypto/crypto_test.go`
       // decode và validate length
   }
   ```
-- [ ] Tạo helper script để generate key: `scripts/gen-crypto-keys.sh`
+- [x] Tạo helper script để generate key: `scripts/gen-crypto-keys.sh`
   ```bash
   #!/bin/bash
   echo "FIELD_ENCRYPTION_KEY=$(openssl rand -base64 32)"
@@ -125,9 +125,9 @@ File: `pkg/crypto/crypto_test.go`
 
 ## Definition of Done (Step 3)
 
-- [ ] `go test ./pkg/crypto/... -v` → **tất cả test PASS**
-- [ ] Coverage ≥ 95%
-- [ ] Encrypt/decrypt round-trip đúng
-- [ ] HMAC deterministic (cùng input → cùng output)
-- [ ] Ciphertext bị tamper → decrypt trả về error (không panic)
-- [ ] Key sai size → error rõ ràng
+- [x] `go test ./pkg/crypto/... -v` → **tất cả test PASS**
+- [x] Coverage ≥ 95%
+- [x] Encrypt/decrypt round-trip đúng
+- [x] HMAC deterministic (cùng input → cùng output)
+- [x] Ciphertext bị tamper → decrypt trả về error (không panic)
+- [x] Key sai size → error rõ ràng

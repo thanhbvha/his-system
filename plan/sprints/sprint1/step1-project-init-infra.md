@@ -8,15 +8,15 @@
 
 ## 1. Khởi tạo Go Project
 
-- [ ] `go mod init his-system`
-- [ ] Cài các dependencies core:
+- [x] `go mod init his-system`
+- [x] Cài các dependencies core:
   ```bash
   go get github.com/gofiber/fiber/v2
   go get github.com/jackc/pgx/v5/pgxpool
   go get go.mongodb.org/mongo-driver/mongo
   go get github.com/thanhbvha/go-common   # logger, redis, queue, websocket
   ```
-- [ ] Tạo cấu trúc thư mục theo plan:
+- [x] Tạo cấu trúc thư mục theo plan:
   ```
   his-system/
   ├── cmd/
@@ -33,7 +33,7 @@
       ├── errors/
       └── ...
   ```
-- [ ] `Makefile` với các targets:
+- [x] `Makefile` với các targets:
   ```makefile
   dev       # air hot-reload
   migrate   # chạy migration
@@ -49,7 +49,7 @@
 
 File: `docker-compose.yml`
 
-- [ ] Các service cần thiết:
+- [x] Các service cần thiết:
   | Service | Image | Port |
   |---------|-------|------|
   | `postgres` | `postgres:15-alpine` | `5432` |
@@ -62,7 +62,7 @@ File: `docker-compose.yml`
 
   > ⚠️ **NOTE:** Không cần service `nats` riêng — Redis Stream dùng chung container `redis`.
 
-- [ ] Volume config:
+- [x] Volume config:
   ```yaml
   volumes:
     postgres_data:
@@ -71,14 +71,14 @@ File: `docker-compose.yml`
     minio_data:
   ```
 
-- [ ] Network config:
+- [x] Network config:
   ```yaml
   networks:
     his-net:
       driver: bridge
   ```
 
-- [ ] Health check cho từng service:
+- [x] Health check cho từng service:
   ```yaml
   # Ví dụ postgres
   healthcheck:
@@ -88,7 +88,7 @@ File: `docker-compose.yml`
     retries: 5
   ```
 
-- [ ] `.env` file mẫu:
+- [x] `.env` file mẫu:
   ```env
   POSTGRES_DSN=postgres://postgres:postgres@localhost:5432/his_db?sslmode=disable
   MONGO_URI=mongodb://localhost:27017/his_db
@@ -103,8 +103,8 @@ File: `docker-compose.yml`
 
 ## Definition of Done (Step 1)
 
-- [ ] `go mod tidy` không lỗi
-- [ ] `docker-compose up -d` → tất cả service status `healthy`
-- [ ] Có thể kết nối PostgreSQL: `psql -h localhost -U postgres`
-- [ ] Có thể kết nối Redis: `redis-cli ping` → `PONG`
-- [ ] MinIO UI truy cập được tại `http://localhost:9001`
+- [x] `go mod tidy` không lỗi
+- [x] `docker-compose up -d` → tất cả service status `healthy`
+- [x] Có thể kết nối PostgreSQL: `psql -h localhost -U postgres`
+- [x] Có thể kết nối Redis: `redis-cli ping` → `PONG`
+- [x] MinIO UI truy cập được tại `http://localhost:9001`

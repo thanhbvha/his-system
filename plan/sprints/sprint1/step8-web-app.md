@@ -8,7 +8,7 @@
 
 ## 1. Khởi tạo Vite Project
 
-- [ ] Tạo project:
+- [x] Tạo project:
   ```bash
   npm create vite@latest web -- --template react-ts
   cd web
@@ -16,7 +16,7 @@
   ```
   Thư mục output: `web/`
 
-- [ ] Cài dependencies:
+- [x] Cài dependencies:
   ```bash
   npm install \
     axios \
@@ -31,7 +31,7 @@
     i18next-browser-languagedetector
   ```
 
-- [ ] Cài shadcn/ui + Tailwind CSS:
+- [x] Cài shadcn/ui + Tailwind CSS:
   ```bash
   npm install tailwindcss @tailwindcss/vite
   npx shadcn@latest init
@@ -41,7 +41,7 @@
 
 ## 2. Design System (shadcn/ui + Tailwind)
 
-- [ ] `tailwind.config.ts` — màu primary y tế:
+- [x] `tailwind.config.ts` — màu primary y tế:
   ```ts
   extend: {
     colors: {
@@ -58,7 +58,7 @@
   }
   ```
 
-- [ ] shadcn/ui `components.json` config:
+- [x] shadcn/ui `components.json` config:
   ```json
   {
     "style": "default",
@@ -67,7 +67,7 @@
   }
   ```
 
-- [ ] `src/styles/globals.css`:
+- [x] `src/styles/globals.css`:
   ```css
   @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
   @tailwind base;
@@ -80,7 +80,7 @@
   }
   ```
 
-- [ ] Responsive breakpoints sử dụng Tailwind defaults (sm, md, lg, xl)
+- [x] Responsive breakpoints sử dụng Tailwind defaults (sm, md, lg, xl)
 
 ---
 
@@ -116,8 +116,8 @@ apiClient.interceptors.response.use(
 export default apiClient;
 ```
 
-- [ ] `src/lib/queryClient.ts` — TanStack Query config
-- [ ] `src/store/authStore.ts`:
+- [x] `src/lib/queryClient.ts` — TanStack Query config
+- [x] `src/store/authStore.ts`:
   ```ts
   interface AuthState {
     token: string | null;
@@ -126,7 +126,7 @@ export default apiClient;
     clearAuth: () => void;
   }
   ```
-- [ ] `src/store/bookingStore.ts` — multi-step booking state:
+- [x] `src/store/bookingStore.ts` — multi-step booking state:
   ```ts
   interface BookingState {
     step: 1 | 2 | 3 | 4;
@@ -143,7 +143,7 @@ export default apiClient;
 
 ## 4. Routing & Layout
 
-- [ ] React Router v6 setup trong `src/App.tsx`:
+- [x] React Router v6 setup trong `src/App.tsx`:
   ```tsx
   <Routes>
     {/* Public routes */}
@@ -165,15 +165,15 @@ export default apiClient;
   </Routes>
   ```
 
-- [ ] `src/layouts/PublicLayout.tsx`:
+- [x] `src/layouts/PublicLayout.tsx`:
   - Header: Logo + Nav links + Login button
   - Footer: Copyright, links
 
-- [ ] `src/layouts/AuthLayout.tsx`:
+- [x] `src/layouts/AuthLayout.tsx`:
   - Header: Logo + Nav links + User avatar dropdown (logout)
   - Footer
 
-- [ ] Protected route wrapper:
+- [x] Protected route wrapper:
   ```tsx
   const ProtectedRoute = () => {
     const token = useAuthStore((s) => s.token);
@@ -181,7 +181,7 @@ export default apiClient;
   };
   ```
 
-- [ ] Placeholder pages (hiển thị content cơ bản + "Coming soon"):
+- [x] Placeholder pages (hiển thị content cơ bản + "Coming soon"):
   | Route | Page | Nội dung |
   |-------|------|---------|
   | `/` | LandingPage | Hero section, giới thiệu dịch vụ |
@@ -196,7 +196,7 @@ export default apiClient;
 
 ## 5. i18n
 
-- [ ] `src/i18n/index.ts`:
+- [x] `src/i18n/index.ts`:
   ```ts
   i18n
     .use(LanguageDetector)
@@ -210,24 +210,24 @@ export default apiClient;
       },
     });
   ```
-- [ ] `src/i18n/vi.json` — nội dung VI đầy đủ cho các trang landing
-- [ ] `src/i18n/en.json` — bản EN tương ứng
+- [x] `src/i18n/vi.json` — nội dung VI đầy đủ cho các trang landing
+- [x] `src/i18n/en.json` — bản EN tương ứng
 
 ---
 
 ## 6. Build & Env Config
 
-- [ ] `.env.development`:
+- [x] `.env.development`:
   ```env
   VITE_API_URL=http://localhost:8080
   ```
 
-- [ ] `.env.production`:
+- [x] `.env.production`:
   ```env
   VITE_API_URL=https://api.his-system.vn
   ```
 
-- [ ] `vite.config.ts` — proxy cho dev mode:
+- [x] `vite.config.ts` — proxy cho dev mode:
   ```ts
   server: {
     proxy: {
@@ -243,11 +243,11 @@ export default apiClient;
 
 ## Definition of Done (Step 8)
 
-- [ ] `npm run dev` khởi động Vite dev server tại `localhost:5173`
-- [ ] Landing page `/` load không lỗi, hiển thị hero section
-- [ ] Route `/login` render form (UI only, chưa cần API)
-- [ ] Route guard: `/book` redirect về `/login` khi chưa auth
-- [ ] shadcn/ui theme áp dụng đúng màu primary blue-600
-- [ ] Font Inter load từ Google Fonts
-- [ ] i18n mặc định VI, text hiển thị đúng tiếng Việt
-- [ ] Vite proxy `/api` → `localhost:8080` hoạt động (test với `/api/health`)
+- [x] `npm run dev` khởi động Vite dev server tại `localhost:5173`
+- [x] Landing page `/` load không lỗi, hiển thị hero section
+- [x] Route `/login` render form (UI only, chưa cần API)
+- [x] Route guard: `/book` redirect về `/login` khi chưa auth
+- [x] shadcn/ui theme áp dụng đúng màu primary blue-600
+- [x] Font Inter load từ Google Fonts
+- [x] i18n mặc định VI, text hiển thị đúng tiếng Việt
+- [x] Vite proxy `/api` → `localhost:8080` hoạt động (test với `/api/health`)

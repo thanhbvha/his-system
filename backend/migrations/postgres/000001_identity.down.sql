@@ -1,0 +1,12 @@
+DROP TABLE IF EXISTS audit_sessions;
+DROP TABLE IF EXISTS staff_profiles;
+DROP TABLE IF EXISTS departments;
+DROP TABLE IF EXISTS device_registry;
+DROP TABLE IF EXISTS login_attempts;
+DROP TABLE IF EXISTS mfa_secrets;
+DROP TABLE IF EXISTS refresh_tokens;
+DROP TABLE IF EXISTS role_permissions;
+DROP TABLE IF EXISTS user_roles;
+DROP TABLE IF EXISTS permissions;
+DROP TABLE IF EXISTS roles;
+DROP TABLE IF EXISTS users;

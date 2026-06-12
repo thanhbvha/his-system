@@ -12,8 +12,8 @@
 go get -tags 'postgres' github.com/golang-migrate/migrate/v4
 ```
 
-- [ ] Tạo `cmd/migrate/main.go` — CLI runner nhận `--up` / `--down` / `--steps`
-- [ ] Thư mục migrations: `migrations/postgres/`
+- [x] Tạo `cmd/migrate/main.go` — CLI runner nhận `--up` / `--down` / `--steps`
+- [x] Thư mục migrations: `migrations/postgres/`
 
 ---
 
@@ -21,7 +21,7 @@ go get -tags 'postgres' github.com/golang-migrate/migrate/v4
 
 ### `001_identity.sql`
 
-- [ ] Tạo các bảng:
+- [x] Tạo các bảng:
   | Bảng | Mô tả |
   |------|-------|
   | `users` | Tài khoản hệ thống |
@@ -39,7 +39,7 @@ go get -tags 'postgres' github.com/golang-migrate/migrate/v4
 
 ### `002_patient.sql`
 
-- [ ] Tạo các bảng:
+- [x] Tạo các bảng:
   | Bảng | Ghi chú |
   |------|---------|
   | `patients` | Có các cột mã hoá: `phone_encrypted`, `phone_hmac`, `cccd_encrypted`, `cccd_hmac`, `email_encrypted`, `email_hmac` |
@@ -50,7 +50,7 @@ go get -tags 'postgres' github.com/golang-migrate/migrate/v4
 
 ### `003_appointment.sql`
 
-- [ ] Tạo các bảng:
+- [x] Tạo các bảng:
   | Bảng | Mô tả |
   |------|-------|
   | `appointments` | Lịch hẹn chính |
@@ -81,10 +81,10 @@ CREATE INDEX IF NOT EXISTS idx_users_username ON users(username);
 
 File: `migrations/postgres/seed/001_seed.sql`
 
-- [ ] Roles mặc định: `admin`, `doctor`, `nurse`, `receptionist`, `pharmacist`, `patient`
-- [ ] Permissions cơ bản cho từng role
-- [ ] ICD-10 cơ bản (top 100 mã bệnh phổ biến)
-- [ ] Demo user:
+- [x] Roles mặc định: `admin`, `doctor`, `nurse`, `receptionist`, `pharmacist`, `patient`
+- [x] Permissions cơ bản cho từng role
+- [x] ICD-10 cơ bản (top 100 mã bệnh phổ biến)
+- [x] Demo user:
   ```sql
   -- Password: Admin@123 (bcrypt hash)
   INSERT INTO users (username, password_hash, is_active) VALUES
@@ -96,8 +96,8 @@ File: `migrations/postgres/seed/001_seed.sql`
 
 ## Definition of Done (Step 2)
 
-- [ ] `make migrate` chạy không lỗi
-- [ ] Migration 001–003 apply thành công, có thể chạy lại (idempotent)
-- [ ] Bảng `users`, `patients`, `appointments` tồn tại trong DB
-- [ ] Seed data: login với `admin` / `Admin@123` thành công (kiểm tra sau khi có Auth)
-- [ ] `make migrate` với `--down` rollback sạch
+- [x] `make migrate` chạy không lỗi
+- [x] Migration 001–003 apply thành công, có thể chạy lại (idempotent)
+- [x] Bảng `users`, `patients`, `appointments` tồn tại trong DB
+- [x] Seed data: login với `admin` / `Admin@123` thành công (kiểm tra sau khi có Auth)
+- [x] `make migrate` với `--down` rollback sạch

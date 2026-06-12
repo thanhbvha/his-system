@@ -8,25 +8,25 @@
 
 ## 1. Khởi tạo Wails Project
 
-- [ ] Cài Wails CLI:
+- [x] Cài Wails CLI:
   ```bash
   go install github.com/wailsapp/wails/v2/cmd/wails@latest
   ```
 
-- [ ] Init project:
+- [x] Init project:
   ```bash
   wails init -n desktop -t react-ts
   ```
   Thư mục output: `desktop/`
 
-- [ ] Cài React dependencies:
+- [x] Cài React dependencies:
   ```bash
   cd desktop/frontend
   npm install axios @tanstack/react-query zustand antd react-router-dom zod i18next react-i18next i18next-browser-languagedetector
   npm install -D @types/node
   ```
 
-- [ ] Setup path alias `@/` → `src/`:
+- [x] Setup path alias `@/` → `src/`:
   ```ts
   // vite.config.ts
   resolve: {
@@ -38,7 +38,7 @@
 
 ## 2. Design System (Ant Design 5.x)
 
-- [ ] Ant Design theme config trong `src/main.tsx`:
+- [x] Ant Design theme config trong `src/main.tsx`:
   ```tsx
   import { ConfigProvider } from "antd";
 
@@ -54,7 +54,7 @@
   };
   ```
 
-- [ ] Global CSS reset + custom variables: `src/styles/global.css`
+- [x] Global CSS reset + custom variables: `src/styles/global.css`
   ```css
   :root {
     --color-primary: #1677ff;
@@ -64,7 +64,7 @@
   * { box-sizing: border-box; }
   ```
 
-- [ ] Typography scale: `src/styles/typography.css`
+- [x] Typography scale: `src/styles/typography.css`
   ```css
   h1 { font-size: 2rem; font-weight: 700; }
   h2 { font-size: 1.5rem; font-weight: 600; }
@@ -72,7 +72,7 @@
   h4 { font-size: 1rem; font-weight: 600; }
   ```
 
-- [ ] Import Google Fonts Inter trong `index.html`:
+- [x] Import Google Fonts Inter trong `index.html`:
   ```html
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -111,7 +111,7 @@ apiClient.interceptors.response.use(
 export default apiClient;
 ```
 
-- [ ] `src/lib/queryClient.ts`:
+- [x] `src/lib/queryClient.ts`:
   ```ts
   import { QueryClient } from "@tanstack/react-query";
 
@@ -126,7 +126,7 @@ export default apiClient;
   });
   ```
 
-- [ ] `src/lib/websocket.ts` — WS client skeleton:
+- [x] `src/lib/websocket.ts` — WS client skeleton:
   ```ts
   class WSClient {
     private ws: WebSocket | null = null;
@@ -140,7 +140,7 @@ export default apiClient;
 
 ### State (Zustand)
 
-- [ ] `src/store/authStore.ts`:
+- [x] `src/store/authStore.ts`:
   ```ts
   interface AuthState {
     token: string | null;
@@ -151,7 +151,7 @@ export default apiClient;
   }
   ```
 
-- [ ] `src/store/uiStore.ts`:
+- [x] `src/store/uiStore.ts`:
   ```ts
   interface UIState {
     sidebarOpen: boolean;
@@ -164,8 +164,8 @@ export default apiClient;
 
 ## 4. Routing & Layout
 
-- [ ] React Router v6 setup trong `src/App.tsx`
-- [ ] `src/layouts/RoleLayout.tsx`:
+- [x] React Router v6 setup trong `src/App.tsx`
+- [x] `src/layouts/RoleLayout.tsx`:
   - Sidebar + Header + Content wrapper
   - Sidebar items render theo `role` từ `authStore`
   - Sidebar items per role:
@@ -177,7 +177,7 @@ export default apiClient;
     | `receptionist` | Lịch hẹn, Tiếp nhận |
     | `pharmacist` | Kê đơn, Kho thuốc |
 
-- [ ] Route guard:
+- [x] Route guard:
   ```tsx
   // src/components/ProtectedRoute.tsx
   const ProtectedRoute = () => {
@@ -186,14 +186,14 @@ export default apiClient;
   };
   ```
 
-- [ ] Placeholder pages hiển thị "Coming soon" cho từng role
+- [x] Placeholder pages hiển thị "Coming soon" cho từng role
 
 ---
 
 ## 5. i18n
 
-- [ ] i18next config trong `src/i18n/index.ts`
-- [ ] `src/i18n/vi.json`:
+- [x] i18next config trong `src/i18n/index.ts`
+- [x] `src/i18n/vi.json`:
   ```json
   {
     "common": {
@@ -208,17 +208,17 @@ export default apiClient;
     }
   }
   ```
-- [ ] `src/i18n/en.json` — bản tiếng Anh tương ứng
-- [ ] Language switcher component trong Header
+- [x] `src/i18n/en.json` — bản tiếng Anh tương ứng
+- [x] Language switcher component trong Header
 
 ---
 
 ## Definition of Done (Step 7)
 
-- [ ] `wails dev` khởi động không lỗi
-- [ ] Layout hiển thị đúng sidebar + header + content area
-- [ ] Sidebar items thay đổi theo role (test với mock role trong store)
-- [ ] Route guard redirect `/login` khi chưa có token
-- [ ] i18n: toggle VI/EN thay đổi text trên UI
-- [ ] Ant Design theme áp dụng đúng màu primary `#1677ff`
-- [ ] Fonts Inter load từ Google Fonts
+- [x] `wails dev` khởi động không lỗi
+- [x] Layout hiển thị đúng sidebar + header + content area
+- [x] Sidebar items thay đổi theo role (test với mock role trong store)
+- [x] Route guard redirect `/login` khi chưa có token
+- [x] i18n: toggle VI/EN thay đổi text trên UI
+- [x] Ant Design theme áp dụng đúng màu primary `#1677ff`
+- [x] Fonts Inter load từ Google Fonts

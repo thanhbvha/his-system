@@ -1,0 +1,18 @@
+{
+  "common": {
+    "login": "Đăng nhập",
+    "register": "Đăng ký",
+    "logout": "Đăng xuất",
+    "comingSoon": "Tính năng đang phát triển",
+    "loading": "Đang tải..."
+  },
+  "nav": {
+    "book": "Đặt khám",
+    "myAppointments": "Lịch hẹn của tôi",
+    "results": "Kết quả khám"
+  },
+  "home": {
+    "heroTitle": "Đặt lịch khám nhanh chóng & dễ dàng",
+    "heroSubtitle": "Hệ thống quản lý bệnh viện thông minh giúp bạn chủ động thời gian thăm khám."
+  }
+}

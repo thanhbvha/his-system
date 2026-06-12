@@ -1,0 +1,48 @@
+basePath: /api/v1
+host: localhost:8080
+info:
+  contact: {}
+  description: Hospital Information System API
+  title: HIS System API
+  version: "1.0"
+paths:
+  /health:
+    get:
+      description: Endpoint dùng cho K8s/Docker để biết container còn sống hay không
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+      summary: Liveness Check
+      tags:
+      - Health
+  /ready:
+    get:
+      description: Endpoint dùng cho K8s/Docker để biết ứng dụng đã sẵn sàng nhận
+        traffic chưa
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+        "503":
+          description: Service Unavailable
+          schema:
+            additionalProperties: true
+            type: object
+      summary: Readiness Check
+      tags:
+      - Health
+securityDefinitions:
+  BearerAuth:
+    in: header
+    name: Authorization
+    type: apiKey
+swagger: "2.0"

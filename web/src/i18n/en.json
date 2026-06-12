@@ -1,0 +1,18 @@
+{
+  "common": {
+    "login": "Login",
+    "register": "Register",
+    "logout": "Logout",
+    "comingSoon": "Feature coming soon",
+    "loading": "Loading..."
+  },
+  "nav": {
+    "book": "Book Appointment",
+    "myAppointments": "My Appointments",
+    "results": "Medical Results"
+  },
+  "home": {
+    "heroTitle": "Book your medical appointment quickly & easily",
+    "heroSubtitle": "Smart hospital management system helps you take control of your consultation time."
+  }
+}

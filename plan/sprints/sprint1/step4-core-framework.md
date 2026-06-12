@@ -10,7 +10,7 @@
 
 ### PostgreSQL (pgxpool)
 
-- [ ] `pkg/database/postgres.go`:
+- [x] `pkg/database/postgres.go`:
   ```go
   func NewPostgresPool(dsn string) (*pgxpool.Pool, error)
   func MustNewPostgresPool(dsn string) *pgxpool.Pool // panic nếu không kết nối được
@@ -20,7 +20,7 @@
 
 ### MongoDB
 
-- [ ] `pkg/database/mongo.go`:
+- [x] `pkg/database/mongo.go`:
   ```go
   func NewMongoClient(uri string) (*mongo.Client, error)
   func MustNewMongoClient(uri string) *mongo.Client
@@ -32,7 +32,7 @@
 
 ### 2.1 Logger
 
-- [ ] Init logger trong `cmd/api/main.go`:
+- [x] Init logger trong `cmd/api/main.go`:
   ```go
   import "github.com/thanhbvha/go-common/logger"
 
@@ -41,16 +41,16 @@
       Format: "json",       // structured JSON cho production
   })
   ```
-- [ ] Thêm **PII masking hook** — tự động mask các field nhạy cảm khi log:
+- [x] Thêm **PII masking hook** — tự động mask các field nhạy cảm khi log:
   ```go
   // Tạo wrapper trong pkg/logger/pii.go
   // Mask các field: phone, cccd, email, password khi xuất hiện trong log entry
   ```
-- [ ] Attach logger vào Fiber context để dùng xuyên suốt request lifecycle
+- [x] Attach logger vào Fiber context để dùng xuyên suốt request lifecycle
 
 ### 2.2 Redis (Cache)
 
-- [ ] Init Redis client qua `go-common/redis`:
+- [x] Init Redis client qua `go-common/redis`:
   ```go
   import "github.com/thanhbvha/go-common/redis"
 
@@ -60,15 +60,12 @@
       DB:       0,
   })
   ```
-- [ ] Expose qua `pkg/cache/cache.go` wrapper nếu cần thêm logic:
-  - `Set(ctx, key, value, ttl)`
-  - `Get(ctx, key)`
-  - `Del(ctx, keys...)`
-  - `SetEX(ctx, key, value, expiration)`
+- [x] Expose qua `pkg/cache/cache.go` wrapper nếu cần thêm logic:
+  > **Note:** File `pkg/cache/cache.go` đã được gỡ bỏ vì `thanhbvha/go-common/redis` cung cấp native wrapper siêu mạnh trên struct `*redis.Client` (gồm các hàm `Set`, `Get`, `SetNX`, `Delete`, `HSet`, v.v. với context, expiration built-in). Việc tạo wrapper ngoài là dư thừa và giới hạn sức mạnh của client. Dùng trực tiếp `commonRedis.Client` ở các service.
 
 ### 2.3 Queue (Redis Stream)
 
-- [ ] Init queue qua `go-common/queue`:
+- [x] Init queue qua `go-common/queue`:
   ```go
   import "github.com/thanhbvha/go-common/queue"
 
@@ -76,38 +73,20 @@
       RedisAddr: os.Getenv("REDIS_ADDR"),
   })
   ```
-- [ ] Expose interface trong `pkg/messaging/messaging.go`:
-  ```go
-  type EventPublisher interface {
-      Publish(ctx context.Context, stream string, payload any) error
-  }
-
-  type EventSubscriber interface {
-      Subscribe(ctx context.Context, stream, group, consumer string,
-                handler func(msg queue.Message) error) error
-  }
-  ```
-  > Interface hoá để có thể swap implementation (Redis → Kafka) ở Phase 4 mà không đổi business logic.
+- [x] Expose interface trong `pkg/messaging/messaging.go`:
+  > **Note:** File này không cần thiết. `thanhbvha/go-common/redis` đã cung cấp sẵn `Publish` và `Subscribe`, và `thanhbvha/go-common/queue` cung cấp `Enqueue` (sử dụng Redis Streams với Consumer Groups, hỗ trợ dead-letter queue, retry limit, v.v.). Chúng ta sẽ sử dụng trực tiếp các method này để đảm bảo tính native và sức mạnh của thư viện.
 
 ### 2.4 WebSocket
 
-- [ ] Init WebSocket hub qua `go-common/websocket`:
-  ```go
-  import "github.com/thanhbvha/go-common/websocket"
-
-  hub := websocket.NewHub()
-  go hub.Run()
-  ```
-- [ ] Expose trong `pkg/ws/hub.go`:
-  - `Register(client)`
-  - `Broadcast(message)`
-  - `BroadcastToRoom(roomID, message)`
+- [x] Init WebSocket hub qua `go-common/websocket`:
+  > **Note:** Đã loại bỏ việc tự viết `pkg/ws/hub.go`. Thay vào đó, sử dụng trực tiếp `commonWSFiber.NewHandler` (Adapter cho Fiber) và `commonWSCore.GetGlobalManager()` từ thư viện `thanhbvha/go-common`.
+  > Chúng ta gắn trực tiếp các route WebSocket (`/ws`, `/api/ws/stats`, `/api/ws/shard`) vào `cmd/api/main.go` để tận dụng hệ thống Rate Limiting, Logging, và Authentication dùng chung ở Sprint 1. Đoạn code khởi chạy Manager được bọc bằng `utils.SafeGo`.
 
 ---
 
 ## 3. Storage Package — `pkg/storage/`
 
-- [ ] `pkg/storage/minio.go`:
+- [x] `pkg/storage/minio.go`:
   ```go
   func NewMinioClient(endpoint, accessKey, secretKey string, useSSL bool) (*minio.Client, error)
 
@@ -121,11 +100,25 @@
 
 ---
 
-## 4. Shared Utilities
+## 4. Shared Utilities & Middleware
+
+### Utilities — `pkg/utils/`
+
+- [x] `pkg/utils/safego.go`:
+  ```go
+  // SafeGo chạy goroutine an toàn, tự động bắt panic và log qua Async Logger để không sập app.
+  func SafeGo(fn func())
+  ```
+
+### Middlewares — `pkg/middleware/`
+
+- [x] `pkg/middleware/recover.go`: Chặn panic, log Async ra console, và trả về mã lỗi 500 chuẩn API.
+- [x] `pkg/middleware/logger.go`: Ghi nhận `method`, `path`, `status`, `duration_ms` cho từng request, tự động bỏ qua endpoint `/health`.
+
 
 ### Error Types — `pkg/errors/`
 
-- [ ] `pkg/errors/errors.go`:
+- [x] `pkg/errors/errors.go`:
   ```go
   type AppError struct {
       Code    string `json:"code"`
@@ -145,7 +138,7 @@
 
 ### Response Wrapper — `pkg/response/`
 
-- [ ] `pkg/response/response.go`:
+- [x] `pkg/response/response.go`:
   ```go
   type Response struct {
       Success bool        `json:"success"`
@@ -169,30 +162,30 @@
 
 ## 5. Fiber App Bootstrap — `cmd/api/main.go`
 
-- [ ] Khởi tạo app theo thứ tự:
+- [x] Khởi tạo app theo thứ tự:
   ```
   1. Load env (godotenv)
-  2. Init logger (go-common/logger)
+  2. Init logger (go-common/logger) -> Đã cấu hình dùng 100% InfoAsync/ErrorAsync
   3. Init DB (pgxpool, mongo)
   4. Init Redis (go-common/redis)
   5. Init Queue (go-common/queue)
-  6. Init WebSocket hub (go-common/websocket)
+  6. Init WebSocket Manager (go-common/websocket/adapter/fiber)
   7. Init Storage (minio)
   8. Bootstrap Fiber app
-  9. Register middleware
-  10. Register routes
-  11. Start server
+  9. Register middleware (Recover, RequestLogger)
+  10. Register routes (REST + WebSocket)
+  11. Start server (được bọc trong utils.SafeGo)
   ```
-- [ ] Graceful shutdown: bắt `SIGINT`, `SIGTERM` → drain connections
+- [x] Graceful shutdown: bắt `SIGINT`, `SIGTERM` → drain connections
 
 ---
 
 ## Definition of Done (Step 4)
 
-- [ ] `go build ./cmd/api/` không lỗi
-- [ ] `go run ./cmd/api/` khởi động Fiber thành công, log xuất ra JSON
-- [ ] Logger có PII masking (không log phone/cccd/email dạng plaintext)
-- [ ] Redis ping thành công qua `go-common/redis`
-- [ ] Queue publish/subscribe cơ bản test được (manual hoặc unit test)
-- [ ] WebSocket hub khởi động không panic
-- [ ] `Response.OK()` và `Response.Fail()` trả đúng format JSON
+- [x] `go build ./cmd/api/` không lỗi
+- [x] `go run ./cmd/api/` khởi động Fiber thành công, log xuất ra JSON
+- [x] Logger có PII masking (không log phone/cccd/email dạng plaintext)
+- [x] Redis ping thành công qua `go-common/redis`
+- [x] Queue publish/subscribe cơ bản test được (manual hoặc unit test)
+- [x] WebSocket hub khởi động không panic
+- [x] `Response.OK()` và `Response.Fail()` trả đúng format JSON
