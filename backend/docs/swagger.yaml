@@ -1,4 +1,152 @@
 basePath: /api/v1
+definitions:
+  auth.CompleteLoginRequest:
+    properties:
+      challenge_string:
+        type: string
+      device_fingerprint:
+        type: string
+      mfa_token:
+        type: string
+      public_key_pem:
+        type: string
+      signature:
+        type: string
+    type: object
+  auth.InitLoginRequest:
+    properties:
+      password:
+        type: string
+      username:
+        type: string
+    type: object
+  auth.LogoutRequest:
+    properties:
+      refresh_token:
+        type: string
+    type: object
+  auth.RefreshRequest:
+    properties:
+      public_key_pem:
+        type: string
+      refresh_token:
+        type: string
+      signature:
+        type: string
+    type: object
+  auth.RegisterPatientRequest:
+    properties:
+      dob:
+        description: '"2006-01-02"'
+        type: string
+      email:
+        type: string
+      full_name:
+        type: string
+      gender:
+        description: '"male", "female", "other"'
+        type: string
+      phone:
+        type: string
+    type: object
+  auth.SendOTPRequest:
+    properties:
+      phone:
+        type: string
+    type: object
+  auth.VerifyMFARequest:
+    properties:
+      totp_code:
+        type: string
+      user_id:
+        description: Alternatively username
+        type: string
+    type: object
+  auth.VerifyOTPRequest:
+    properties:
+      otp:
+        type: string
+      phone:
+        type: string
+    type: object
+  command.CompleteLoginResult:
+    properties:
+      access_token:
+        type: string
+      refresh_token:
+        type: string
+    type: object
+  command.InitLoginResult:
+    properties:
+      challenge_string:
+        type: string
+      mfa_required:
+        type: boolean
+    type: object
+  command.RefreshTokenResult:
+    properties:
+      access_token:
+        type: string
+      refresh_token:
+        type: string
+    type: object
+  command.RefreshWebResult:
+    properties:
+      access_token:
+        type: string
+    type: object
+  command.RegisterPatientResult:
+    properties:
+      access_token:
+        type: string
+    type: object
+  command.SetupMFAResult:
+    properties:
+      backup_codes:
+        items:
+          type: string
+        type: array
+      qr_uri:
+        type: string
+    type: object
+  command.VerifyMFAResult:
+    properties:
+      mfa_token:
+        type: string
+    type: object
+  command.VerifyOTPResult:
+    properties:
+      access_token:
+        type: string
+      needs_register:
+        type: boolean
+    type: object
+  response.ErrorInfo:
+    properties:
+      code:
+        type: string
+      message:
+        type: string
+    type: object
+  response.Meta:
+    properties:
+      limit:
+        type: integer
+      page:
+        type: integer
+      total:
+        type: integer
+    type: object
+  response.Response:
+    properties:
+      data: {}
+      error:
+        $ref: '#/definitions/response.ErrorInfo'
+      meta:
+        $ref: '#/definitions/response.Meta'
+      success:
+        type: boolean
+    type: object
 host: localhost:8080
 info:
   contact: {}
@@ -6,6 +154,285 @@ info:
   title: HIS System API
   version: "1.0"
 paths:
+  /auth/login/complete:
+    post:
+      consumes:
+      - application/json
+      description: Verifies challenge signature and issues tokens
+      parameters:
+      - description: Challenge Response
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/auth.CompleteLoginRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/command.CompleteLoginResult'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.Response'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/response.Response'
+      summary: Complete Desktop Login
+      tags:
+      - Auth (Desktop)
+  /auth/login/init:
+    post:
+      consumes:
+      - application/json
+      description: Authenticates user and returns a challenge string
+      parameters:
+      - description: Login Credentials
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/auth.InitLoginRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/command.InitLoginResult'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.Response'
+        "429":
+          description: Too Many Requests
+          schema:
+            $ref: '#/definitions/response.Response'
+      summary: Initialize Desktop Login
+      tags:
+      - Auth (Desktop)
+  /auth/logout:
+    post:
+      consumes:
+      - application/json
+      description: Invalidates the refresh token
+      parameters:
+      - description: Refresh Token
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/auth.LogoutRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.Response'
+      summary: Logout Desktop
+      tags:
+      - Auth (Desktop)
+  /auth/mfa/setup:
+    post:
+      consumes:
+      - application/json
+      description: Generates TOTP secret and backup codes. Requires valid access token.
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/command.SetupMFAResult'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.Response'
+      security:
+      - BearerAuth: []
+      summary: Setup TOTP MFA
+      tags:
+      - Auth (Desktop)
+  /auth/mfa/verify:
+    post:
+      consumes:
+      - application/json
+      description: Validates TOTP code to complete login flow
+      parameters:
+      - description: MFA Code
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/auth.VerifyMFARequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/command.VerifyMFAResult'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.Response'
+      summary: Verify TOTP MFA
+      tags:
+      - Auth (Desktop)
+  /auth/otp/send:
+    post:
+      consumes:
+      - application/json
+      description: Generates and sends OTP to patient's phone
+      parameters:
+      - description: Phone number
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/auth.SendOTPRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.Response'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.Response'
+        "422":
+          description: Unprocessable Entity
+          schema:
+            $ref: '#/definitions/response.Response'
+        "429":
+          description: Too Many Requests
+          schema:
+            $ref: '#/definitions/response.Response'
+      summary: Send OTP via SMS/Zalo
+      tags:
+      - Auth (Web)
+  /auth/otp/verify:
+    post:
+      consumes:
+      - application/json
+      description: Verifies patient's OTP and issues tokens if user exists
+      parameters:
+      - description: OTP data
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/auth.VerifyOTPRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/command.VerifyOTPResult'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.Response'
+        "429":
+          description: Too Many Requests
+          schema:
+            $ref: '#/definitions/response.Response'
+      summary: Verify OTP
+      tags:
+      - Auth (Web)
+  /auth/refresh:
+    post:
+      consumes:
+      - application/json
+      description: Rotates tokens using valid Refresh Token and device signature
+      parameters:
+      - description: Refresh Payload
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/auth.RefreshRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/command.RefreshTokenResult'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.Response'
+      summary: Refresh Access Token
+      tags:
+      - Auth (Desktop)
+  /auth/register:
+    post:
+      consumes:
+      - application/json
+      description: Registers a new patient after OTP verification
+      parameters:
+      - description: Patient info
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/auth.RegisterPatientRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/command.RegisterPatientResult'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.Response'
+        "409":
+          description: Conflict
+          schema:
+            $ref: '#/definitions/response.Response'
+      summary: Register Patient
+      tags:
+      - Auth (Web)
+  /auth/web/logout:
+    post:
+      description: Clears refresh token cookie
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.Response'
+      summary: Logout Web
+      tags:
+      - Auth (Web)
+  /auth/web/refresh:
+    post:
+      description: Rotates HttpOnly refresh cookie and issues new access token
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/command.RefreshWebResult'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.Response'
+      summary: Refresh Token for Web
+      tags:
+      - Auth (Web)
   /health:
     get:
       description: Endpoint dùng cho K8s/Docker để biết container còn sống hay không

@@ -42,7 +42,7 @@ func InitTracer(serviceName, jaegerEndpoint string) (func(context.Context) error
 		sdktrace.WithResource(res),
 		sdktrace.WithSpanProcessor(bsp),
 	)
-	
+
 	// Thiết lập TracerProvider làm global mặc định
 	otel.SetTracerProvider(tracerProvider)
 

@@ -9,9 +9,9 @@ INSERT INTO roles (name, description) VALUES
 ON CONFLICT (name) DO NOTHING;
 
 -- Password: Admin@123
--- Hash: $2a$12$R9h/cIPz0gi.URNNX3kh2OPST9/PgBkqquzi.Ss7KIUgO2t0jWMUW
+-- Hash: $2a$10$WqiuRa2nRAbooSYc3zeqgun5SCQAzugAE3eUeMVC18kQKO753CYBO
 INSERT INTO users (username, password_hash, is_active) VALUES
-    ('admin', '$2a$12$R9h/cIPz0gi.URNNX3kh2OPST9/PgBkqquzi.Ss7KIUgO2t0jWMUW', true)
+    ('admin', '$2a$10$WqiuRa2nRAbooSYc3zeqgun5SCQAzugAE3eUeMVC18kQKO753CYBO', true)
 ON CONFLICT (username) DO NOTHING;
 
 -- Link admin to admin role

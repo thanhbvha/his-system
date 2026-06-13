@@ -1,0 +1,164 @@
+import { useState, useEffect } from "react";
+import { Table, Checkbox, Button, message, Space } from "antd";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { SaveOutlined } from "@ant-design/icons";
+import apiClient from "@/lib/apiClient";
+
+export const RolePermissionPage = () => {
+  const queryClient = useQueryClient();
+  const [matrixState, setMatrixState] = useState<Record<string, Record<string, boolean>>>({});
+  const [dirtyRoles, setDirtyRoles] = useState<Set<string>>(new Set());
+
+  // Fetch roles (which include permissions)
+  const { data: rolesData, isLoading } = useQuery({
+    queryKey: ["roles"],
+    queryFn: async () => {
+      const res = await apiClient.get("/admin/roles");
+      return res.data.data; // assuming array of roles is here
+    }
+  });
+
+  useEffect(() => {
+    if (rolesData) {
+      const newState: Record<string, Record<string, boolean>> = {};
+      rolesData.forEach((role: any) => {
+        newState[role.id] = {};
+        role.permissions?.forEach((p: any) => {
+          const key = `${p.resource}:${p.action}`;
+          newState[role.id][key] = true;
+        });
+      });
+      setMatrixState(newState);
+      setDirtyRoles(new Set());
+    }
+  }, [rolesData]);
+
+  const updatePermissionsMutation = useMutation({
+    mutationFn: async ({ roleId, permissions }: { roleId: string, permissions: any[] }) => {
+      await apiClient.put(`/admin/roles/${roleId}/permissions`, { permissions });
+    },
+    onSuccess: () => {
+      message.success("Lưu phân quyền thành công!");
+      queryClient.invalidateQueries({ queryKey: ["roles"] });
+    },
+    onError: () => {
+      message.error("Lỗi khi lưu phân quyền");
+    }
+  });
+
+  const handleCheckboxChange = (roleId: string, permKey: string, checked: boolean) => {
+    setMatrixState(prev => ({
+      ...prev,
+      [roleId]: {
+        ...prev[roleId],
+        [permKey]: checked
+      }
+    }));
+    
+    setDirtyRoles(prev => {
+      const newSet = new Set(prev);
+      newSet.add(roleId);
+      return newSet;
+    });
+  };
+
+  const handleSave = async () => {
+    if (dirtyRoles.size === 0) {
+      message.info("Không có thay đổi nào để lưu");
+      return;
+    }
+
+    try {
+      const promises = Array.from(dirtyRoles).map(roleId => {
+        const rolePermsMap = matrixState[roleId] || {};
+        const permissionsToSave = Object.keys(rolePermsMap)
+          .filter(key => rolePermsMap[key])
+          .map(key => {
+            const [resource, action] = key.split(":");
+            return { resource, action };
+          });
+        
+        return updatePermissionsMutation.mutateAsync({ roleId, permissions: permissionsToSave });
+      });
+
+      await Promise.all(promises);
+      setDirtyRoles(new Set());
+    } catch (err) {
+      // errors handled in mutation onError
+    }
+  };
+
+  // Derive unique permissions from all roles for Rows
+  const allPermKeys = new Set<string>();
+  rolesData?.forEach((role: any) => {
+    role.permissions?.forEach((p: any) => {
+      allPermKeys.add(`${p.resource}:${p.action}`);
+    });
+  });
+  
+  // Sort permission keys
+  const sortedPermKeys = Array.from(allPermKeys).sort();
+
+  const dataSource = sortedPermKeys.map(key => ({
+    key,
+    permission: key
+  }));
+
+  // Columns: Permission name first, then 1 column per role
+  const columns: any[] = [
+    {
+      title: "Permission",
+      dataIndex: "permission",
+      key: "permission",
+      fixed: "left",
+      width: 200,
+    }
+  ];
+
+  rolesData?.forEach((role: any) => {
+    columns.push({
+      title: role.name,
+      dataIndex: role.id,
+      key: role.id,
+      align: "center",
+      render: (_: any, record: any) => {
+        const isChecked = matrixState[role.id]?.[record.key] || false;
+        return (
+          <Checkbox 
+            checked={isChecked} 
+            onChange={(e) => handleCheckboxChange(role.id, record.key, e.target.checked)} 
+          />
+        );
+      }
+    });
+  });
+
+  return (
+    <div>
+      <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 16 }}>
+        <h2>Ma trận Phân quyền (Roles & Permissions)</h2>
+        <Space>
+          {dirtyRoles.size > 0 && <span style={{ color: "#faad14" }}>Chưa lưu ({dirtyRoles.size} roles)</span>}
+          <Button 
+            type="primary" 
+            icon={<SaveOutlined />} 
+            onClick={handleSave} 
+            loading={updatePermissionsMutation.isPending}
+            disabled={dirtyRoles.size === 0}
+          >
+            Lưu thay đổi
+          </Button>
+        </Space>
+      </div>
+
+      <Table 
+        columns={columns} 
+        dataSource={dataSource} 
+        loading={isLoading}
+        pagination={false}
+        scroll={{ x: 'max-content' }}
+        bordered
+      />
+    </div>
+  );
+};

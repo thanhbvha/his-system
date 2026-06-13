@@ -1,15 +1,15 @@
 package response
 
 import (
-	"his-system/pkg/errors"
 	"github.com/gofiber/fiber/v2"
+	"his-system/pkg/errors"
 )
 
 type Response struct {
-	Success bool        `json:"success"`
-	Data    any         `json:"data,omitempty"`
-	Error   *ErrorInfo  `json:"error,omitempty"`
-	Meta    *Meta       `json:"meta,omitempty"`
+	Success bool       `json:"success"`
+	Data    any        `json:"data,omitempty"`
+	Error   *ErrorInfo `json:"error,omitempty"`
+	Meta    *Meta      `json:"meta,omitempty"`
 }
 
 type ErrorInfo struct {

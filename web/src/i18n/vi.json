@@ -14,5 +14,32 @@
   "home": {
     "heroTitle": "Đặt lịch khám nhanh chóng & dễ dàng",
     "heroSubtitle": "Hệ thống quản lý bệnh viện thông minh giúp bạn chủ động thời gian thăm khám."
+  },
+  "auth": {
+    "loginTitle": "Đăng nhập bằng số điện thoại",
+    "enterPhoneDesc": "Nhập số điện thoại để nhận mã xác thực",
+    "enterOTPDesc": "Mã 6 số đã được gửi tới ",
+    "phone": "Số điện thoại",
+    "sendOTP": "Gửi mã OTP",
+    "resendIn": "Gửi lại sau",
+    "resend": "Gửi lại mã OTP",
+    "changePhone": "Đổi số điện thoại",
+    "registerTitle": "Hoàn tất đăng ký",
+    "registerDesc": "Cập nhật thông tin hồ sơ cho số điện thoại: ",
+    "fullName": "Họ và tên",
+    "dob": "Ngày sinh (YYYY-MM-DD)",
+    "gender": "Giới tính",
+    "genderMale": "Nam",
+    "genderFemale": "Nữ",
+    "genderOther": "Khác",
+    "email": "Email (Không bắt buộc)",
+    "createAccount": "Tạo tài khoản",
+    "errors": {
+      "invalidPhone": "Số điện thoại không hợp lệ",
+      "tooManyAttempts": "Quá nhiều lần thử. Vui lòng đợi vài phút.",
+      "invalidOTP": "Mã OTP không đúng",
+      "expiredOTP": "Mã OTP đã hết hạn",
+      "phoneExists": "Số điện thoại đã được đăng ký. Vui lòng đăng nhập."
+    }
   }
 }

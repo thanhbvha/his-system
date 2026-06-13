@@ -1,0 +1,155 @@
+package infrastructure
+
+import (
+	"context"
+	"errors"
+
+	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgxpool"
+	"his-system/internal/identity/domain"
+)
+
+type UserRepositoryPG struct {
+	db *pgxpool.Pool
+}
+
+func NewUserRepositoryPG(db *pgxpool.Pool) *UserRepositoryPG {
+	return &UserRepositoryPG{db: db}
+}
+
+func (r *UserRepositoryPG) Create(ctx context.Context, user *domain.User) error {
+	tx, err := r.db.Begin(ctx)
+	if err != nil {
+		return err
+	}
+	defer tx.Rollback(ctx)
+
+	q := `INSERT INTO users (id, username, email_encrypted, email_hmac, password_hash, is_active, mfa_enabled, created_at, updated_at) 
+	      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)`
+	_, err = tx.Exec(ctx, q,
+		user.ID, user.Username, user.EmailEncrypted, user.EmailHMAC,
+		user.PasswordHash, user.IsActive, user.MFAEnabled,
+		user.CreatedAt, user.UpdatedAt,
+	)
+	if err != nil {
+		return err
+	}
+
+	if len(user.RoleIDs) > 0 {
+		for _, roleID := range user.RoleIDs {
+			_, err = tx.Exec(ctx, `INSERT INTO user_roles (user_id, role_id) VALUES ($1, $2)`, user.ID, roleID)
+			if err != nil {
+				return err
+			}
+		}
+	}
+
+	return tx.Commit(ctx)
+}
+
+func (r *UserRepositoryPG) GetByID(ctx context.Context, id uuid.UUID) (*domain.User, error) {
+	return r.getBy(ctx, "id", id)
+}
+
+func (r *UserRepositoryPG) GetByUsername(ctx context.Context, username string) (*domain.User, error) {
+	return r.getBy(ctx, "username", username)
+}
+
+func (r *UserRepositoryPG) GetByEmailHMAC(ctx context.Context, emailHMAC string) (*domain.User, error) {
+	return r.getBy(ctx, "email_hmac", emailHMAC)
+}
+
+func (r *UserRepositoryPG) getBy(ctx context.Context, field string, value interface{}) (*domain.User, error) {
+	q := `SELECT id, username, email_encrypted, email_hmac, password_hash, is_active, mfa_enabled, created_at, updated_at
+	      FROM users WHERE ` + field + ` = $1`
+
+	row := r.db.QueryRow(ctx, q, value)
+	var u domain.User
+	err := row.Scan(&u.ID, &u.Username, &u.EmailEncrypted, &u.EmailHMAC, &u.PasswordHash,
+		&u.IsActive, &u.MFAEnabled, &u.CreatedAt, &u.UpdatedAt)
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return nil, nil // Return nil when not found
+		}
+		return nil, err
+	}
+
+	// fetch roles
+	rows, err := r.db.Query(ctx, `SELECT role_id FROM user_roles WHERE user_id = $1`, u.ID)
+	if err == nil {
+		defer rows.Close()
+		for rows.Next() {
+			var rid uuid.UUID
+			if err := rows.Scan(&rid); err == nil {
+				u.RoleIDs = append(u.RoleIDs, rid)
+			}
+		}
+	}
+
+	return &u, nil
+}
+
+func (r *UserRepositoryPG) Update(ctx context.Context, user *domain.User) error {
+	q := `UPDATE users SET 
+			username = $1, email_encrypted = $2, email_hmac = $3, 
+			password_hash = $4, is_active = $5, mfa_enabled = $6, updated_at = $7
+		  WHERE id = $8`
+	_, err := r.db.Exec(ctx, q,
+		user.Username, user.EmailEncrypted, user.EmailHMAC,
+		user.PasswordHash, user.IsActive, user.MFAEnabled, user.UpdatedAt,
+		user.ID,
+	)
+	return err
+}
+
+func (r *UserRepositoryPG) UpdateRoles(ctx context.Context, userID uuid.UUID, roleIDs []uuid.UUID) error {
+	tx, err := r.db.Begin(ctx)
+	if err != nil {
+		return err
+	}
+	defer tx.Rollback(ctx)
+
+	// Xóa role cũ
+	if _, err := tx.Exec(ctx, `DELETE FROM user_roles WHERE user_id = $1`, userID); err != nil {
+		return err
+	}
+
+	// Thêm role mới
+	for _, roleID := range roleIDs {
+		if _, err := tx.Exec(ctx, `INSERT INTO user_roles (user_id, role_id) VALUES ($1, $2)`, userID, roleID); err != nil {
+			return err
+		}
+	}
+
+	return tx.Commit(ctx)
+}
+
+func (r *UserRepositoryPG) List(ctx context.Context, page, limit int) ([]*domain.User, int64, error) {
+	var total int64
+	err := r.db.QueryRow(ctx, `SELECT COUNT(*) FROM users`).Scan(&total)
+	if err != nil {
+		return nil, 0, err
+	}
+
+	offset := (page - 1) * limit
+	rows, err := r.db.Query(ctx, `
+		SELECT id, username, email_encrypted, email_hmac, password_hash, is_active, mfa_enabled, created_at, updated_at 
+		FROM users ORDER BY created_at DESC LIMIT $1 OFFSET $2`, limit, offset)
+	if err != nil {
+		return nil, 0, err
+	}
+	defer rows.Close()
+
+	var users []*domain.User
+	for rows.Next() {
+		var u domain.User
+		if err := rows.Scan(&u.ID, &u.Username, &u.EmailEncrypted, &u.EmailHMAC, &u.PasswordHash,
+			&u.IsActive, &u.MFAEnabled, &u.CreatedAt, &u.UpdatedAt); err != nil {
+			return nil, 0, err
+		}
+		users = append(users, &u)
+	}
+
+	return users, total, nil
+}

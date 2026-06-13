@@ -1,26 +1,26 @@
 # Sprint 2 — Step 2: Desktop Auth API (Challenge-Response + TOTP MFA)
 
 > **Mục tiêu:** Xây dựng toàn bộ backend authentication flow cho nhân viên nội bộ: challenge-response hardware-bound login, TOTP MFA, và token management.
-> **Phụ thuộc:** Step 1 (Identity Domain + JWT package hoàn thành).
+> **Phụ thuộc:** Step 1 (Identity Domain + JWT package) — ✅ Đã hoàn thành.
 > **Output:** Các API `/auth/login/init`, `/auth/login/complete`, `/auth/mfa/*`, `/auth/refresh`, `/auth/logout` hoạt động end-to-end.
 
 ---
 
 ## Nền tảng Sprint 1 + Step 1 sử dụng
 
-| Package / Schema | Dùng để |
-|-----------------|---------|
-| `pkg/auth/jwt.go` | Issue + Verify Access Token có hardware binding |
-| `internal/identity/domain/` | User, Device, Role entity + Repository interfaces |
-| `internal/identity/infrastructure/` | UserRepositoryPG, DeviceRepositoryPG |
-| `go-common/redis` | Lưu refresh token (TTL 7d), challenge (TTL 5m) |
-| `go-common/queue` | Gửi email notification async (login từ thiết bị mới) |
-| `pkg/errors/errors.go` | ErrUnauthorized, ErrForbidden, ErrConflict |
-| `pkg/response/response.go` | OK(), Fail() |
-| `pkg/middleware/logger.go` | Auto log auth events |
-| Schema `mfa_secrets` | Lưu TOTP secret (đã encrypted) |
-| Schema `device_registry` | Lưu Public Key theo device |
-| Schema `login_attempts` | Brute-force protection counter |
+| Package / Schema | Dùng để | Trạng thái |
+|-----------------|---------|------------|
+| `pkg/auth/jwt.go` | Issue + Verify Access Token có hardware binding | ✅ Đã hoàn thành (Step 1) |
+| `internal/identity/domain/` | User, Device, Role entity + Repository interfaces | ✅ Đã hoàn thành (Step 1) |
+| `internal/identity/infrastructure/` | UserRepositoryPG, DeviceRepositoryPG | ✅ Đã hoàn thành (Step 1) |
+| `go-common/redis` | Lưu refresh token (TTL 7d), challenge (TTL 5m) | ✅ Có sẵn (Sprint 1) |
+| `go-common/queue` | Gửi email notification async (login từ thiết bị mới) | ✅ Có sẵn (Sprint 1) |
+| `pkg/errors/errors.go` | ErrUnauthorized, ErrForbidden, ErrConflict | ✅ Có sẵn (Sprint 1) |
+| `pkg/response/response.go` | OK(), Fail() | ✅ Có sẵn (Sprint 1) |
+| `pkg/middleware/logger.go` | Auto log auth events | ✅ Có sẵn (Sprint 1) |
+| Schema `mfa_secrets` | Lưu TOTP secret (đã encrypted) | ✅ Có sẵn (Sprint 1) |
+| Schema `device_registry` | Lưu Public Key theo device | ✅ Có sẵn (Sprint 1) |
+| Schema `login_attempts` | Brute-force protection counter | ✅ Có sẵn (Sprint 1) |
 
 ---
 
@@ -28,7 +28,7 @@
 
 ### `InitLoginCommand`
 
-- [ ] `internal/identity/application/command/init_login.go`:
+- [x] `internal/identity/application/command/init_login.go`:
   ```go
   type InitLoginCommand struct {
       Username    string
@@ -49,7 +49,7 @@
 
 ### `CompleteLoginCommand`
 
-- [ ] `internal/identity/application/command/complete_login.go`:
+- [x] `internal/identity/application/command/complete_login.go`:
   ```go
   type CompleteLoginCommand struct {
       ChallengeString string
@@ -77,13 +77,13 @@
 
 ### `LogoutCommand`
 
-- [ ] `internal/identity/application/command/logout.go`:
+- [x] `internal/identity/application/command/logout.go`:
   - Nhận `RefreshToken` → hash → xoá khỏi Redis
   - Trả 200 dù token không tồn tại (idempotent)
 
 ### `RefreshTokenCommand`
 
-- [ ] `internal/identity/application/command/refresh_token.go`:
+- [x] `internal/identity/application/command/refresh_token.go`:
   ```go
   type RefreshTokenCommand struct {
       RefreshToken  string
@@ -98,7 +98,7 @@
 
 ### `SetupMFACommand`
 
-- [ ] `internal/identity/application/command/setup_mfa.go`:
+- [x] `internal/identity/application/command/setup_mfa.go`:
   - `go get github.com/pquerna/otp`
   - Generate TOTP secret (base32, 32 bytes)
   - **Encrypt secret bằng AES-GCM trước khi lưu** bảng `mfa_secrets`
@@ -108,7 +108,7 @@
 
 ### `VerifyMFACommand`
 
-- [ ] `internal/identity/application/command/verify_mfa.go`:
+- [x] `internal/identity/application/command/verify_mfa.go`:
   - Decrypt TOTP secret từ DB
   - Validate TOTP code với window ±1 step (30s)
   - Nếu đúng: tạo `mfa_token` → lưu Redis `mfa:{token}` → `{user_id}` TTL 5m
@@ -118,7 +118,7 @@
 
 ## 2. Rate Limiting (Auth-specific)
 
-- [ ] `pkg/middleware/auth_rate_limit.go`:
+- [x] `pkg/middleware/auth_rate_limit.go`:
   - **Login endpoint:** max 5 req/IP/phút (Redis sliding window)
     ```go
     func AuthRateLimit(rdb *redis.Client) fiber.Handler
@@ -133,7 +133,7 @@
 
 ### Route Setup
 
-- [ ] Đăng ký routes trong `cmd/api/main.go`:
+- [x] Đăng ký routes trong `cmd/api/main.go`:
   ```go
   auth := api.Group("/api/v1/auth")
   auth.Use(authRateLimit)   // 5 req/phút/IP
@@ -149,7 +149,7 @@
 
 ### Handler Implementations
 
-- [ ] `POST /api/v1/auth/login/init`:
+- [x] `POST /api/v1/auth/login/init`:
   ```
   Request:  { "username": "drnguyenvan", "password": "Secret@123" }
   Response: { "challenge_string": "...", "mfa_required": true }
@@ -158,14 +158,14 @@
   Error 423: account bị khóa
   ```
 
-- [ ] `POST /api/v1/auth/mfa/verify`:
+- [x] `POST /api/v1/auth/mfa/verify`:
   ```
   Request:  { "username": "drnguyenvan", "totp_code": "123456" }
   Response: { "mfa_token": "..." }  // TTL 5 phút
   Error 401: sai TOTP code
   ```
 
-- [ ] `POST /api/v1/auth/login/complete`:
+- [x] `POST /api/v1/auth/login/complete`:
   ```
   Request: {
     "challenge_string": "...",
@@ -180,13 +180,13 @@
   Error 403: MFA required nhưng không có mfa_token
   ```
 
-- [ ] `POST /api/v1/auth/mfa/setup`:
+- [x] `POST /api/v1/auth/mfa/setup`:
   ```
   Auth: Bearer JWT (đã login)
   Response: { "qr_uri": "otpauth://totp/...", "backup_codes": ["abc123", ...] }
   ```
 
-- [ ] `POST /api/v1/auth/refresh`:
+- [x] `POST /api/v1/auth/refresh`:
   ```
   Request: { "refresh_token": "...", "signature": "...", "public_key_pem": "..." }
   Response: { "access_token": "..." }
@@ -194,7 +194,7 @@
   Error 401: public key không khớp
   ```
 
-- [ ] `POST /api/v1/auth/logout`:
+- [x] `POST /api/v1/auth/logout`:
   ```
   Request: { "refresh_token": "..." }
   Response: 200 OK (luôn luôn)
@@ -204,20 +204,20 @@
 
 ## 4. Swagger Annotations
 
-- [ ] Thêm `// @Summary`, `// @Tags`, `// @Accept`, `// @Produce`, `// @Param`, `// @Success`, `// @Failure` cho tất cả handlers trên
-- [ ] Chạy `swag init -g ./cmd/api/main.go --output ./docs` để generate lại docs
+- [x] Thêm `// @Summary`, `// @Tags`, `// @Accept`, `// @Produce`, `// @Param`, `// @Success`, `// @Failure` cho tất cả handlers trên
+- [x] Chạy `swag init -g ./cmd/api/main.go --output ./docs` để generate lại docs
 
 ---
 
 ## Definition of Done (Step 2)
 
-- [ ] `POST /api/v1/auth/login/init` nhận username/password, trả challenge
-- [ ] `POST /api/v1/auth/login/complete` verify signature, issue JWT + Refresh Token
-- [ ] `POST /api/v1/auth/mfa/verify` validate TOTP code, trả mfa_token
-- [ ] `POST /api/v1/auth/mfa/setup` tạo TOTP secret encrypt + trả QR URI
-- [ ] `POST /api/v1/auth/refresh` rotate refresh token, issue access token mới
-- [ ] `POST /api/v1/auth/logout` xoá refresh token khỏi Redis
-- [ ] Rate limit: request thứ 6 liên tiếp cùng IP → 429
-- [ ] Brute force: sai password 5 lần → account lock
-- [ ] TOTP secret được lưu AES-GCM encrypted trong DB (kiểm tra bằng DB viewer)
-- [ ] Swagger docs hiển thị đúng tất cả endpoints mới
+- [x] `POST /api/v1/auth/login/init` nhận username/password, trả challenge
+- [x] `POST /api/v1/auth/login/complete` verify signature, issue JWT + Refresh Token
+- [x] `POST /api/v1/auth/mfa/verify` validate TOTP code, trả mfa_token
+- [x] `POST /api/v1/auth/mfa/setup` tạo TOTP secret encrypt + trả QR URI
+- [x] `POST /api/v1/auth/refresh` rotate refresh token, issue access token mới
+- [x] `POST /api/v1/auth/logout` xoá refresh token khỏi Redis
+- [x] Rate limit: request thứ 6 liên tiếp cùng IP → 429
+- [x] Brute force: sai password 5 lần → account lock
+- [x] TOTP secret được lưu AES-GCM encrypted trong DB (kiểm tra bằng DB viewer)
+- [x] Swagger docs hiển thị đúng tất cả endpoints mới

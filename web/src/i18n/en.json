@@ -14,5 +14,32 @@
   "home": {
     "heroTitle": "Book your medical appointment quickly & easily",
     "heroSubtitle": "Smart hospital management system helps you take control of your consultation time."
+  },
+  "auth": {
+    "loginTitle": "Login with phone number",
+    "enterPhoneDesc": "Enter your phone number to receive a verification code",
+    "enterOTPDesc": "A 6-digit code has been sent to ",
+    "phone": "Phone number",
+    "sendOTP": "Send OTP code",
+    "resendIn": "Resend in",
+    "resend": "Resend OTP code",
+    "changePhone": "Change phone number",
+    "registerTitle": "Complete Registration",
+    "registerDesc": "Update profile information for phone number: ",
+    "fullName": "Full Name",
+    "dob": "Date of Birth (YYYY-MM-DD)",
+    "gender": "Gender",
+    "genderMale": "Male",
+    "genderFemale": "Female",
+    "genderOther": "Other",
+    "email": "Email (Optional)",
+    "createAccount": "Create Account",
+    "errors": {
+      "invalidPhone": "Invalid phone number",
+      "tooManyAttempts": "Too many attempts. Please wait a few minutes.",
+      "invalidOTP": "Incorrect OTP code",
+      "expiredOTP": "OTP code has expired",
+      "phoneExists": "Phone number is already registered. Please login."
+    }
   }
 }

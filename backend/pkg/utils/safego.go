@@ -1,8 +1,8 @@
 package utils
 
 import (
-	"fmt"
 	"runtime/debug"
+	"time"
 
 	"github.com/thanhbvha/go-common/logger"
 )
@@ -14,12 +14,10 @@ func SafeGo(fn func()) {
 	go func() {
 		defer func() {
 			if r := recover(); r != nil {
-				stack := string(debug.Stack())
-				errStr := fmt.Sprintf("%v", r)
-				
 				logger.ErrorAsync("Goroutine panic recovered",
-					"error", errStr,
-					"stack", stack,
+					"error", r,
+					"stack", string(debug.Stack()),
+					"dispatch_time", time.Now().Format(time.RFC3339Nano),
 				)
 			}
 		}()

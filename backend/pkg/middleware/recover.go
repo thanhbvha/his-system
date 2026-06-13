@@ -3,11 +3,12 @@ package middleware
 import (
 	"fmt"
 	"runtime/debug"
+	"time"
 
 	"github.com/gofiber/fiber/v2"
+	commonLogger "github.com/thanhbvha/go-common/logger"
 	"his-system/pkg/errors"
 	"his-system/pkg/response"
-	commonLogger "github.com/thanhbvha/go-common/logger"
 )
 
 // Recover là middleware để bắt các panic trong quá trình xử lý request,
@@ -26,6 +27,7 @@ func Recover(logger *commonLogger.Logger) fiber.Handler {
 						"method", c.Method(),
 						"ip", c.IP(),
 						"stack", stack,
+						"dispatch_time", time.Now().Format(time.RFC3339Nano),
 					)
 				}
 

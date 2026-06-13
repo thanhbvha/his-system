@@ -11,7 +11,7 @@ func NewPostgresPool(dsn string) (*pgxpool.Pool, error) {
 	if err != nil {
 		return nil, err
 	}
-	
+
 	config.MaxConns = 50
 	config.MinConns = 5
 

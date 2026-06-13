@@ -9,5 +9,19 @@
     "dashboard": "Dashboard",
     "patients": "Patients",
     "appointments": "Appointments"
+  },
+  "auth": {
+    "loginTitle": "System Login",
+    "username": "Username",
+    "password": "Password",
+    "loginBtn": "Login",
+    "mfaTitle": "Two-Factor Authentication",
+    "mfaSetupTitle": "Setup Two-Factor Authentication",
+    "backupCodes": "Backup Codes",
+    "errors": {
+      "invalidCredentials": "Invalid username or password",
+      "tooManyAttempts": "Too many attempts. Please wait a few minutes.",
+      "accountLocked": "Account locked. Please contact administrator."
+    }
   }
 }

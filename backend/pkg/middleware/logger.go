@@ -42,6 +42,7 @@ func RequestLogger(logger *commonLogger.Logger) fiber.Handler {
 				"user_agent", string(c.Request().Header.UserAgent()),
 			}
 
+			args = append(args, "dispatch_time", time.Now().Format(time.RFC3339Nano))
 			// Ghi log mức Error nếu HTTP Status >= 500, ngược lại Info
 			if status >= 500 {
 				if err != nil {

@@ -75,13 +75,13 @@ func TestTamperedCiphertextDetected(t *testing.T) {
 	if err != ErrInvalidCiphertext {
 		t.Errorf("Expected ErrInvalidCiphertext for tampered data, got %v", err)
 	}
-	
+
 	// Test invalid base64
 	_, err = DecryptAESGCM([]byte("invalid^base64"), key, nil)
 	if err != ErrInvalidCiphertext {
 		t.Errorf("Expected ErrInvalidCiphertext for invalid base64, got %v", err)
 	}
-	
+
 	// Test too short ciphertext
 	short := make([]byte, 10)
 	shortEncoded := make([]byte, base64.RawURLEncoding.EncodedLen(len(short)))
@@ -194,14 +194,14 @@ func TestLoadFieldCipherFromEnv(t *testing.T) {
 	if fc == nil {
 		t.Errorf("Expected non-nil FieldCipher")
 	}
-	
+
 	// Invalid base64
 	os.Setenv("FIELD_ENCRYPTION_KEY", "not-base64")
 	_, err = LoadFieldCipherFromEnv()
 	if err == nil {
 		t.Errorf("Expected error on invalid base64")
 	}
-	
+
 	os.Setenv("FIELD_ENCRYPTION_KEY", base64.StdEncoding.EncodeToString(make([]byte, 32)))
 	os.Setenv("FIELD_HMAC_KEY", "not-base64")
 	_, err = LoadFieldCipherFromEnv()
@@ -218,7 +218,7 @@ func TestFieldCipherUnreachableErrors(t *testing.T) {
 	if err == nil {
 		t.Errorf("Expected error")
 	}
-	
+
 	// Valid base64 but will fail decrypt due to invalid key
 	validBase64 := base64.RawURLEncoding.EncodeToString([]byte("dummydata"))
 	_, err = fc.Decrypt(validBase64)

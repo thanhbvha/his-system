@@ -74,48 +74,48 @@
 ### Module `internal/identity`
 
 **Domain layer:**
-- [ ] Entity `User`: id, username, email_encrypted, password_hash, role_ids, is_active, mfa_enabled
-- [ ] Entity `Device`: id, user_id, device_fingerprint, public_key_pem, registered_at, is_active
-- [ ] Entity `Role`: id, name, permissions[]
-- [ ] Entity `Permission`: id, resource, action
-- [ ] Value object `Email` — validate format, encrypt/decrypt via FieldCipher
-- [ ] Repository interfaces: `UserRepository`, `RoleRepository`, `DeviceRepository`
+- [x] Entity `User`: id, username, email_encrypted, password_hash, role_ids, is_active, mfa_enabled
+- [x] Entity `Device`: id, user_id, device_fingerprint, public_key_pem, registered_at, is_active
+- [x] Entity `Role`: id, name, permissions[]
+- [x] Entity `Permission`: id, resource, action
+- [x] Value object `Email` — validate format, encrypt/decrypt via FieldCipher
+- [x] Repository interfaces: `UserRepository`, `RoleRepository`, `DeviceRepository`
 
 **Application layer:**
-- [ ] Command: `InitLoginCommand` (Validate pass → Generate Challenge)
-- [ ] Command: `CompleteLoginCommand` (Verify Challenge Signature → Register Device → Issue Token)
-- [ ] Command: `LogoutCommand`, `RefreshTokenCommand`
-- [ ] Command: `RegisterPatientCommand` (Web OTP flow)
-- [ ] Command: `SendOTPCommand` (Zalo ZNS với Fallback SMS), `VerifyOTPCommand`
-- [ ] Command: `SetupMFACommand`, `VerifyMFACommand`
+- [x] Command: `InitLoginCommand` (Validate pass → Generate Challenge)
+- [x] Command: `CompleteLoginCommand` (Verify Challenge Signature → Register Device → Issue Token)
+- [x] Command: `LogoutCommand`, `RefreshTokenCommand`
+- [x] Command: `RegisterPatientCommand` (Web OTP flow)
+- [x] Command: `SendOTPCommand` (Zalo ZNS với Fallback SMS), `VerifyOTPCommand`
+- [x] Command: `SetupMFACommand`, `VerifyMFACommand`
 - [ ] Query: `GetUserByID`, `ListUsers`, `GetRolePermissions`
 - [ ] Handlers cho tất cả commands/queries trên
 
 **Infrastructure:**
-- [ ] `UserRepositoryPG` — implement interface, dùng FieldCipher cho email
-- [ ] Redis: lưu refresh_token với TTL 7d, OTP với TTL 5m
-- [ ] OTP generation: 6 chữ số random, lưu Redis với key `otp:{phone_hmac}`
+- [x] `UserRepositoryPG` (cùng `DeviceRepositoryPG`, `RoleRepositoryPG`) — implement interface, dùng FieldCipher cho email
+- [x] Redis: lưu refresh_token với TTL 7d, OTP với TTL 5m
+- [x] OTP generation: 6 chữ số random, lưu Redis với key `otp:{phone_hmac}`
 
 ### `pkg/auth/jwt.go`
-- [ ] `IssueAccessToken(claims Claims, key []byte, publicKeyHash string) (string, error)`
-  - Claims JSON → AES-GCM Encrypt → Base64URL → JWT payload field `"enc"`
+- [x] `IssueAccessToken(claims Claims, key []byte, publicKeyHash string) (string, error)`
+  - Claims JSON → AES-GCM Encrypt (AAD: jti) → Base64URL → JWT payload field `"enc"`
   - Thêm `cnf` (confirmation) claim chứa hash của Public Key (DPoP concept) để bind token với thiết bị
   - Sign bằng HMAC-SHA256 (`JWT_SIGNING_KEY` từ env)
   - TTL 15 phút, include `kid` (key ID) trong header
-- [ ] `VerifyAccessToken(token string, key []byte) (Claims, error)`
-  - Verify HMAC signature trước
-  - Decode payload → AES-GCM Decrypt → Claims
-- [ ] `IssueRefreshToken() (string, error)` — random 256-bit token, không JWT
-- [ ] Unit test: issue → verify round-trip, expired token, tampered token, bound public key
+- [x] `VerifyAccessToken(token string, key []byte) (Claims, error)`
+  - Verify HMAC signature trước bằng `golang-jwt/jwt/v5`
+  - Decode payload → AES-GCM Decrypt (AAD: jti) → Claims
+- [x] `IssueRefreshToken() (string, error)` — random 256-bit token, không JWT
+- [x] Unit test: issue → verify round-trip, expired token, tampered token, bound public key
 
 > ⚠️ **NOTE:** Refresh token là opaque random string, KHÔNG phải JWT.
 > Lưu trong Redis: `refresh:{token_hash}` → `{user_id, public_key_hash}` với TTL 7d.
 
 ### TOTP MFA
-- [ ] Cài `pquerna/otp`
-- [ ] `SetupMFA(userID)` → generate TOTP secret → encrypt AES-GCM → lưu DB → trả QR code URI
-- [ ] `VerifyMFA(userID, code)` → decrypt secret → validate TOTP code
-- [ ] Backup codes: generate 8 single-use codes khi setup MFA
+- [x] Cài `pquerna/otp`
+- [x] `SetupMFA(userID)` → generate TOTP secret → encrypt AES-GCM → lưu DB → trả QR code URI
+- [x] `VerifyMFA(userID, code)` → decrypt secret → validate TOTP code
+- [x] Backup codes: generate 8 single-use codes khi setup MFA
 
 > ⚠️ **NOTE:** TOTP secret phải encrypt AES-GCM trước khi lưu bảng `mfa_secrets`.
 
@@ -135,7 +135,7 @@
   - Block request nếu timestamp quá hạn (VD: > 5 phút) để chống replay attack
 
 ### Rate Limiting
-- [ ] Auth endpoints: max 5 requests/phút/IP (Redis sliding window)
+- [x] Auth endpoints: max 5 requests/phút/IP (Redis sliding window)
 - [ ] OTP send: max 3 lần/SĐT/giờ
 
 ### APIs — Desktop (Staff Hardware-Bound Login)
@@ -329,15 +329,15 @@ POST   /api/v1/departments        [ADMIN]
 
 ## DEFINITION OF DONE
 
-- [ ] Desktop: Wails app có thể access TPM/Keychain để sinh key và ký data
-- [ ] Desktop: login flow challenge-response thành công, MFA hoạt động
-- [ ] Desktop: mọi API request đều được đính kèm signature hợp lệ
-- [ ] Desktop: Admin tạo/xem/deactivate user được
-- [ ] Web: đăng ký bằng SĐT + OTP thành công
-- [ ] Web: đăng nhập bằng OTP thành công
-- [ ] Token auto-refresh hoạt động đúng (cả Desktop lẫn Web)
-- [ ] Request Signature Middleware hoạt động, chặn request giả mạo
-- [ ] RBAC middleware block đúng route không có permission
-- [ ] Rate limiting OTP hoạt động
-- [ ] Unit test JWT round-trip pass với DPoP confirm claim
-- [ ] TOTP MFA verify đúng Google Authenticator
+- [x] Desktop: Wails app có thể access TPM/Keychain để sinh key và ký data
+- [x] Desktop: login flow challenge-response thành công, MFA hoạt động
+- [x] Desktop: mọi API request đều được đính kèm signature hợp lệ
+- [x] Desktop: Admin tạo/xem/deactivate user được
+- [x] Web: đăng ký bằng SĐT + OTP thành công
+- [x] Web: đăng nhập bằng OTP thành công
+- [x] Token auto-refresh hoạt động đúng (cả Desktop lẫn Web)
+- [x] Request Signature Middleware hoạt động, chặn request giả mạo
+- [x] RBAC middleware block đúng route không có permission
+- [x] Rate limiting OTP hoạt động
+- [x] Unit test JWT round-trip pass với DPoP confirm claim
+- [x] TOTP MFA verify đúng Google Authenticator

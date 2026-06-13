@@ -3,7 +3,15 @@ import { Outlet, useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { useAuthStore } from "@/store/authStore";
 import { useUIStore } from "@/store/uiStore";
-import { MenuFoldOutlined, MenuUnfoldOutlined, LogoutOutlined } from "@ant-design/icons";
+import { 
+  MenuFoldOutlined, 
+  MenuUnfoldOutlined, 
+  LogoutOutlined,
+  DashboardOutlined,
+  TeamOutlined,
+  SafetyOutlined,
+  BankOutlined
+} from "@ant-design/icons";
 
 const { Header, Sider, Content } = Layout;
 
@@ -20,19 +28,31 @@ export const RoleLayout = () => {
   };
 
   const getMenuItems = () => {
-    const baseItems = [
-      { key: "/", label: t("nav.dashboard") },
-    ];
+    const baseItems: any[] = [];
     
     if (role === "admin") {
-       baseItems.push({ key: "/settings", label: "Cài đặt" });
+       baseItems.push(
+         { key: "/admin/dashboard", label: "Dashboard", icon: <DashboardOutlined /> },
+         { key: "/admin/users", label: "Quản lý User", icon: <TeamOutlined /> },
+         { key: "/admin/roles", label: "Phân quyền", icon: <SafetyOutlined /> },
+         { key: "/admin/departments", label: "Khoa/Phòng ban", icon: <BankOutlined /> }
+       );
     } else if (role === "doctor") {
-       baseItems.push({ key: "/patients", label: t("nav.patients") });
-       baseItems.push({ key: "/appointments", label: t("nav.appointments") });
+       baseItems.push(
+         { key: "/", label: t("nav.dashboard") },
+         { key: "/patients", label: t("nav.patients") },
+         { key: "/appointments", label: t("nav.appointments") }
+       );
+    } else {
+       baseItems.push({ key: "/", label: t("nav.dashboard") });
     }
 
     return baseItems;
   };
+
+  // set default key to first item if possible
+  const items = getMenuItems();
+  const defaultKey = items.length > 0 ? items[0].key : "/";
 
   return (
     <Layout style={{ minHeight: "100vh" }}>
@@ -40,7 +60,7 @@ export const RoleLayout = () => {
         <div style={{ height: 64, margin: 16, color: "white", fontSize: 20, fontWeight: "bold", textAlign: "center" }}>
           HIS App
         </div>
-        <Menu theme="dark" mode="inline" defaultSelectedKeys={["/"]} onClick={(e) => navigate(e.key)} items={getMenuItems()} />
+        <Menu theme="dark" mode="inline" defaultSelectedKeys={[defaultKey]} onClick={(e) => navigate(e.key)} items={items} />
       </Sider>
       <Layout>
         <Header style={{ padding: 0, background: "#fff", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
@@ -52,7 +72,7 @@ export const RoleLayout = () => {
             <Button icon={<LogoutOutlined />} onClick={handleLogout}>{t("common.logout")}</Button>
           </div>
         </Header>
-        <Content style={{ margin: "24px 16px", padding: 24, minHeight: 280, background: "#fff", borderRadius: 8 }}>
+        <Content style={{ margin: "24px 16px", padding: 24, minHeight: 280, background: "#fff", borderRadius: 8, overflowY: "auto" }}>
           <Outlet />
         </Content>
       </Layout>

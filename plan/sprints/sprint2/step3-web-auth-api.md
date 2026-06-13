@@ -8,15 +8,15 @@
 
 ## Nền tảng Sprint 1 + Step 1 sử dụng
 
-| Package / Schema | Dùng để |
-|-----------------|---------|
-| `pkg/auth/jwt.go` | `IssueAccessToken` không có `cnf` claim (Web token) |
-| `internal/identity/domain/` | User entity (patient role) |
-| `internal/identity/infrastructure/UserRepositoryPG` | Create + GetByPhoneHMAC |
-| `go-common/redis` | Lưu OTP `otp:{phone_hmac}` TTL 5m, rate limit counter |
-| `go-common/queue` | Gửi OTP async qua Queue worker |
-| `pkg/crypto/field_cipher.go` | HMAC phone để lookup, encrypt phone/CCCD lưu DB |
-| Schema `patients` | `phone_encrypted`, `phone_hmac` — đã có từ Sprint 1 |
+| Package / Schema | Dùng để | Trạng thái |
+|-----------------|---------|------------|
+| `pkg/auth/jwt.go` | `IssueAccessToken` không có `cnf` claim (Web token) | ✅ Đã hoàn thành (Step 1) |
+| `internal/identity/domain/` | User entity (patient role) | ✅ Đã hoàn thành (Step 1) |
+| `internal/identity/infrastructure/UserRepositoryPG` | Create + GetByPhoneHMAC | ✅ Đã hoàn thành (Step 1) |
+| `go-common/redis` | Lưu OTP `otp:{phone_hmac}` TTL 5m, rate limit counter | ✅ Sẵn sàng (Step 2) |
+| `go-common/queue` | Gửi OTP async qua Queue worker | ✅ Sẵn sàng (Sprint 1) |
+| `pkg/crypto/field_cipher.go` | HMAC phone để lookup, encrypt phone/CCCD lưu DB | ✅ Đã hoàn thành (Sprint 1) |
+| Schema `patients` | `phone_encrypted`, `phone_hmac` — đã có từ Sprint 1 | ✅ Sẵn sàng (Sprint 1) |
 
 ---
 
@@ -24,7 +24,7 @@
 
 ### `SendOTPCommand`
 
-- [ ] `internal/identity/application/command/send_otp.go`:
+- [x] `internal/identity/application/command/send_otp.go`:
   ```go
   type SendOTPCommand struct {
       Phone    string   // raw phone, VD: "0912345678"
@@ -51,7 +51,7 @@
 
 ### OTP Delivery Worker — `cmd/worker/`
 
-- [ ] `cmd/worker/handlers/send_otp_handler.go`:
+- [x] `cmd/worker/handlers/send_otp_handler.go`:
   - Nhận job `send_otp` từ Queue
   - **Bước 1:** Gọi Zalo ZNS API
     ```go
@@ -63,9 +63,9 @@
         _ = smsClient.SendBrandname(phone, fmt.Sprintf("Ma OTP HIS cua ban la: %s", otp))
     }
     ```
-  - [ ] `pkg/notify/zalo_zns.go` — interface + HTTP client gọi Zalo ZNS API
-  - [ ] `pkg/notify/sms_brandname.go` — interface + HTTP client gọi SMS provider
-  - [ ] Config credentials từ env:
+  - [x] `pkg/notify/zalo_zns.go` — interface + HTTP client gọi Zalo ZNS API
+  - [x] `pkg/notify/sms_brandname.go` — interface + HTTP client gọi SMS provider
+  - [x] Config credentials từ env:
     ```env
     ZALO_OA_ACCESS_TOKEN=<token>
     ZALO_TEMPLATE_ID=<id>
@@ -76,7 +76,7 @@
 
 ### `VerifyOTPCommand`
 
-- [ ] `internal/identity/application/command/verify_otp.go`:
+- [x] `internal/identity/application/command/verify_otp.go`:
   ```go
   type VerifyOTPCommand struct {
       Phone string
@@ -99,7 +99,7 @@
 
 ### `RegisterPatientCommand`
 
-- [ ] `internal/identity/application/command/register_patient.go`:
+- [x] `internal/identity/application/command/register_patient.go`:
   ```go
   type RegisterPatientCommand struct {
       Phone     string
@@ -122,7 +122,7 @@
 
 ### Route Setup
 
-- [ ] Đăng ký routes trong `cmd/api/main.go`:
+- [x] Đăng ký routes trong `cmd/api/main.go`:
   ```go
   // Web OTP — Public endpoints
   auth.Post("/otp/send",   webAuthHandler.SendOTP)
@@ -134,7 +134,7 @@
 
 ### Handler Implementations
 
-- [ ] `POST /api/v1/auth/otp/send`:
+- [x] `POST /api/v1/auth/otp/send`:
   ```
   Request:  { "phone": "0912345678" }
   Response: { "success": true, "message": "OTP đã được gửi" }
@@ -142,7 +142,7 @@
   Error 429: quá 3 lần/giờ với SĐT này
   ```
 
-- [ ] `POST /api/v1/auth/otp/verify`:
+- [x] `POST /api/v1/auth/otp/verify`:
   ```
   Request:  { "phone": "0912345678", "otp": "123456" }
 
@@ -158,7 +158,7 @@
   Error 429: quá 5 lần sai OTP
   ```
 
-- [ ] `POST /api/v1/auth/register`:
+- [x] `POST /api/v1/auth/register`:
   ```
   Request: {
     "phone": "0912345678",   // đã verify OTP ở bước trước
@@ -172,7 +172,7 @@
   Error 409: SĐT đã đăng ký
   ```
 
-- [ ] `POST /api/v1/auth/refresh` (Web):
+- [x] `POST /api/v1/auth/web/refresh` (Web):
   ```
   Cookie: refresh_token=<opaque_token>   // browser tự đính kèm
   Response: { "access_token": "eyJ..." }
@@ -180,7 +180,7 @@
   Error 401: cookie không hợp lệ / hết hạn
   ```
 
-- [ ] `POST /api/v1/auth/logout` (Web):
+- [x] `POST /api/v1/auth/web/logout` (Web):
   ```
   Response: 200 OK
   Set-Cookie: refresh_token=; HttpOnly; Max-Age=0   // clear cookie
@@ -194,7 +194,7 @@
 
 ## 3. CORS Update cho Web Auth
 
-- [ ] Cập nhật CORS trong `cmd/api/main.go` để hỗ trợ cookie:
+- [x] Cập nhật CORS trong `cmd/api/main.go` để hỗ trợ cookie:
   ```go
   app.Use(cors.New(cors.Config{
       AllowOrigins:     "http://localhost:5173,https://his-system.vn",
@@ -208,12 +208,12 @@
 
 ## Definition of Done (Step 3)
 
-- [ ] `POST /api/v1/auth/otp/send` → OTP được gửi qua Queue worker (Zalo/SMS fallback)
-- [ ] `POST /api/v1/auth/otp/verify` → trả đúng `needs_register` flag
-- [ ] `POST /api/v1/auth/register` → tạo patient + set HttpOnly cookie
-- [ ] `POST /api/v1/auth/refresh` (Web) → đọc cookie, issue token mới, rotate cookie
-- [ ] `POST /api/v1/auth/logout` (Web) → clear cookie
-- [ ] Rate limit OTP: SĐT gửi quá 3 lần/giờ → 429
-- [ ] OTP sai 5 lần → key bị xoá, phải gửi OTP mới
-- [ ] Phone encrypt+HMAC lưu đúng trong bảng `patients`
-- [ ] CORS: request từ `localhost:5173` với `withCredentials: true` không bị block
+- [x] `POST /api/v1/auth/otp/send` → OTP được gửi qua Queue worker (Zalo/SMS fallback)
+- [x] `POST /api/v1/auth/otp/verify` → trả đúng `needs_register` flag
+- [x] `POST /api/v1/auth/register` → tạo patient + set HttpOnly cookie
+- [x] `POST /api/v1/auth/web/refresh` (Web) → đọc cookie, issue token mới, rotate cookie
+- [x] `POST /api/v1/auth/web/logout` (Web) → clear cookie
+- [x] Rate limit OTP: SĐT gửi quá 3 lần/giờ → 429
+- [x] OTP sai 5 lần → key bị xoá, phải gửi OTP mới
+- [x] Phone encrypt+HMAC lưu đúng trong bảng `patients`
+- [x] CORS: request từ `localhost:5173` với `withCredentials: true` không bị block

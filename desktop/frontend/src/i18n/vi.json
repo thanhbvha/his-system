@@ -9,5 +9,19 @@
     "dashboard": "Tổng quan",
     "patients": "Bệnh nhân",
     "appointments": "Lịch hẹn"
+  },
+  "auth": {
+    "loginTitle": "Đăng nhập hệ thống",
+    "username": "Tên đăng nhập",
+    "password": "Mật khẩu",
+    "loginBtn": "Đăng nhập",
+    "mfaTitle": "Xác thực 2 bước",
+    "mfaSetupTitle": "Thiết lập xác thực 2 bước",
+    "backupCodes": "Mã dự phòng",
+    "errors": {
+      "invalidCredentials": "Tên đăng nhập hoặc mật khẩu không đúng",
+      "tooManyAttempts": "Quá nhiều lần thử. Vui lòng đợi vài phút.",
+      "accountLocked": "Tài khoản bị khóa. Liên hệ quản trị viên."
+    }
   }
 }
