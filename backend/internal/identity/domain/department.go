@@ -8,12 +8,13 @@ import (
 )
 
 type Department struct {
-	ID          uuid.UUID
-	Name        string
-	Description string
-	IsActive    bool
-	CreatedAt   time.Time
-	UpdatedAt   time.Time
+	ID          uuid.UUID `json:"id"`
+	Code        string    `json:"code"`
+	Name        string    `json:"name"`
+	Description string    `json:"description"`
+	IsActive    bool      `json:"is_active"`
+	CreatedAt   time.Time `json:"created_at"`
+	UpdatedAt   time.Time `json:"updated_at"`
 }
 
 type DepartmentRepository interface {

@@ -33,13 +33,14 @@ type RefreshTokenResult struct {
 
 type RefreshTokenHandler struct {
 	userRepo domain.UserRepository
+	roleRepo domain.RoleRepository
 	rdb      *commonRedis.Client
 	signKey  []byte
 	encKey   []byte
 }
 
-func NewRefreshTokenHandler(userRepo domain.UserRepository, rdb *commonRedis.Client, signKey, encKey []byte) *RefreshTokenHandler {
-	return &RefreshTokenHandler{userRepo: userRepo, rdb: rdb, signKey: signKey, encKey: encKey}
+func NewRefreshTokenHandler(userRepo domain.UserRepository, roleRepo domain.RoleRepository, rdb *commonRedis.Client, signKey, encKey []byte) *RefreshTokenHandler {
+	return &RefreshTokenHandler{userRepo: userRepo, roleRepo: roleRepo, rdb: rdb, signKey: signKey, encKey: encKey}
 }
 
 func (h *RefreshTokenHandler) Handle(ctx context.Context, cmd RefreshTokenCommand) (*RefreshTokenResult, error) {
@@ -80,9 +81,18 @@ func (h *RefreshTokenHandler) Handle(ctx context.Context, cmd RefreshTokenComman
 		return nil, &appErrors.AppError{Code: "UNAUTHORIZED", Status: 401, Message: "Người dùng không tồn tại hoặc bị khóa"}
 	}
 
+	var roleNames []string
+	for _, roleID := range user.RoleIDs {
+		role, err := h.roleRepo.GetByID(ctx, roleID)
+		if err == nil && role != nil {
+			roleNames = append(roleNames, role.Name)
+		}
+	}
+
 	claims := auth.Claims{
 		UserID:    userID,
 		Username:  user.Username,
+		Roles:     roleNames,
 		IssuedAt:  time.Now().Unix(),
 		ExpiresAt: time.Now().Add(15 * time.Minute).Unix(),
 	}
@@ -98,7 +108,7 @@ func (h *RefreshTokenHandler) Handle(ctx context.Context, cmd RefreshTokenComman
 	}
 
 	// Rotate in Redis: delete old, set new
-	h.rdb.Delete(ctx, rtKey)
+	h.rdb.Native().Del(ctx, rtKey)
 
 	newRtHash := auth.HashToken(newRefreshToken)
 	newRtKey := h.rdb.BuildKey(fmt.Sprintf("refresh:%s", newRtHash))

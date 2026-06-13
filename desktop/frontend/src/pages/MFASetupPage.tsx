@@ -4,10 +4,14 @@ import { useEffect, useState } from "react";
 import apiClient from "@/lib/apiClient";
 import { QRCodeSVG } from "qrcode.react"; // Requires: npm install qrcode.react
 
+import { useAuthStore } from "@/store/authStore";
+
 const { Title, Text, Paragraph } = Typography;
 
 export const MFASetupPage = () => {
   const navigate = useNavigate();
+  const user = useAuthStore(s => s.user);
+  const updateAuthUser = useAuthStore(s => s.updateAuthUser);
   const [loading, setLoading] = useState(false);
   const [setupData, setSetupData] = useState<{ qr_uri: string; backup_codes: string[] } | null>(null);
 
@@ -26,14 +30,29 @@ export const MFASetupPage = () => {
   const onFinish = async (values: any) => {
     setLoading(true);
     try {
-      // Typically, setup requires a verify step to confirm the user saved it.
-      // But based on the backend API, maybe they just need to see the backup codes.
-      // Actually step 5 says:
-      // - Bước 3: Nhập mã 6 số để xác nhận kích hoạt
-      // Wait, there is no separate /mfa/confirm endpoint in our Step 4/2 plan. We have /mfa/verify.
-      // Let's just navigate to dashboard for now.
+      await apiClient.post("/auth/mfa/verify", {
+        user_id: user?.username,
+        totp_code: values.code
+      });
+
+      // Cập nhật lại state trong store
+      if (updateAuthUser && user) {
+        updateAuthUser({ ...user, mfa_enabled: true });
+      }
+
       message.success("Thiết lập MFA thành công");
-      navigate("/"); // Redirect to dashboard
+      
+      const role = user?.role_ids && user.role_ids.length > 0 ? "admin" : "receptionist";
+      const getRoleRoute = (r: string) => {
+        const map: Record<string, string> = {
+          receptionist: "/receptionist/queue",
+          doctor: "/doctor/worklist",
+          admin: "/admin/dashboard",
+        };
+        return map[r] ?? "/";
+      };
+
+      navigate(getRoleRoute(role)); // Redirect to correct dashboard
     } catch (err: any) {
       console.error(err);
       message.error("Mã xác thực không đúng");

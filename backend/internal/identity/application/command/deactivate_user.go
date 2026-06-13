@@ -14,7 +14,7 @@ type DeactivateUserCommand struct {
 }
 
 type DeactivateUserResult struct {
-	Success bool
+	Success bool `json:"success"`
 }
 
 type DeactivateUserHandler struct {

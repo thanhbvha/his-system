@@ -21,6 +21,7 @@ type RoleRepository interface {
 	GetByName(ctx context.Context, name string) (*Role, error)
 	List(ctx context.Context) ([]*Role, error)
 	UpdatePermissions(ctx context.Context, roleID uuid.UUID, perms []Permission) error
+	ListPermissions(ctx context.Context) ([]Permission, error)
 }
 
 type DeviceRepository interface {

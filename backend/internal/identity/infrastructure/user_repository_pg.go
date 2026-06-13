@@ -61,7 +61,7 @@ func (r *UserRepositoryPG) GetByEmailHMAC(ctx context.Context, emailHMAC string)
 }
 
 func (r *UserRepositoryPG) getBy(ctx context.Context, field string, value interface{}) (*domain.User, error) {
-	q := `SELECT id, username, email_encrypted, email_hmac, password_hash, is_active, mfa_enabled, created_at, updated_at
+	q := `SELECT id, username, COALESCE(email_encrypted, ''), COALESCE(email_hmac, ''), password_hash, is_active, COALESCE(mfa_enabled, false), created_at, updated_at
 	      FROM users WHERE ` + field + ` = $1`
 
 	row := r.db.QueryRow(ctx, q, value)
@@ -134,7 +134,7 @@ func (r *UserRepositoryPG) List(ctx context.Context, page, limit int) ([]*domain
 
 	offset := (page - 1) * limit
 	rows, err := r.db.Query(ctx, `
-		SELECT id, username, email_encrypted, email_hmac, password_hash, is_active, mfa_enabled, created_at, updated_at 
+		SELECT id, username, COALESCE(email_encrypted, ''), COALESCE(email_hmac, ''), password_hash, is_active, COALESCE(mfa_enabled, false), created_at, updated_at 
 		FROM users ORDER BY created_at DESC LIMIT $1 OFFSET $2`, limit, offset)
 	if err != nil {
 		return nil, 0, err
@@ -142,6 +142,7 @@ func (r *UserRepositoryPG) List(ctx context.Context, page, limit int) ([]*domain
 	defer rows.Close()
 
 	var users []*domain.User
+	var userIDs []uuid.UUID
 	for rows.Next() {
 		var u domain.User
 		if err := rows.Scan(&u.ID, &u.Username, &u.EmailEncrypted, &u.EmailHMAC, &u.PasswordHash,
@@ -149,6 +150,25 @@ func (r *UserRepositoryPG) List(ctx context.Context, page, limit int) ([]*domain
 			return nil, 0, err
 		}
 		users = append(users, &u)
+		userIDs = append(userIDs, u.ID)
+	}
+
+	// Lấy tất cả roles của các users vừa query
+	if len(userIDs) > 0 {
+		roleRows, err := r.db.Query(ctx, `SELECT user_id, role_id FROM user_roles WHERE user_id = ANY($1)`, userIDs)
+		if err == nil {
+			defer roleRows.Close()
+			roleMap := make(map[uuid.UUID][]uuid.UUID)
+			for roleRows.Next() {
+				var uid, rid uuid.UUID
+				if err := roleRows.Scan(&uid, &rid); err == nil {
+					roleMap[uid] = append(roleMap[uid], rid)
+				}
+			}
+			for _, u := range users {
+				u.RoleIDs = roleMap[u.ID]
+			}
+		}
 	}
 
 	return users, total, nil

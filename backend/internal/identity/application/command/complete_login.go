@@ -29,20 +29,29 @@ type CompleteLoginCommand struct {
 }
 
 type CompleteLoginResult struct {
-	AccessToken  string `json:"access_token"`
-	RefreshToken string `json:"refresh_token"`
+	AccessToken  string      `json:"access_token"`
+	RefreshToken string      `json:"refresh_token"`
+	User         UserPayload `json:"user"`
+}
+
+type UserPayload struct {
+	ID         string   `json:"id"`
+	Username   string   `json:"username"`
+	RoleIDs    []string `json:"role_ids"`
+	MFAEnabled bool     `json:"mfa_enabled"`
 }
 
 type CompleteLoginHandler struct {
 	userRepo   domain.UserRepository
 	deviceRepo domain.DeviceRepository
+	roleRepo   domain.RoleRepository
 	rdb        *commonRedis.Client
 	signKey    []byte
 	encKey     []byte
 }
 
-func NewCompleteLoginHandler(userRepo domain.UserRepository, deviceRepo domain.DeviceRepository, rdb *commonRedis.Client, signKey, encKey []byte) *CompleteLoginHandler {
-	return &CompleteLoginHandler{userRepo: userRepo, deviceRepo: deviceRepo, rdb: rdb, signKey: signKey, encKey: encKey}
+func NewCompleteLoginHandler(userRepo domain.UserRepository, deviceRepo domain.DeviceRepository, roleRepo domain.RoleRepository, rdb *commonRedis.Client, signKey, encKey []byte) *CompleteLoginHandler {
+	return &CompleteLoginHandler{userRepo: userRepo, deviceRepo: deviceRepo, roleRepo: roleRepo, rdb: rdb, signKey: signKey, encKey: encKey}
 }
 
 func (h *CompleteLoginHandler) Handle(ctx context.Context, cmd CompleteLoginCommand) (*CompleteLoginResult, error) {
@@ -78,7 +87,7 @@ func (h *CompleteLoginHandler) Handle(ctx context.Context, cmd CompleteLoginComm
 			return nil, &appErrors.AppError{Code: "FORBIDDEN", Status: 403, Message: "Mã MFA hết hạn hoặc không hợp lệ"}
 		}
 		// MFA verified, delete token
-		h.rdb.Delete(ctx, mfaKey)
+		h.rdb.Native().Del(ctx, mfaKey)
 	}
 
 	// Hash public key for hardware binding
@@ -100,11 +109,20 @@ func (h *CompleteLoginHandler) Handle(ctx context.Context, cmd CompleteLoginComm
 		return nil, err
 	}
 
+	var roleNames []string
+	for _, roleID := range user.RoleIDs {
+		role, err := h.roleRepo.GetByID(ctx, roleID)
+		if err == nil && role != nil {
+			roleNames = append(roleNames, role.Name)
+		}
+	}
+
 	claims := auth.Claims{
 		UserID:      userID,
 		Username:    user.Username,
-		Roles:       []string{}, // TODO: Populate roles
-		Permissions: []string{}, // TODO: Populate permissions
+		Roles:       roleNames,
+		Permissions: []string{}, // Middleware will fetch permissions based on Roles
+
 		IssuedAt:    time.Now().Unix(),
 		ExpiresAt:   time.Now().Add(15 * time.Minute).Unix(),
 	}
@@ -128,11 +146,22 @@ func (h *CompleteLoginHandler) Handle(ctx context.Context, cmd CompleteLoginComm
 	}
 
 	// Cleanup challenge
-	h.rdb.Delete(ctx, challengeKey)
+	h.rdb.Native().Del(ctx, challengeKey)
+
+	var roleIDs []string
+	for _, id := range user.RoleIDs {
+		roleIDs = append(roleIDs, id.String())
+	}
 
 	return &CompleteLoginResult{
 		AccessToken:  accessToken,
 		RefreshToken: refreshToken,
+		User: UserPayload{
+			ID:         user.ID.String(),
+			Username:   user.Username,
+			RoleIDs:    roleIDs,
+			MFAEnabled: user.MFAEnabled,
+		},
 	}, nil
 }
 

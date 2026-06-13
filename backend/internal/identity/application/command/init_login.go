@@ -64,7 +64,7 @@ func (h *InitLoginHandler) Handle(ctx context.Context, cmd InitLoginCommand) (*I
 	}
 
 	// Password correct, clear attempts
-	h.rdb.Delete(ctx, attemptsKey)
+	h.rdb.Native().Del(ctx, attemptsKey)
 
 	// Generate Challenge String (32 bytes)
 	b := make([]byte, 32)

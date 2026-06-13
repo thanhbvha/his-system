@@ -27,7 +27,7 @@ export const UserListPage = () => {
     queryKey: ["roles"],
     queryFn: async () => {
       const res = await apiClient.get("/admin/roles");
-      return res.data;
+      return res.data.data;
     }
   });
 
@@ -35,7 +35,7 @@ export const UserListPage = () => {
     queryKey: ["departments"],
     queryFn: async () => {
       const res = await apiClient.get("/admin/departments");
-      return res.data;
+      return res.data.data;
     }
   });
 
@@ -137,15 +137,15 @@ export const UserListPage = () => {
       <UserCreateModal 
         open={isCreateOpen} 
         onClose={() => setIsCreateOpen(false)} 
-        roles={rolesData?.data || []}
-        departments={deptsData?.data || []}
+        roles={rolesData || []}
+        departments={deptsData || []}
       />
 
       <AssignRolesModal
         open={!!assignUser}
         onClose={() => setAssignUser(null)}
         user={assignUser}
-        roles={rolesData?.data || []}
+        roles={rolesData || []}
       />
     </div>
   );

@@ -16,7 +16,7 @@ type UpdateRolePermissionsCommand struct {
 }
 
 type UpdateRolePermissionsResult struct {
-	Success bool
+	Success bool `json:"success"`
 }
 
 type UpdateRolePermissionsHandler struct {

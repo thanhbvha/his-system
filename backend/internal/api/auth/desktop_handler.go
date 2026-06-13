@@ -6,8 +6,8 @@ import (
 	"github.com/gofiber/fiber/v2"
 
 	"his-system/internal/identity/application/command"
-	"his-system/pkg/auth"
 	appErrors "his-system/pkg/errors"
+	"his-system/pkg/middleware"
 	"his-system/pkg/response"
 )
 
@@ -210,9 +210,7 @@ func (h *DesktopAuthHandler) SetupMFA(c *fiber.Ctx) error {
 		return response.Fail(c, &appErrors.AppError{Code: "UNAUTHORIZED", Status: 401})
 	}
 
-	// Temporarily hardcode or use a helper to get user ID.
-	// Since we don't have the full middleware yet, we will just parse it here or expect it from Context.
-	claims, ok := c.Locals("userClaims").(auth.Claims)
+	claims, ok := middleware.GetClaims(c)
 	if !ok {
 		return response.Fail(c, &appErrors.AppError{Code: "UNAUTHORIZED", Status: 401, Message: "Missing claims in context"})
 	}

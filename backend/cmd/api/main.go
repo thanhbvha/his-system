@@ -190,8 +190,8 @@ func main() {
 
 	// Initialize Identity Commands
 	initLoginCmd := command.NewInitLoginHandler(userRepo, rdb)
-	completeLoginCmd := command.NewCompleteLoginHandler(userRepo, deviceRepo, rdb, signKey, encKey)
-	refreshTokenCmd := command.NewRefreshTokenHandler(userRepo, rdb, signKey, encKey)
+	completeLoginCmd := command.NewCompleteLoginHandler(userRepo, deviceRepo, roleRepo, rdb, signKey, encKey)
+	refreshTokenCmd := command.NewRefreshTokenHandler(userRepo, roleRepo, rdb, signKey, encKey)
 	logoutCmd := command.NewLogoutHandler(rdb)
 	setupMFACmd := command.NewSetupMFAHandler(mfaRepo, encKey)
 	verifyMFACmd := command.NewVerifyMFAHandler(mfaRepo, userRepo, rdb, encKey)
@@ -204,9 +204,10 @@ func main() {
 	logoutWebCmd := command.NewLogoutWebHandler(rdb)
 
 	// Initialize Admin Commands & Queries
-	getUserByIDCmd := query.NewGetUserByIDHandler(userRepo)
-	listUsersCmd := query.NewListUsersHandler(userRepo)
+	getUserByIDCmd := query.NewGetUserByIDHandler(userRepo, roleRepo, cipher)
+	listUsersCmd := query.NewListUsersHandler(userRepo, roleRepo, cipher)
 	getRolePermsCmd := query.NewGetRolePermissionsHandler(roleRepo)
+	listPermsCmd := query.NewListPermissionsHandler(roleRepo)
 
 	createStaffCmd := command.NewCreateStaffHandler(userRepo, cipher)
 	deactivateCmd := command.NewDeactivateUserHandler(userRepo, deviceRepo)
@@ -216,7 +217,7 @@ func main() {
 
 	// Initialize Handlers
 	adminUserHandler := adminHandlers.NewAdminUserHandler(getUserByIDCmd, listUsersCmd, createStaffCmd, deactivateCmd, assignRolesCmd)
-	adminRoleHandler := adminHandlers.NewAdminRoleHandler(roleRepo, getRolePermsCmd, updateRolePermsCmd)
+	adminRoleHandler := adminHandlers.NewAdminRoleHandler(roleRepo, getRolePermsCmd, updateRolePermsCmd, listPermsCmd)
 	adminDeptHandler := adminHandlers.NewAdminDepartmentHandler(deptRepo, createDeptCmd)
 
 	// Initialize Auth Handlers
@@ -283,6 +284,9 @@ func main() {
 	adminRoles.Get("/", adminRoleHandler.List)
 	adminRoles.Get("/:id/permissions", adminRoleHandler.GetPermissions)
 	adminRoles.Put("/:id/permissions", adminRoleHandler.UpdatePermissions)
+
+	adminPerms := adminGrp.Group("/permissions")
+	adminPerms.Get("/", adminRoleHandler.ListPermissions)
 
 	adminDepts := adminGrp.Group("/departments")
 	adminDepts.Get("/", adminDeptHandler.List)

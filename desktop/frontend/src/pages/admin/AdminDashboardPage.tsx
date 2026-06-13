@@ -19,7 +19,7 @@ export const AdminDashboardPage = () => {
     queryKey: ["roles"],
     queryFn: async () => {
       const res = await apiClient.get("/admin/roles");
-      return res.data;
+      return res.data.data;
     }
   });
 
@@ -27,7 +27,7 @@ export const AdminDashboardPage = () => {
     queryKey: ["departments"],
     queryFn: async () => {
       const res = await apiClient.get("/admin/departments");
-      return res.data;
+      return res.data.data;
     }
   });
 
@@ -35,9 +35,9 @@ export const AdminDashboardPage = () => {
     return <div style={{ textAlign: "center", marginTop: 100 }}><Spin size="large" /></div>;
   }
 
-  const totalUsers = usersData?.meta?.total_count || 0;
-  const totalRoles = rolesData?.data?.length || 0;
-  const totalDepts = deptsData?.data?.length || 0;
+  const totalUsers = usersData?.meta?.total || 0;
+  const totalRoles = rolesData?.length || 0;
+  const totalDepts = deptsData?.length || 0;
 
   return (
     <div>

@@ -610,6 +610,9 @@ const docTemplate = `{
                 },
                 "refresh_token": {
                     "type": "string"
+                },
+                "user": {
+                    "$ref": "#/definitions/command.UserPayload"
                 }
             }
         },
@@ -661,6 +664,26 @@ const docTemplate = `{
                     }
                 },
                 "qr_uri": {
+                    "type": "string"
+                }
+            }
+        },
+        "command.UserPayload": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "string"
+                },
+                "mfa_enabled": {
+                    "type": "boolean"
+                },
+                "role_ids": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "username": {
                     "type": "string"
                 }
             }

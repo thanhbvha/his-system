@@ -15,17 +15,20 @@ type AdminRoleHandler struct {
 	roleRepo           domain.RoleRepository
 	getRolePermsCmd    query.GetRolePermissionsHandler
 	updateRolePermsCmd command.UpdateRolePermissionsHandler
+	listPermsCmd       query.ListPermissionsHandler
 }
 
 func NewAdminRoleHandler(
 	roleRepo domain.RoleRepository,
 	getRolePermsCmd *query.GetRolePermissionsHandler,
 	updateRolePermsCmd *command.UpdateRolePermissionsHandler,
+	listPermsCmd *query.ListPermissionsHandler,
 ) *AdminRoleHandler {
 	return &AdminRoleHandler{
 		roleRepo:           roleRepo,
 		getRolePermsCmd:    *getRolePermsCmd,
 		updateRolePermsCmd: *updateRolePermsCmd,
+		listPermsCmd:       *listPermsCmd,
 	}
 }
 
@@ -36,6 +39,15 @@ func (h *AdminRoleHandler) List(c *fiber.Ctx) error {
 	}
 
 	return response.OK(c, roles)
+}
+
+func (h *AdminRoleHandler) ListPermissions(c *fiber.Ctx) error {
+	res, err := h.listPermsCmd.Handle(c.Context(), query.ListPermissionsQuery{})
+	if err != nil {
+		return response.Fail(c, appErrors.ErrInternal)
+	}
+
+	return response.OK(c, res.Permissions)
 }
 
 func (h *AdminRoleHandler) GetPermissions(c *fiber.Ctx) error {

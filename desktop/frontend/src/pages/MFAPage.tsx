@@ -34,8 +34,8 @@ export const MFAPage = () => {
     try {
       // Step 1: Verify MFA
       const verifyRes = await apiClient.post("/auth/mfa/verify", {
-        username,
-        code: values.code,
+        user_id: username,
+        totp_code: values.code,
       });
 
       const { mfa_token } = verifyRes.data.data;
@@ -54,7 +54,7 @@ export const MFAPage = () => {
       });
 
       const { access_token, refresh_token, user } = compRes.data.data;
-      const role = "admin"; // Mock for now
+      const role = user.role_ids && user.role_ids.length > 0 ? "admin" : "receptionist";
       
       setAuth(access_token, refresh_token, user, role as any);
       navigate(getRoleRoute(role));

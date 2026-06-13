@@ -72,7 +72,8 @@ export const Login = () => {
       } else if (err.response?.status === 423) {
         message.error("Tài khoản bị khóa. Liên hệ quản trị viên.");
       } else {
-        message.error("Lỗi hệ thống");
+        const backendMsg = err.response?.data?.error?.message || err.response?.data?.message;
+        message.error(backendMsg || "Lỗi hệ thống");
       }
     } finally {
       setLoading(false);

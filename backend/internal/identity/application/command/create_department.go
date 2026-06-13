@@ -10,13 +10,14 @@ import (
 )
 
 type CreateDepartmentCommand struct {
+	Code        string
 	Name        string
 	Description string
 }
 
 type CreateDepartmentResult struct {
-	ID   uuid.UUID
-	Name string
+	ID   uuid.UUID `json:"id"`
+	Name string    `json:"name"`
 }
 
 type CreateDepartmentHandler struct {
@@ -30,6 +31,7 @@ func NewCreateDepartmentHandler(deptRepo domain.DepartmentRepository) *CreateDep
 func (h *CreateDepartmentHandler) Handle(ctx context.Context, cmd CreateDepartmentCommand) (*CreateDepartmentResult, error) {
 	dept := &domain.Department{
 		ID:          uuid.New(),
+		Code:        cmd.Code,
 		Name:        cmd.Name,
 		Description: cmd.Description,
 		IsActive:    true,

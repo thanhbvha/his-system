@@ -87,7 +87,10 @@ apiClient.interceptors.response.use(
         });
         
         const newToken = res.data.data.access_token;
-        useAuthStore.getState().setToken(newToken);
+        const newRefreshToken = res.data.data.refresh_token;
+        
+        // Save BOTH tokens because backend rotates them!
+        useAuthStore.getState().setTokens(newToken, newRefreshToken);
         
         pendingQueue.forEach(p => p.resolve(newToken));
         pendingQueue = [];
@@ -95,11 +98,13 @@ apiClient.interceptors.response.use(
         originalRequest.headers.Authorization = `Bearer ${newToken}`;
         return apiClient(originalRequest);
       } catch (refreshErr) {
+        console.error("Refresh token failed:", refreshErr);
         pendingQueue.forEach(p => p.reject(refreshErr));
         pendingQueue = [];
         useAuthStore.getState().clearAuth();
         window.location.hash = "/login";
-        return Promise.reject(refreshErr);
+        // Return the original 401 error so the calling function can handle it properly
+        return Promise.reject(err);
       } finally {
         isRefreshing = false;
       }

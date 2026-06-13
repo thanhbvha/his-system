@@ -9,12 +9,21 @@ export const RolePermissionPage = () => {
   const [matrixState, setMatrixState] = useState<Record<string, Record<string, boolean>>>({});
   const [dirtyRoles, setDirtyRoles] = useState<Set<string>>(new Set());
 
+  // Fetch all predefined permissions
+  const { data: permsData, isLoading: isLoadingPerms } = useQuery({
+    queryKey: ["permissions"],
+    queryFn: async () => {
+      const res = await apiClient.get("/admin/permissions");
+      return res.data.data; // array of { id, resource, action }
+    }
+  });
+
   // Fetch roles (which include permissions)
-  const { data: rolesData, isLoading } = useQuery({
+  const { data: rolesData, isLoading: isLoadingRoles } = useQuery({
     queryKey: ["roles"],
     queryFn: async () => {
       const res = await apiClient.get("/admin/roles");
-      return res.data.data; // assuming array of roles is here
+      return res.data.data;
     }
   });
 
@@ -88,12 +97,10 @@ export const RolePermissionPage = () => {
     }
   };
 
-  // Derive unique permissions from all roles for Rows
+  // Build unique permissions from API
   const allPermKeys = new Set<string>();
-  rolesData?.forEach((role: any) => {
-    role.permissions?.forEach((p: any) => {
-      allPermKeys.add(`${p.resource}:${p.action}`);
-    });
+  permsData?.forEach((p: any) => {
+    allPermKeys.add(`${p.resource}:${p.action}`);
   });
   
   // Sort permission keys
@@ -154,7 +161,7 @@ export const RolePermissionPage = () => {
       <Table 
         columns={columns} 
         dataSource={dataSource} 
-        loading={isLoading}
+        loading={isLoadingRoles || isLoadingPerms}
         pagination={false}
         scroll={{ x: 'max-content' }}
         bordered

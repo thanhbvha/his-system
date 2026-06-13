@@ -5,15 +5,15 @@ import (
 )
 
 type Role struct {
-	ID          uuid.UUID
-	Name        string
-	Permissions []Permission
+	ID          uuid.UUID    `json:"id"`
+	Name        string       `json:"name"`
+	Permissions []Permission `json:"permissions"`
 }
 
 type Permission struct {
-	ID       uuid.UUID
-	Resource string
-	Action   string
+	ID       uuid.UUID `json:"id"`
+	Resource string    `json:"resource"`
+	Action   string    `json:"action"`
 }
 
 func (p Permission) String() string {

@@ -34,6 +34,7 @@ func (h *AdminDepartmentHandler) List(c *fiber.Ctx) error {
 }
 
 type createDeptReq struct {
+	Code        string `json:"code"`
 	Name        string `json:"name"`
 	Description string `json:"description"`
 }
@@ -45,6 +46,7 @@ func (h *AdminDepartmentHandler) Create(c *fiber.Ctx) error {
 	}
 
 	res, err := h.createDeptCmd.Handle(c.Context(), command.CreateDepartmentCommand{
+		Code:        req.Code,
 		Name:        req.Name,
 		Description: req.Description,
 	})

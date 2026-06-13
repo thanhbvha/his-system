@@ -106,11 +106,33 @@ func (r *RoleRepositoryPG) UpdatePermissions(ctx context.Context, roleID uuid.UU
 	}
 
 	for _, p := range perms {
-		_, err = tx.Exec(ctx, `INSERT INTO role_permissions (role_id, permission_id) VALUES ($1, $2)`, roleID, p.ID)
+		q := `INSERT INTO role_permissions (role_id, permission_id) 
+		      SELECT $1, id FROM permissions WHERE resource = $2 AND action = $3`
+		_, err = tx.Exec(ctx, q, roleID, p.Resource, p.Action)
 		if err != nil {
 			return err
 		}
 	}
 
 	return tx.Commit(ctx)
+}
+
+func (r *RoleRepositoryPG) ListPermissions(ctx context.Context) ([]domain.Permission, error) {
+	q := `SELECT id, resource, action FROM permissions`
+	rows, err := r.db.Query(ctx, q)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var perms []domain.Permission
+	for rows.Next() {
+		var p domain.Permission
+		if err := rows.Scan(&p.ID, &p.Resource, &p.Action); err != nil {
+			return nil, err
+		}
+		perms = append(perms, p)
+	}
+
+	return perms, nil
 }

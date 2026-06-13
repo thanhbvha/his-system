@@ -1,5 +1,5 @@
 import { Layout, Menu, Button } from "antd";
-import { Outlet, useNavigate } from "react-router-dom";
+import { Outlet, useNavigate, useLocation } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { useAuthStore } from "@/store/authStore";
 import { useUIStore } from "@/store/uiStore";
@@ -18,6 +18,7 @@ const { Header, Sider, Content } = Layout;
 export const RoleLayout = () => {
   const { t, i18n } = useTranslation();
   const navigate = useNavigate();
+  const location = useLocation();
   const role = useAuthStore((s) => s.role);
   const clearAuth = useAuthStore((s) => s.clearAuth);
   const { sidebarOpen, toggleSidebar } = useUIStore();
@@ -60,7 +61,7 @@ export const RoleLayout = () => {
         <div style={{ height: 64, margin: 16, color: "white", fontSize: 20, fontWeight: "bold", textAlign: "center" }}>
           HIS App
         </div>
-        <Menu theme="dark" mode="inline" defaultSelectedKeys={[defaultKey]} onClick={(e) => navigate(e.key)} items={items} />
+        <Menu theme="dark" mode="inline" selectedKeys={[location.pathname]} onClick={(e) => navigate(e.key)} items={items} />
       </Sider>
       <Layout>
         <Header style={{ padding: 0, background: "#fff", display: "flex", justifyContent: "space-between", alignItems: "center" }}>

@@ -1,0 +1,4 @@
+ALTER TABLE users 
+ADD COLUMN email_encrypted VARCHAR(255),
+ADD COLUMN email_hmac VARCHAR(255),
+ADD COLUMN mfa_enabled BOOLEAN DEFAULT FALSE;

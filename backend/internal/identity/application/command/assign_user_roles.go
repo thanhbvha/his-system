@@ -15,7 +15,7 @@ type AssignUserRolesCommand struct {
 }
 
 type AssignUserRolesResult struct {
-	Success bool
+	Success bool `json:"success"`
 }
 
 type AssignUserRolesHandler struct {

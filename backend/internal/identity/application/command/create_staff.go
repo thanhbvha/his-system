@@ -21,8 +21,8 @@ type CreateStaffCommand struct {
 }
 
 type CreateStaffResult struct {
-	ID       uuid.UUID
-	Username string
+	ID       uuid.UUID `json:"id"`
+	Username string    `json:"username"`
 }
 
 type CreateStaffHandler struct {
