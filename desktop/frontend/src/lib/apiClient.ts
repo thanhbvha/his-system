@@ -17,22 +17,25 @@ apiClient.interceptors.request.use(async (config) => {
   // Ký request cho các endpoint yêu cầu signature
   if (config.headers["X-Require-Signature"] !== "false") {
     const timestamp = Math.floor(Date.now() / 1000).toString(); // Using Unix timestamp as seconds
-    const body = config.data ? JSON.stringify(config.data) : "";
-    // Notice: The signature structure must match backend's expected structure
-    // We didn't define a complex structure in Signature middleware. It only hashes the body and URL + timestamp?
-    // Let's check signature.go from backend to see what it hashes exactly. Wait, backend hashes the body directly?
-    // Let's look at signature.go:
-    // hash := sha256.Sum256(c.Body())
-    // if len(c.Body()) == 0 { hash = sha256.Sum256([]byte(timestampStr + c.OriginalURL())) }
-    // Wait, let's read the backend signature middleware logic.
-    // For now, I'll sign the body if present, or timestamp + url if empty, as per common practice.
-    // Let's just sign the timestamp to keep it simple, or body.
-    // Wait, let me check pkg/middleware/signature.go!
-    // Actually, I can check later. For now let's implement a generic string.
-    let messageToSign = body;
-    if (!messageToSign) {
-        messageToSign = timestamp + config.url;
+    
+    // Extract path and query from full URL to match backend's c.OriginalURL()
+    const fullUrl = apiClient.getUri(config);
+    // getUri might return a relative URL if baseURL is not absolute, but here baseURL is http://localhost:8080/api/v1
+    const urlObj = new URL(fullUrl, window.location.origin);
+    const pathAndQuery = urlObj.pathname + urlObj.search;
+    
+    const method = (config.method || "GET").toUpperCase();
+    
+    let bodyStr = "";
+    if (config.data) {
+      if (typeof config.data === "string") {
+        bodyStr = config.data;
+      } else {
+        bodyStr = JSON.stringify(config.data);
+      }
     }
+
+    const messageToSign = `${method}${pathAndQuery}${timestamp}${bodyStr}`;
 
     try {
       const signature = await SignData(messageToSign);

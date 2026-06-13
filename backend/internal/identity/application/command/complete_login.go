@@ -10,13 +10,16 @@ import (
 	"encoding/pem"
 	"errors"
 	"fmt"
+	"log/slog"
 	"time"
 
-	"github.com/google/uuid"
-	commonRedis "github.com/thanhbvha/go-common/redis"
 	"his-system/internal/identity/domain"
 	"his-system/pkg/auth"
 	appErrors "his-system/pkg/errors"
+
+	"github.com/google/uuid"
+	"github.com/thanhbvha/go-common/logger"
+	commonRedis "github.com/thanhbvha/go-common/redis"
 )
 
 type CompleteLoginCommand struct {
@@ -58,6 +61,7 @@ func (h *CompleteLoginHandler) Handle(ctx context.Context, cmd CompleteLoginComm
 	challengeKey := h.rdb.BuildKey(fmt.Sprintf("challenge:%s", cmd.ChallengeString))
 	userIDStr, err := h.rdb.Get(ctx, challengeKey)
 	if err != nil || userIDStr == "" {
+		logger.ErrorAsync("CompleteLoginHandler.Handle: challenge expired or invalid", slog.String("error", fmt.Sprintf("%v", err)), slog.String("challenge", cmd.ChallengeString), slog.String("dispatch_time", time.Now().Format(time.RFC3339Nano)))
 		return nil, &appErrors.AppError{Code: "UNAUTHORIZED", Status: 401, Message: "Challenge hết hạn hoặc không hợp lệ"}
 	}
 
@@ -68,11 +72,13 @@ func (h *CompleteLoginHandler) Handle(ctx context.Context, cmd CompleteLoginComm
 
 	user, err := h.userRepo.GetByID(ctx, userID)
 	if err != nil || user == nil {
+		logger.ErrorAsync("CompleteLoginHandler.Handle: user not found", slog.String("error", fmt.Sprintf("%v", err)), slog.String("user_id", userID.String()), slog.String("dispatch_time", time.Now().Format(time.RFC3339Nano)))
 		return nil, &appErrors.AppError{Code: "UNAUTHORIZED", Status: 401, Message: "Không tìm thấy người dùng"}
 	}
 
 	// Verify ECDSA Signature
 	if err := h.verifySignature(cmd.ChallengeString, cmd.Signature, cmd.PublicKeyPEM); err != nil {
+		logger.ErrorAsync("CompleteLoginHandler.Handle: invalid device signature", slog.String("error", err.Error()), slog.String("user_id", userID.String()), slog.String("dispatch_time", time.Now().Format(time.RFC3339Nano)))
 		return nil, &appErrors.AppError{Code: "UNAUTHORIZED", Status: 401, Message: "Chữ ký thiết bị không hợp lệ"}
 	}
 
@@ -123,17 +129,19 @@ func (h *CompleteLoginHandler) Handle(ctx context.Context, cmd CompleteLoginComm
 		Roles:       roleNames,
 		Permissions: []string{}, // Middleware will fetch permissions based on Roles
 
-		IssuedAt:    time.Now().Unix(),
-		ExpiresAt:   time.Now().Add(15 * time.Minute).Unix(),
+		IssuedAt:  time.Now().Unix(),
+		ExpiresAt: time.Now().Add(15 * time.Minute).Unix(),
 	}
 
 	accessToken, err := auth.IssueAccessToken(claims, h.signKey, h.encKey, pubKeyHash)
 	if err != nil {
+		logger.ErrorAsync("CompleteLoginHandler.Handle: failed to issue access token", slog.String("error", err.Error()), slog.String("dispatch_time", time.Now().Format(time.RFC3339Nano)))
 		return nil, err
 	}
 
 	refreshToken, err := auth.IssueRefreshToken()
 	if err != nil {
+		logger.ErrorAsync("CompleteLoginHandler.Handle: failed to issue refresh token", slog.String("error", err.Error()), slog.String("dispatch_time", time.Now().Format(time.RFC3339Nano)))
 		return nil, err
 	}
 
@@ -142,6 +150,7 @@ func (h *CompleteLoginHandler) Handle(ctx context.Context, cmd CompleteLoginComm
 	rtKey := h.rdb.BuildKey(fmt.Sprintf("refresh:%s", rtHash))
 	rtValue := fmt.Sprintf("%s:%s", userIDStr, pubKeyHash)
 	if err := h.rdb.Set(ctx, rtKey, rtValue, 7*24*time.Hour); err != nil {
+		logger.ErrorAsync("CompleteLoginHandler.Handle: failed to save refresh token", slog.String("error", err.Error()), slog.String("dispatch_time", time.Now().Format(time.RFC3339Nano)))
 		return nil, err
 	}
 
@@ -173,22 +182,26 @@ func (h *CompleteLoginHandler) verifySignature(payload string, sigBase64 string,
 
 	block, _ := pem.Decode([]byte(pubKeyPEM))
 	if block == nil {
+		logger.ErrorAsync("CompleteLoginHandler.Handle: failed to parse PEM block containing the public key", slog.String("error", err.Error()), slog.String("dispatch_time", time.Now().Format(time.RFC3339Nano)))
 		return errors.New("failed to parse PEM block containing the public key")
 	}
 
 	pub, err := x509.ParsePKIXPublicKey(block.Bytes)
 	if err != nil {
+		logger.ErrorAsync("CompleteLoginHandler.Handle: failed to parse PKIX public key", slog.String("error", err.Error()), slog.String("dispatch_time", time.Now().Format(time.RFC3339Nano)))
 		return err
 	}
 
 	ecdsaPub, ok := pub.(*ecdsa.PublicKey)
 	if !ok {
+		logger.ErrorAsync("CompleteLoginHandler.Handle: not ECDSA public key", slog.String("dispatch_time", time.Now().Format(time.RFC3339Nano)))
 		return errors.New("not ECDSA public key")
 	}
 
 	hash := sha256.Sum256([]byte(payload))
 	valid := ecdsa.VerifyASN1(ecdsaPub, hash[:], sigBytes)
 	if !valid {
+		logger.ErrorAsync("CompleteLoginHandler.Handle: invalid signature", slog.String("dispatch_time", time.Now().Format(time.RFC3339Nano)))
 		return errors.New("invalid signature")
 	}
 	return nil

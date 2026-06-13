@@ -2,9 +2,11 @@ package command
 
 import (
 	"context"
+	"log/slog"
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/thanhbvha/go-common/logger"
 
 	"his-system/internal/identity/domain"
 )
@@ -41,6 +43,7 @@ func (h *CreateDepartmentHandler) Handle(ctx context.Context, cmd CreateDepartme
 
 	err := h.deptRepo.Create(ctx, dept)
 	if err != nil {
+		logger.ErrorAsync("CreateDepartmentHandler.Handle: failed to create department", slog.String("error", err.Error()), slog.String("dispatch_time", time.Now().Format(time.RFC3339Nano)))
 		return nil, err
 	}
 

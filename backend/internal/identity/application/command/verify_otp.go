@@ -4,10 +4,12 @@ import (
 	"context"
 	"crypto/subtle"
 	"fmt"
+	"log/slog"
 	"strconv"
 	"strings"
 	"time"
 
+	"github.com/thanhbvha/go-common/logger"
 	commonRedis "github.com/thanhbvha/go-common/redis"
 
 	"his-system/internal/identity/domain"
@@ -51,6 +53,7 @@ func (h *VerifyOTPHandler) Handle(ctx context.Context, cmd VerifyOTPCommand) (*V
 
 	val, err := h.rdb.Get(ctx, otpKey)
 	if err != nil || val == "" {
+		logger.ErrorAsync("VerifyOTPHandler.Handle: otp expired or not found", slog.String("error", fmt.Sprintf("%v", err)), slog.String("dispatch_time", time.Now().Format(time.RFC3339Nano)))
 		return nil, "", &appErrors.AppError{Code: "UNAUTHORIZED", Status: 401, Message: "Mã OTP đã hết hạn hoặc không tồn tại"}
 	}
 
@@ -76,6 +79,7 @@ func (h *VerifyOTPHandler) Handle(ctx context.Context, cmd VerifyOTPCommand) (*V
 		if ttl > 0 {
 			h.rdb.Set(ctx, otpKey, newVal, ttl)
 		}
+		logger.ErrorAsync("VerifyOTPHandler.Handle: invalid otp", slog.String("dispatch_time", time.Now().Format(time.RFC3339Nano)))
 		return nil, "", &appErrors.AppError{Code: "UNAUTHORIZED", Status: 401, Message: "Mã OTP không chính xác"}
 	}
 
@@ -85,6 +89,7 @@ func (h *VerifyOTPHandler) Handle(ctx context.Context, cmd VerifyOTPCommand) (*V
 	// Check if patient exists
 	patient, err := h.patientRepo.GetByPhoneHMAC(ctx, phoneHMAC)
 	if err != nil {
+		logger.ErrorAsync("VerifyOTPHandler.Handle: failed to get patient", slog.String("error", err.Error()), slog.String("dispatch_time", time.Now().Format(time.RFC3339Nano)))
 		return nil, "", err
 	}
 
@@ -99,11 +104,13 @@ func (h *VerifyOTPHandler) Handle(ctx context.Context, cmd VerifyOTPCommand) (*V
 	}
 	accessToken, err := auth.IssueAccessToken(claims, h.signKey, h.encKey, "")
 	if err != nil {
+		logger.ErrorAsync("VerifyOTPHandler.Handle: failed to issue access token", slog.String("error", err.Error()), slog.String("dispatch_time", time.Now().Format(time.RFC3339Nano)))
 		return nil, "", err
 	}
 
 	refreshToken, err := auth.IssueRefreshToken()
 	if err != nil {
+		logger.ErrorAsync("VerifyOTPHandler.Handle: failed to issue refresh token", slog.String("error", err.Error()), slog.String("dispatch_time", time.Now().Format(time.RFC3339Nano)))
 		return nil, "", err
 	}
 
@@ -111,6 +118,7 @@ func (h *VerifyOTPHandler) Handle(ctx context.Context, cmd VerifyOTPCommand) (*V
 	rtKey := h.rdb.BuildKey(fmt.Sprintf("refresh:%s", rtHash))
 	// Save refresh token to Redis (No pubKeyHash for web)
 	if err := h.rdb.Set(ctx, rtKey, patient.ID.String(), 7*24*time.Hour); err != nil {
+		logger.ErrorAsync("VerifyOTPHandler.Handle: failed to save refresh token", slog.String("error", err.Error()), slog.String("dispatch_time", time.Now().Format(time.RFC3339Nano)))
 		return nil, "", err
 	}
 

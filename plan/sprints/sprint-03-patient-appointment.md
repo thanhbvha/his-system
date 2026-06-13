@@ -1,8 +1,42 @@
 # Sprint 3 — Patient & Appointment (Tuần 5–6)
 
 > **Mục tiêu:** Quản lý bệnh nhân (PII encrypted) và đặt lịch khám — cả Desktop lẫn Web đều dùng.
-> **Prerequisite:** Sprint 2 hoàn thành, Auth middleware hoạt động, token refresh OK.
+> **Prerequisite:** Sprint 2 hoàn thành ✅, Auth middleware hoạt động ✅, token refresh OK ✅.
 > **Kết thúc sprint:** Receptionist tìm/tạo bệnh nhân trên Desktop; Bệnh nhân đặt lịch được qua Web.
+
+---
+
+## 🏗️ KẾ THỪA TỪ SPRINT 2 (Đã hoàn thành — Không cần làm lại)
+
+> Đây là nền tảng Sprint 3 sẽ kế thừa trực tiếp từ Sprint 2.
+
+### Backend Foundation ✅
+- **Domain Models sẵn sàng:** Entity `User`, `Role`, `Permission`, `Device`, `MFA`, `Department`, `Patient` đã được khởi tạo với Clean Architecture.
+  - ⚠️ Entity `Patient` đã có cấu trúc cơ bản — Sprint 3 sẽ **mở rộng** (thêm PII encryption, value objects, relations).
+- **JWT AES-GCM Infrastructure:** `pkg/auth/jwt.go` với mã hoá payload sẵn sàng — dùng để bảo vệ API Patient/Appointment.
+- **Postgres Repositories (PGX):** Patterns repository đã được thiết lập — Sprint 3 follow cùng pattern.
+- **Database Migrations:** Hệ thống migration đã chạy ổn định — Sprint 3 thêm migration mới cho Patient/Appointment tables.
+- **Redis Infrastructure:** Kết nối Redis ổn định (đã fix double-prefix bug). Sẵn sàng cho Redis Stream events.
+
+### Auth & RBAC Middleware ✅
+- `JWTAuth` middleware: giải mã và verify JWT — **dùng ngay** cho tất cả Patient/Appointment APIs.
+- `RequireRole` / `RequirePermission`: phân quyền RECEPTIONIST, DOCTOR, NURSE, PATIENT — **dùng ngay**.
+- `RequestSignature`: ký request từ Desktop — **áp dụng** cho các API nhạy cảm.
+- **Roles đã có:** `ADMIN`, `RECEPTIONIST`, `DOCTOR`, `NURSE`, `LAB_TECH`, `PHARMACIST`, `PATIENT`.
+
+### Admin Infrastructure ✅
+- CRUD User, Role, Permission, Department đã hoàn chỉnh.
+- Department (Khoa/Phòng ban) schema có trường `code` — Doctor schedule sẽ link vào Department.
+
+### Desktop Frontend (Wails + React) ✅
+- `apiClient.ts` với interceptor tự động ký Hardware Key + Silent Refresh Token.
+- Zustand persist storage đã cấu hình — Sprint 3 thêm `patientStore`, `appointmentStore`.
+- Admin Dashboard layout sẵn sàng — Sprint 3 thêm section Receptionist/Doctor.
+
+### Web Frontend (React) ✅
+- Interceptor Cookie Refresh Token tự động.
+- Zustand global state management.
+- OTP/Login flow cho bệnh nhân — bệnh nhân đã có `patient_id` sau đăng ký, dùng luôn cho `/patients/me`.
 
 ---
 
@@ -10,8 +44,10 @@
 
 ### Module `internal/patient`
 
+> ⚠️ Entity `Patient` đã có stub từ Sprint 2. Sprint 3 **hoàn thiện** entity này với PII encryption đầy đủ.
+
 **Domain layer:**
-- [ ] Entity `Patient`: id, full_name, dob, gender, phone_encrypted, phone_hmac, cccd_encrypted, cccd_hmac, email_encrypted, email_hmac, address_detail_encrypted, blood_type, is_active
+- [ ] Hoàn thiện Entity `Patient`: id, full_name, dob, gender, phone_encrypted, phone_hmac, cccd_encrypted, cccd_hmac, email_encrypted, email_hmac, address_detail_encrypted, blood_type, is_active
 - [ ] Value object `PhoneNumber` — validate 10 số VN, tự encrypt/HMAC
 - [ ] Value object `CCCD` — validate 12 số, tự encrypt/HMAC
 - [ ] Value object `BHYTNumber` — validate format Bộ Y tế
@@ -27,14 +63,17 @@
 - [ ] Handlers + DTOs
 
 **Infrastructure:**
-- [ ] `PatientRepositoryPG` — encrypt/decrypt PII tự động trong repo layer
+- [ ] `PatientRepositoryPG` — encrypt/decrypt PII tự động trong repo layer (kế thừa pattern PGX từ Sprint 2)
 - [ ] Full-text search: PostgreSQL `tsvector` cho `full_name`
 - [ ] Masked response: list endpoint trả `phone_masked = "09x***xxx"`
+- [ ] Database Migration: thêm columns PII + tsvector, index `phone_hmac`, `cccd_hmac`
 
 > ⚠️ **NOTE:** Search phải dùng `phone_hmac` / `cccd_hmac` cho exact-match.
 > Full-text search chỉ cho `full_name`. Không bao giờ query plaintext PII.
 
 ### APIs — Patient
+
+> Tất cả routes được bảo vệ bởi `JWTAuth` + `RequireRole` middleware từ Sprint 2.
 
 ```
 GET  /api/v1/patients
@@ -72,7 +111,7 @@ PUT  /api/v1/patients/me/insurance       [PATIENT]
 > `/patients/me` cho patient chỉ trả masked. Backend phải enforce theo JWT role.
 
 ### Redis Stream Event
-- [ ] Publish `HIS.PATIENT.PatientRegistered` khi tạo mới
+- [ ] Publish `HIS.PATIENT.PatientRegistered` khi tạo mới (dùng Redis native driver đã ổn định từ Sprint 2)
 - [ ] Publish `HIS.PATIENT.PatientUpdated` khi cập nhật
 
 ---
@@ -82,7 +121,7 @@ PUT  /api/v1/patients/me/insurance       [PATIENT]
 **Domain layer:**
 - [ ] Entity `Appointment`: id, patient_id, doctor_id, service_id, slot_id, status, note, scheduled_at
 - [ ] Entity `AppointmentSlot`: id, doctor_id, date, start_time, end_time, is_booked
-- [ ] Entity `DoctorSchedule`: doctor_id, day_of_week, start_time, end_time, slot_duration_min
+- [ ] Entity `DoctorSchedule`: doctor_id, department_id (→ link Department từ Sprint 2), day_of_week, start_time, end_time, slot_duration_min
 - [ ] Entity `SlotTemplate`: template rules → generate slots
 - [ ] Status machine: `PENDING` → `CONFIRMED` → `CHECKED_IN` → `COMPLETED` | `CANCELLED`
 - [ ] Repository interfaces: `AppointmentRepository`, `SlotRepository`
@@ -106,6 +145,8 @@ GET /api/v1/public/doctors              → danh sách bác sĩ (public profile,
 GET /api/v1/public/services             → danh sách dịch vụ + giá
 GET /api/v1/public/doctors?service_id=  → bác sĩ theo dịch vụ
 ```
+
+> ℹ️ Doctor profile lấy từ `User` + `Department` đã có từ Sprint 2 — thêm fields: specialty, avatar_url, bio.
 
 **Auth required:**
 ```
@@ -140,6 +181,9 @@ DELETE /api/v1/appointments/:id         [PATIENT, RECEPTIONIST]
 
 ### Prerequisite
 - Patient APIs và Appointment APIs phải sẵn sàng
+- `apiClient.ts` với Hardware Key signing ✅ (đã có từ Sprint 2 — dùng ngay)
+- Zustand store ✅ (đã có từ Sprint 2 — thêm `patientStore`, `appointmentStore`)
+- Admin Dashboard layout ✅ (đã có từ Sprint 2 — thêm menu items Receptionist)
 
 ### Patient Search Modal (Shared Component)
 - [ ] Input debounce 300ms → `GET /patients?q={input}`
@@ -184,6 +228,9 @@ DELETE /api/v1/appointments/:id         [PATIENT, RECEPTIONIST]
 ### Prerequisite
 - Public endpoints phải ready: `/public/clinic-info`, `/public/doctors`, `/public/services`
 - Appointment slots API phải ready
+- OTP Login/Register flow ✅ (đã có từ Sprint 2 — bệnh nhân đã có `patient_id`)
+- Cookie Refresh Token interceptor ✅ (đã có từ Sprint 2 — dùng ngay)
+- Zustand store ✅ (đã có từ Sprint 2 — thêm `bookingStore`)
 
 ### Landing Page (`/`)
 - [ ] Section: Giới thiệu phòng khám — `GET /public/clinic-info`
@@ -239,6 +286,10 @@ DELETE /api/v1/appointments/:id         [PATIENT, RECEPTIONIST]
 | Slot conflict | SELECT FOR UPDATE + 409 | Hiển thị error rõ ràng | Hiển thị error + refetch slots |
 | SMS sau booking | Redis Stream → notification worker | — | Bệnh nhân nhận SMS |
 | Public endpoints | `/public/*` không cần auth | — | Landing page + Booking step 1–2 |
+| RBAC enforcement | JWTAuth + RequireRole (từ Sprint 2 ✅) | Hardware Key signing (từ Sprint 2 ✅) | Cookie interceptor (từ Sprint 2 ✅) |
+| Department link | Doctor → Department (từ Sprint 2 ✅) | Hiển thị Khoa/Phòng ban của bác sĩ | Chuyên khoa bác sĩ trên landing |
+
+---
 
 ## DEFINITION OF DONE
 
@@ -252,3 +303,5 @@ DELETE /api/v1/appointments/:id         [PATIENT, RECEPTIONIST]
 - [ ] Web: my-appointments hiển thị và hủy được
 - [ ] SMS xác nhận lịch hẹn gửi thành công (hoặc mock)
 - [ ] Redis Stream events được publish đúng
+- [ ] RBAC đúng: PATIENT không truy cập được `/patients/:id` (staff only)
+- [ ] Không có plaintext PII nào lọt vào DB hoặc logs

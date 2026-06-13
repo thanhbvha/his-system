@@ -27,6 +27,7 @@ type RoleRepository interface {
 type DeviceRepository interface {
 	Upsert(ctx context.Context, device *Device) error
 	GetByUserAndFingerprint(ctx context.Context, userID uuid.UUID, fingerprint string) (*Device, error)
+	GetByUserAndPubKeyHash(ctx context.Context, userID uuid.UUID, pubKeyHash string) (*Device, error)
 	DeactivateByUser(ctx context.Context, userID uuid.UUID) error
 }
 

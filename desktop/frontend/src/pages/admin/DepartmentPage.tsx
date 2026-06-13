@@ -34,7 +34,8 @@ export const DepartmentPage = () => {
 
   const columns = [
     { title: "Mã khoa", dataIndex: "code", key: "code", width: 150 },
-    { title: "Tên khoa/phòng", dataIndex: "name", key: "name" },
+    { title: "Tên khoa/phòng", dataIndex: "name", key: "name", width: 250 },
+    { title: "Mô tả", dataIndex: "description", key: "description" },
     { title: "Số nhân viên", dataIndex: "employee_count", key: "employee_count", width: 150, render: (val: number) => val || 0 },
   ];
 
@@ -76,6 +77,12 @@ export const DepartmentPage = () => {
             rules={[{ required: true, message: "Vui lòng nhập tên khoa" }]}
           >
             <Input placeholder="VD: Khoa Nội tổng hợp" />
+          </Form.Item>
+          <Form.Item 
+            name="description" 
+            label="Mô tả" 
+          >
+            <Input.TextArea rows={3} placeholder="Mô tả ngắn gọn về chức năng của khoa/phòng" />
           </Form.Item>
         </Form>
       </Modal>

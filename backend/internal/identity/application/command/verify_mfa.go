@@ -5,10 +5,12 @@ import (
 	"crypto/rand"
 	"encoding/base64"
 	"fmt"
+	"log/slog"
 	"time"
 
 	"github.com/google/uuid"
 	"github.com/pquerna/otp/totp"
+	"github.com/thanhbvha/go-common/logger"
 	commonRedis "github.com/thanhbvha/go-common/redis"
 	"golang.org/x/crypto/bcrypt"
 
@@ -40,11 +42,13 @@ func NewVerifyMFAHandler(mfaRepo domain.MFARepository, userRepo domain.UserRepos
 func (h *VerifyMFAHandler) Handle(ctx context.Context, cmd VerifyMFACommand) (*VerifyMFAResult, error) {
 	user, err := h.userRepo.GetByUsername(ctx, cmd.Username)
 	if err != nil || user == nil {
+		logger.ErrorAsync("VerifyMFAHandler.Handle: user not found", slog.String("error", fmt.Sprintf("%v", err)), slog.String("username", cmd.Username), slog.String("dispatch_time", time.Now().Format(time.RFC3339Nano)))
 		return nil, &appErrors.AppError{Code: "UNAUTHORIZED", Status: 401, Message: "Tài khoản không tồn tại"}
 	}
 
 	encSecret, backupCodes, err := h.mfaRepo.GetSecret(ctx, user.ID)
 	if err != nil || encSecret == "" {
+		logger.ErrorAsync("VerifyMFAHandler.Handle: user has no mfa secret", slog.String("error", fmt.Sprintf("%v", err)), slog.String("username", cmd.Username), slog.String("dispatch_time", time.Now().Format(time.RFC3339Nano)))
 		return nil, &appErrors.AppError{Code: "FORBIDDEN", Status: 403, Message: "Người dùng chưa thiết lập MFA"}
 	}
 
@@ -69,12 +73,14 @@ func (h *VerifyMFAHandler) Handle(ctx context.Context, cmd VerifyMFACommand) (*V
 	// Decrypt TOTP Secret
 	secretBytes, err := crypto.DecryptAESGCM([]byte(encSecret), h.encKey, []byte(user.ID.String()))
 	if err != nil {
+		logger.ErrorAsync("VerifyMFAHandler.Handle: failed to decrypt MFA secret", slog.String("error", fmt.Sprintf("%v", err)), slog.String("username", cmd.Username), slog.String("dispatch_time", time.Now().Format(time.RFC3339Nano)))
 		return nil, &appErrors.AppError{Code: "INTERNAL_ERROR", Status: 500, Message: "Lỗi giải mã MFA secret"}
 	}
 
 	// Validate TOTP
 	valid := totp.Validate(cmd.Code, string(secretBytes))
 	if !valid {
+		logger.ErrorAsync("VerifyMFAHandler.Handle: invalid totp", slog.String("username", cmd.Username), slog.String("dispatch_time", time.Now().Format(time.RFC3339Nano)))
 		return nil, &appErrors.AppError{Code: "UNAUTHORIZED", Status: 401, Message: "Mã MFA không chính xác"}
 	}
 
@@ -94,6 +100,7 @@ func (h *VerifyMFAHandler) issueMFAToken(ctx context.Context, userID uuid.UUID) 
 
 	key := h.rdb.BuildKey(fmt.Sprintf("mfa:%s", mfaToken))
 	if err := h.rdb.Set(ctx, key, userID.String(), 5*time.Minute); err != nil {
+		logger.ErrorAsync("VerifyMFAHandler.Handle: failed to save MFA token", slog.String("error", err.Error()), slog.String("dispatch_time", time.Now().Format(time.RFC3339Nano)))
 		return nil, err
 	}
 

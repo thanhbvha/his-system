@@ -50,6 +50,22 @@ func (r *DeviceRepositoryPG) GetByUserAndFingerprint(ctx context.Context, userID
 	return &d, nil
 }
 
+func (r *DeviceRepositoryPG) GetByUserAndPubKeyHash(ctx context.Context, userID uuid.UUID, pubKeyHash string) (*domain.Device, error) {
+	q := `SELECT id, user_id, device_fingerprint, public_key_pem, public_key_hash, registered_at, is_active 
+	      FROM device_registry WHERE user_id = $1 AND public_key_hash = $2`
+
+	row := r.db.QueryRow(ctx, q, userID, pubKeyHash)
+	var d domain.Device
+	err := row.Scan(&d.ID, &d.UserID, &d.DeviceFingerprint, &d.PublicKeyPEM, &d.PublicKeyHash, &d.RegisteredAt, &d.IsActive)
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return nil, nil
+		}
+		return nil, err
+	}
+	return &d, nil
+}
+
 func (r *DeviceRepositoryPG) DeactivateByUser(ctx context.Context, userID uuid.UUID) error {
 	_, err := r.db.Exec(ctx, `UPDATE device_registry SET is_active = false WHERE user_id = $1`, userID)
 	return err

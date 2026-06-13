@@ -10,14 +10,17 @@ import (
 	"encoding/pem"
 	"errors"
 	"fmt"
+	"log/slog"
 	"strings"
 	"time"
 
-	"github.com/google/uuid"
-	commonRedis "github.com/thanhbvha/go-common/redis"
 	"his-system/internal/identity/domain"
 	"his-system/pkg/auth"
 	appErrors "his-system/pkg/errors"
+
+	"github.com/google/uuid"
+	"github.com/thanhbvha/go-common/logger"
+	commonRedis "github.com/thanhbvha/go-common/redis"
 )
 
 type RefreshTokenCommand struct {
@@ -46,6 +49,7 @@ func NewRefreshTokenHandler(userRepo domain.UserRepository, roleRepo domain.Role
 func (h *RefreshTokenHandler) Handle(ctx context.Context, cmd RefreshTokenCommand) (*RefreshTokenResult, error) {
 	// 1. Verify Signature
 	if err := h.verifySignature(cmd.RefreshToken, cmd.Signature, cmd.PublicKeyPEM); err != nil {
+		logger.ErrorAsync("RefreshTokenHandler.Handle: invalid signature", slog.String("error", err.Error()), slog.String("dispatch_time", time.Now().Format(time.RFC3339Nano)))
 		return nil, &appErrors.AppError{Code: "UNAUTHORIZED", Status: 401, Message: "Chữ ký không hợp lệ"}
 	}
 
@@ -55,6 +59,7 @@ func (h *RefreshTokenHandler) Handle(ctx context.Context, cmd RefreshTokenComman
 
 	val, err := h.rdb.Get(ctx, rtKey)
 	if err != nil || val == "" {
+		logger.ErrorAsync("RefreshTokenHandler.Handle: refresh token not found or expired", slog.String("error", fmt.Sprintf("%v", err)), slog.String("dispatch_time", time.Now().Format(time.RFC3339Nano)))
 		return nil, &appErrors.AppError{Code: "UNAUTHORIZED", Status: 401, Message: "Refresh token hết hạn hoặc không tồn tại"}
 	}
 
@@ -71,6 +76,7 @@ func (h *RefreshTokenHandler) Handle(ctx context.Context, cmd RefreshTokenComman
 	pubKeyHash := hex.EncodeToString(hSha256.Sum(nil))
 
 	if storedPubKeyHash != pubKeyHash {
+		logger.ErrorAsync("RefreshTokenHandler.Handle: public key mismatch", slog.String("stored", storedPubKeyHash), slog.String("provided", pubKeyHash), slog.String("dispatch_time", time.Now().Format(time.RFC3339Nano)))
 		return nil, &appErrors.AppError{Code: "UNAUTHORIZED", Status: 401, Message: "Public key không khớp với token gốc"}
 	}
 
@@ -78,6 +84,7 @@ func (h *RefreshTokenHandler) Handle(ctx context.Context, cmd RefreshTokenComman
 	userID, _ := uuid.Parse(userIDStr)
 	user, err := h.userRepo.GetByID(ctx, userID)
 	if err != nil || user == nil || !user.IsActive {
+		logger.ErrorAsync("RefreshTokenHandler.Handle: user not found or inactive", slog.String("error", fmt.Sprintf("%v", err)), slog.String("user_id", userIDStr), slog.String("dispatch_time", time.Now().Format(time.RFC3339Nano)))
 		return nil, &appErrors.AppError{Code: "UNAUTHORIZED", Status: 401, Message: "Người dùng không tồn tại hoặc bị khóa"}
 	}
 
@@ -99,11 +106,13 @@ func (h *RefreshTokenHandler) Handle(ctx context.Context, cmd RefreshTokenComman
 
 	newAccessToken, err := auth.IssueAccessToken(claims, h.signKey, h.encKey, pubKeyHash)
 	if err != nil {
+		logger.ErrorAsync("RefreshTokenHandler.Handle: failed to issue access token", slog.String("error", err.Error()), slog.String("dispatch_time", time.Now().Format(time.RFC3339Nano)))
 		return nil, err
 	}
 
 	newRefreshToken, err := auth.IssueRefreshToken()
 	if err != nil {
+		logger.ErrorAsync("RefreshTokenHandler.Handle: failed to issue refresh token", slog.String("error", err.Error()), slog.String("dispatch_time", time.Now().Format(time.RFC3339Nano)))
 		return nil, err
 	}
 
@@ -113,6 +122,7 @@ func (h *RefreshTokenHandler) Handle(ctx context.Context, cmd RefreshTokenComman
 	newRtHash := auth.HashToken(newRefreshToken)
 	newRtKey := h.rdb.BuildKey(fmt.Sprintf("refresh:%s", newRtHash))
 	if err := h.rdb.Set(ctx, newRtKey, val, 7*24*time.Hour); err != nil {
+		logger.ErrorAsync("RefreshTokenHandler.Handle: failed to save refresh token", slog.String("error", err.Error()), slog.String("dispatch_time", time.Now().Format(time.RFC3339Nano)))
 		return nil, err
 	}
 

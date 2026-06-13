@@ -3,9 +3,11 @@ package command
 import (
 	"context"
 	"fmt"
+	"log/slog"
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/thanhbvha/go-common/logger"
 	"golang.org/x/crypto/bcrypt"
 
 	"his-system/internal/identity/domain"
@@ -63,6 +65,7 @@ func (h *CreateStaffHandler) Handle(ctx context.Context, cmd CreateStaffCommand)
 
 	// Create User
 	if err := h.userRepo.Create(ctx, user); err != nil {
+		logger.ErrorAsync("CreateStaffHandler.Handle: failed to create user", slog.String("error", err.Error()), slog.String("dispatch_time", time.Now().Format(time.RFC3339Nano)))
 		return nil, err
 	}
 

@@ -50,7 +50,7 @@ func RequestSignature(deviceRepo domain.DeviceRepository) fiber.Handler {
 		}
 
 		// 3. Lookup Public Key by Hash
-		device, err := deviceRepo.GetByUserAndFingerprint(c.Context(), claims.UserID, claims.PublicKeyHash)
+		device, err := deviceRepo.GetByUserAndPubKeyHash(c.Context(), claims.UserID, claims.PublicKeyHash)
 		if err != nil || device == nil || !device.IsActive {
 			return response.Fail(c, appErrors.ErrUnauthorized)
 		}
@@ -70,7 +70,6 @@ func RequestSignature(deviceRepo domain.DeviceRepository) fiber.Handler {
 		}
 
 		// 5. Verify Signature
-		// message = Method + URL + X-Timestamp + Body
 		method := c.Method()
 		url := c.OriginalURL()
 		body := string(c.Body())

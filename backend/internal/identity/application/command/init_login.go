@@ -5,9 +5,11 @@ import (
 	"crypto/rand"
 	"encoding/base64"
 	"fmt"
+	"log/slog"
 	"strconv"
 	"time"
 
+	"github.com/thanhbvha/go-common/logger"
 	commonRedis "github.com/thanhbvha/go-common/redis"
 	"golang.org/x/crypto/bcrypt"
 
@@ -51,6 +53,9 @@ func (h *InitLoginHandler) Handle(ctx context.Context, cmd InitLoginCommand) (*I
 	user, err := h.userRepo.GetByUsername(ctx, cmd.Username)
 	if err != nil || user == nil {
 		h.incrementAttempts(ctx, attemptsKey)
+
+		logger.ErrorAsync("InitLoginHandler.Handle: user not found", slog.String("error", err.Error()), slog.String("username", cmd.Username), slog.String("dispatch_time", time.Now().Format(time.RFC3339Nano)))
+
 		return nil, &appErrors.AppError{Code: "UNAUTHORIZED", Status: 401, Message: "Tên đăng nhập hoặc mật khẩu không chính xác"}
 	}
 
@@ -60,6 +65,7 @@ func (h *InitLoginHandler) Handle(ctx context.Context, cmd InitLoginCommand) (*I
 
 	if err := bcrypt.CompareHashAndPassword([]byte(user.PasswordHash), []byte(cmd.Password)); err != nil {
 		h.incrementAttempts(ctx, attemptsKey)
+		logger.ErrorAsync("InitLoginHandler.Handle: invalid password", slog.String("error", err.Error()), slog.String("username", cmd.Username), slog.String("dispatch_time", time.Now().Format(time.RFC3339Nano)))
 		return nil, &appErrors.AppError{Code: "UNAUTHORIZED", Status: 401, Message: "Tên đăng nhập hoặc mật khẩu không chính xác"}
 	}
 
@@ -75,6 +81,7 @@ func (h *InitLoginHandler) Handle(ctx context.Context, cmd InitLoginCommand) (*I
 	// Key: challenge:{challengeStr} -> Value: {userID}
 	challengeKey := h.rdb.BuildKey(fmt.Sprintf("challenge:%s", challengeStr))
 	if err := h.rdb.Set(ctx, challengeKey, user.ID.String(), 5*time.Minute); err != nil {
+		logger.ErrorAsync("InitLoginHandler.Handle: failed to save challenge", slog.String("error", err.Error()), slog.String("username", cmd.Username), slog.String("dispatch_time", time.Now().Format(time.RFC3339Nano)))
 		return nil, err
 	}
 
