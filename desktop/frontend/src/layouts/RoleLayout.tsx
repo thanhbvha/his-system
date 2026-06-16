@@ -3,6 +3,7 @@ import { Outlet, useNavigate, useLocation } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { useAuthStore } from "@/store/authStore";
 import { useUIStore } from "@/store/uiStore";
+import apiClient from "@/lib/apiClient";
 import { 
   MenuFoldOutlined, 
   MenuUnfoldOutlined, 
@@ -10,7 +11,9 @@ import {
   DashboardOutlined,
   TeamOutlined,
   SafetyOutlined,
-  BankOutlined
+  BankOutlined,
+  SolutionOutlined,
+  CalendarOutlined
 } from "@ant-design/icons";
 
 const { Header, Sider, Content } = Layout;
@@ -21,11 +24,23 @@ export const RoleLayout = () => {
   const location = useLocation();
   const role = useAuthStore((s) => s.role);
   const clearAuth = useAuthStore((s) => s.clearAuth);
+  const updateAuthUser = useAuthStore((s) => s.updateAuthUser);
   const { sidebarOpen, toggleSidebar } = useUIStore();
 
   const handleLogout = () => {
     clearAuth();
     navigate("/login");
+  };
+
+  const handleLanguageChange = async () => {
+    const newLang = i18n.language === "vi" ? "en" : "vi";
+    i18n.changeLanguage(newLang);
+    try {
+      await apiClient.put("/auth/me/language", { language: newLang });
+      updateAuthUser({ preferred_language: newLang });
+    } catch (e) {
+      console.error("Failed to sync language:", e);
+    }
   };
 
   const getMenuItems = () => {
@@ -36,13 +51,16 @@ export const RoleLayout = () => {
          { key: "/admin/dashboard", label: "Dashboard", icon: <DashboardOutlined /> },
          { key: "/admin/users", label: "Quản lý User", icon: <TeamOutlined /> },
          { key: "/admin/roles", label: "Phân quyền", icon: <SafetyOutlined /> },
-         { key: "/admin/departments", label: "Khoa/Phòng ban", icon: <BankOutlined /> }
+         { key: "/admin/departments", label: "Khoa/Phòng ban", icon: <BankOutlined /> },
+         { type: 'divider' },
+         { key: "/patients", label: t("nav.patients", "Bệnh nhân"), icon: <SolutionOutlined /> },
+         { key: "/appointments", label: t("nav.appointments", "Lịch hẹn"), icon: <CalendarOutlined /> }
        );
-    } else if (role === "doctor") {
+    } else if (role === "doctor" || role === "receptionist") {
        baseItems.push(
-         { key: "/", label: t("nav.dashboard") },
-         { key: "/patients", label: t("nav.patients") },
-         { key: "/appointments", label: t("nav.appointments") }
+         { key: "/", label: t("nav.dashboard"), icon: <DashboardOutlined /> },
+         { key: "/patients", label: t("nav.patients", "Bệnh nhân"), icon: <SolutionOutlined /> },
+         { key: "/appointments", label: t("nav.appointments", "Lịch hẹn"), icon: <CalendarOutlined /> }
        );
     } else {
        baseItems.push({ key: "/", label: t("nav.dashboard") });
@@ -67,7 +85,7 @@ export const RoleLayout = () => {
         <Header style={{ padding: 0, background: "#fff", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
           <Button type="text" icon={sidebarOpen ? <MenuFoldOutlined /> : <MenuUnfoldOutlined />} onClick={toggleSidebar} style={{ fontSize: "16px", width: 64, height: 64 }} />
           <div style={{ paddingRight: 24 }}>
-            <Button onClick={() => i18n.changeLanguage(i18n.language === "vi" ? "en" : "vi")} style={{ marginRight: 16 }}>
+            <Button onClick={handleLanguageChange} style={{ marginRight: 16 }}>
               {i18n.language === "vi" ? "EN" : "VI"}
             </Button>
             <Button icon={<LogoutOutlined />} onClick={handleLogout}>{t("common.logout")}</Button>

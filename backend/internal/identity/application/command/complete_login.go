@@ -38,10 +38,11 @@ type CompleteLoginResult struct {
 }
 
 type UserPayload struct {
-	ID         string   `json:"id"`
-	Username   string   `json:"username"`
-	RoleIDs    []string `json:"role_ids"`
-	MFAEnabled bool     `json:"mfa_enabled"`
+	ID                string   `json:"id"`
+	Username          string   `json:"username"`
+	RoleIDs           []string `json:"role_ids"`
+	MFAEnabled        bool     `json:"mfa_enabled"`
+	PreferredLanguage string   `json:"preferred_language"`
 }
 
 type CompleteLoginHandler struct {
@@ -166,10 +167,11 @@ func (h *CompleteLoginHandler) Handle(ctx context.Context, cmd CompleteLoginComm
 		AccessToken:  accessToken,
 		RefreshToken: refreshToken,
 		User: UserPayload{
-			ID:         user.ID.String(),
-			Username:   user.Username,
-			RoleIDs:    roleIDs,
-			MFAEnabled: user.MFAEnabled,
+			ID:                user.ID.String(),
+			Username:          user.Username,
+			RoleIDs:           roleIDs,
+			MFAEnabled:        user.MFAEnabled,
+			PreferredLanguage: user.PreferredLanguage,
 		},
 	}, nil
 }

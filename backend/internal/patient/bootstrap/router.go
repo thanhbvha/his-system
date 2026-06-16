@@ -48,7 +48,7 @@ func (r *Router) Register(root fiber.Router) {
 	)
 
 	root.Get("/",
-		middleware.RequireRole("receptionist", "doctor", "nurse", "lab_tech", "pharmacist"),
+		middleware.RequireRole("admin", "receptionist", "doctor", "nurse", "lab_tech", "pharmacist"),
 		r.handler.List,
 	)
 	root.Post("/",
@@ -57,7 +57,7 @@ func (r *Router) Register(root fiber.Router) {
 		r.handler.Create,
 	)
 	root.Get("/:id",
-		middleware.RequireRole("receptionist", "doctor", "nurse"),
+		middleware.RequireRole("admin", "receptionist", "doctor", "nurse"),
 		r.handler.GetByID,
 	)
 	root.Put("/:id",

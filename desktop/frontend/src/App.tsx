@@ -12,6 +12,10 @@ import { UserListPage } from "@/pages/admin/UserListPage";
 import { RolePermissionPage } from "@/pages/admin/RolePermissionPage";
 import { DepartmentPage } from "@/pages/admin/DepartmentPage";
 
+// Receptionist & Doctor Pages
+import { PatientsPage } from "@/pages/PatientsPage";
+import { AppointmentsPage } from "@/pages/AppointmentsPage";
+
 const ForbiddenPage = () => <div style={{ padding: 24, textAlign: "center", fontSize: 20 }}>403 Forbidden - Bạn không có quyền truy cập</div>;
 
 function App() {
@@ -36,6 +40,14 @@ function App() {
               <Route path="departments" element={<DepartmentPage />} />
             </Route>
 
+            {/* Receptionist & Doctor Routes */}
+            <Route path="/patients" element={<ProtectedRoute roles={["receptionist", "doctor", "admin"]} />}>
+              <Route index element={<PatientsPage />} />
+            </Route>
+            <Route path="/appointments" element={<ProtectedRoute roles={["receptionist", "doctor", "admin"]} />}>
+              <Route index element={<AppointmentsPage />} />
+            </Route>
+            
             {/* Additional routes will be added here in future sprints */}
           </Route>
         </Route>

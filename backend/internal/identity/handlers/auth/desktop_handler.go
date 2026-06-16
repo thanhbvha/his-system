@@ -29,6 +29,7 @@ type DesktopAuthHandler struct {
 	logoutHandler        *command.LogoutHandler
 	setupMFAHandler      *command.SetupMFAHandler
 	verifyMFAHandler     *command.VerifyMFAHandler
+	updateLangHandler    *command.UpdateLanguageHandler
 }
 
 func NewDesktopAuthHandler(
@@ -38,6 +39,7 @@ func NewDesktopAuthHandler(
 	logout *command.LogoutHandler,
 	setupMFA *command.SetupMFAHandler,
 	verifyMFA *command.VerifyMFAHandler,
+	updateLang *command.UpdateLanguageHandler,
 ) *DesktopAuthHandler {
 	return &DesktopAuthHandler{
 		initLoginHandler:     init,
@@ -46,6 +48,7 @@ func NewDesktopAuthHandler(
 		logoutHandler:        logout,
 		setupMFAHandler:      setupMFA,
 		verifyMFAHandler:     verifyMFA,
+		updateLangHandler:    updateLang,
 	}
 }
 
@@ -260,4 +263,30 @@ func (h *DesktopAuthHandler) VerifyMFA(c *fiber.Ctx) error {
 	}
 
 	return response.OK(c, res)
+}
+
+type UpdateLanguageReq struct {
+	Language string `json:"language"`
+}
+
+func (h *DesktopAuthHandler) UpdateLanguage(c *fiber.Ctx) error {
+	claims, ok := middleware.GetClaims(c)
+	if !ok {
+		return response.Fail(c, &appErrors.AppError{Code: "UNAUTHORIZED", Status: 401})
+	}
+
+	var req UpdateLanguageReq
+	if err := c.BodyParser(&req); err != nil {
+		return response.Fail(c, appErrors.ErrValidation)
+	}
+
+	err := h.updateLangHandler.Handle(c.Context(), command.UpdateLanguageCommand{
+		UserID:   claims.UserID,
+		Language: req.Language,
+	})
+	if err != nil {
+		return handleErr(c, err)
+	}
+
+	return response.OK(c, fiber.Map{"success": true})
 }

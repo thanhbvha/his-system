@@ -197,7 +197,7 @@ func (h *PatientHandler) Update(c *fiber.Ctx) error {
 }
 
 func (h *PatientHandler) GetMyProfile(c *fiber.Ctx) error {
-	claims := c.Locals("claims").(*auth.Claims)
+	claims := c.Locals("claims").(auth.Claims)
 
 	result, err := h.getByIDQuery.Handle(c.Context(), query.GetPatientByIDQuery{
 		ID:      claims.UserID,
@@ -211,7 +211,7 @@ func (h *PatientHandler) GetMyProfile(c *fiber.Ctx) error {
 }
 
 func (h *PatientHandler) UpdateMyProfile(c *fiber.Ctx) error {
-	claims := c.Locals("claims").(*auth.Claims)
+	claims := c.Locals("claims").(auth.Claims)
 
 	var req UpdatePatientReq
 	if err := c.BodyParser(&req); err != nil {
@@ -255,7 +255,7 @@ type UpdateInsuranceReq struct {
 }
 
 func (h *PatientHandler) UpdateMyInsurance(c *fiber.Ctx) error {
-	claims := c.Locals("claims").(*auth.Claims)
+	claims := c.Locals("claims").(auth.Claims)
 
 	var req UpdateInsuranceReq
 	if err := c.BodyParser(&req); err != nil {

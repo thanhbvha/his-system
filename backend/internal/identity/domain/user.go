@@ -15,9 +15,10 @@ type User struct {
 	PasswordHash   string
 	RoleIDs        []uuid.UUID
 	IsActive       bool
-	MFAEnabled     bool
-	CreatedAt      time.Time
-	UpdatedAt      time.Time
+	MFAEnabled        bool
+	PreferredLanguage string
+	CreatedAt         time.Time
+	UpdatedAt         time.Time
 }
 
 func (u *User) SetEmail(plain string, cipher *crypto.FieldCipher) error {

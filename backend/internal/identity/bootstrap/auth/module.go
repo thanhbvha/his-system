@@ -39,6 +39,7 @@ func NewModule(deps ModuleDeps) *Module {
 	logoutCmd        := command.NewLogoutHandler(deps.Rdb)
 	setupMFACmd      := command.NewSetupMFAHandler(mfaRepo, deps.EncKey)
 	verifyMFACmd     := command.NewVerifyMFAHandler(mfaRepo, userRepo, deps.Rdb, deps.EncKey)
+	updateLangCmd    := command.NewUpdateLanguageHandler(userRepo)
 
 	sendOTPCmd         := command.NewSendOTPHandler(deps.Rdb, deps.Queue, deps.Cipher)
 	verifyOTPCmd       := command.NewVerifyOTPHandler(patientAuthRepo, deps.Rdb, deps.Cipher, deps.SignKey, deps.EncKey)
@@ -46,7 +47,7 @@ func NewModule(deps ModuleDeps) *Module {
 	refreshWebCmd      := command.NewRefreshWebHandler(patientAuthRepo, deps.Rdb, deps.SignKey, deps.EncKey)
 	logoutWebCmd       := command.NewLogoutWebHandler(deps.Rdb)
 
-	desktopHandler := auth.NewDesktopAuthHandler(initLoginCmd, completeLoginCmd, refreshTokenCmd, logoutCmd, setupMFACmd, verifyMFACmd)
+	desktopHandler := auth.NewDesktopAuthHandler(initLoginCmd, completeLoginCmd, refreshTokenCmd, logoutCmd, setupMFACmd, verifyMFACmd, updateLangCmd)
 	webHandler     := auth.NewWebAuthHandler(sendOTPCmd, verifyOTPCmd, registerPatientCmd, refreshWebCmd, logoutWebCmd)
 
 	router := NewRouter(RouterDeps{

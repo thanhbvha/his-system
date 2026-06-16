@@ -2,11 +2,13 @@ import { Button, Form, Input, Card, message } from "antd";
 import { useNavigate } from "react-router-dom";
 import { useAuthStore } from "@/store/authStore";
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import apiClient from "@/lib/apiClient";
 import { GetPublicKey, SignData } from "../../wailsjs/go/main/App";
 
 export const Login = () => {
   const navigate = useNavigate();
+  const { i18n } = useTranslation();
   const setAuth = useAuthStore((s) => s.setAuth);
   const [loading, setLoading] = useState(false);
 
@@ -57,6 +59,10 @@ export const Login = () => {
       const role = user.role_ids && user.role_ids.length > 0 ? "admin" : "receptionist"; // TODO: Map real roles
       
       setAuth(access_token, refresh_token, user, role as any);
+
+      if (user.preferred_language) {
+        i18n.changeLanguage(user.preferred_language);
+      }
 
       if (user.mfa_enabled === false) {
         navigate("/mfa-setup");

@@ -110,7 +110,7 @@ func (h *AppointmentHandler) List(c *fiber.Ctx) error {
 		}
 	}
 
-	claims := c.Locals("claims").(*auth.Claims)
+	claims := c.Locals("claims").(auth.Claims)
 	isStaff := false
 	for _, r := range claims.Roles {
 		if r == "receptionist" || r == "doctor" || r == "admin" || r == "nurse" {
@@ -159,7 +159,7 @@ type BookReq struct {
 }
 
 func (h *AppointmentHandler) Book(c *fiber.Ctx) error {
-	claims := c.Locals("claims").(*auth.Claims)
+	claims := c.Locals("claims").(auth.Claims)
 
 	var req BookReq
 	if err := c.BodyParser(&req); err != nil {

@@ -25,11 +25,11 @@ func (r *UserRepositoryPG) Create(ctx context.Context, user *domain.User) error 
 	}
 	defer tx.Rollback(ctx)
 
-	q := `INSERT INTO users (id, username, email_encrypted, email_hmac, password_hash, is_active, mfa_enabled, created_at, updated_at) 
-	      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)`
+	q := `INSERT INTO users (id, username, email_encrypted, email_hmac, password_hash, is_active, mfa_enabled, preferred_language, created_at, updated_at) 
+	      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)`
 	_, err = tx.Exec(ctx, q,
 		user.ID, user.Username, user.EmailEncrypted, user.EmailHMAC,
-		user.PasswordHash, user.IsActive, user.MFAEnabled,
+		user.PasswordHash, user.IsActive, user.MFAEnabled, user.PreferredLanguage,
 		user.CreatedAt, user.UpdatedAt,
 	)
 	if err != nil {
@@ -61,13 +61,13 @@ func (r *UserRepositoryPG) GetByEmailHMAC(ctx context.Context, emailHMAC string)
 }
 
 func (r *UserRepositoryPG) getBy(ctx context.Context, field string, value interface{}) (*domain.User, error) {
-	q := `SELECT id, username, COALESCE(email_encrypted, ''), COALESCE(email_hmac, ''), password_hash, is_active, COALESCE(mfa_enabled, false), created_at, updated_at
+	q := `SELECT id, username, COALESCE(email_encrypted, ''), COALESCE(email_hmac, ''), password_hash, is_active, COALESCE(mfa_enabled, false), COALESCE(preferred_language, 'vi'), created_at, updated_at
 	      FROM users WHERE ` + field + ` = $1`
 
 	row := r.db.QueryRow(ctx, q, value)
 	var u domain.User
 	err := row.Scan(&u.ID, &u.Username, &u.EmailEncrypted, &u.EmailHMAC, &u.PasswordHash,
-		&u.IsActive, &u.MFAEnabled, &u.CreatedAt, &u.UpdatedAt)
+		&u.IsActive, &u.MFAEnabled, &u.PreferredLanguage, &u.CreatedAt, &u.UpdatedAt)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
 			return nil, nil // Return nil when not found
@@ -93,11 +93,11 @@ func (r *UserRepositoryPG) getBy(ctx context.Context, field string, value interf
 func (r *UserRepositoryPG) Update(ctx context.Context, user *domain.User) error {
 	q := `UPDATE users SET 
 			username = $1, email_encrypted = $2, email_hmac = $3, 
-			password_hash = $4, is_active = $5, mfa_enabled = $6, updated_at = $7
-		  WHERE id = $8`
+			password_hash = $4, is_active = $5, mfa_enabled = $6, preferred_language = $7, updated_at = $8
+		  WHERE id = $9`
 	_, err := r.db.Exec(ctx, q,
 		user.Username, user.EmailEncrypted, user.EmailHMAC,
-		user.PasswordHash, user.IsActive, user.MFAEnabled, user.UpdatedAt,
+		user.PasswordHash, user.IsActive, user.MFAEnabled, user.PreferredLanguage, user.UpdatedAt,
 		user.ID,
 	)
 	return err
@@ -134,7 +134,7 @@ func (r *UserRepositoryPG) List(ctx context.Context, page, limit int) ([]*domain
 
 	offset := (page - 1) * limit
 	rows, err := r.db.Query(ctx, `
-		SELECT id, username, COALESCE(email_encrypted, ''), COALESCE(email_hmac, ''), password_hash, is_active, COALESCE(mfa_enabled, false), created_at, updated_at 
+		SELECT id, username, COALESCE(email_encrypted, ''), COALESCE(email_hmac, ''), password_hash, is_active, COALESCE(mfa_enabled, false), COALESCE(preferred_language, 'vi'), created_at, updated_at 
 		FROM users ORDER BY created_at DESC LIMIT $1 OFFSET $2`, limit, offset)
 	if err != nil {
 		return nil, 0, err
@@ -146,7 +146,7 @@ func (r *UserRepositoryPG) List(ctx context.Context, page, limit int) ([]*domain
 	for rows.Next() {
 		var u domain.User
 		if err := rows.Scan(&u.ID, &u.Username, &u.EmailEncrypted, &u.EmailHMAC, &u.PasswordHash,
-			&u.IsActive, &u.MFAEnabled, &u.CreatedAt, &u.UpdatedAt); err != nil {
+			&u.IsActive, &u.MFAEnabled, &u.PreferredLanguage, &u.CreatedAt, &u.UpdatedAt); err != nil {
 			return nil, 0, err
 		}
 		users = append(users, &u)
