@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useTranslation } from "react-i18next";
 import { Button, Space, Typography, Modal } from 'antd';
 import { SearchOutlined, UserAddOutlined } from '@ant-design/icons';
 import { PatientSearchModal } from '@/components/patient/PatientSearchModal';
@@ -9,6 +10,7 @@ import { Patient } from '@/store/patientStore';
 const { Title } = Typography;
 
 export const PatientsPage: React.FC = () => {
+  const { t } = useTranslation();
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [isRegOpen, setIsRegOpen] = useState(false);
   const [selectedPatientId, setSelectedPatientId] = useState<string | null>(null);
@@ -25,13 +27,13 @@ export const PatientsPage: React.FC = () => {
   return (
     <div>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
-        <Title level={2} style={{ margin: 0 }}>Quản lý Bệnh nhân</Title>
+        <Title level={2} style={{ margin: 0 }}>{t("patients.title")}</Title>
         <Space>
           <Button type="primary" icon={<UserAddOutlined />} onClick={() => setIsRegOpen(true)}>
-            Đăng ký mới
+            {t("patients.registerNew")}
           </Button>
           <Button icon={<SearchOutlined />} onClick={() => setIsSearchOpen(true)}>
-            Tìm kiếm
+            {t("common.search")}
           </Button>
         </Space>
       </div>
@@ -40,7 +42,7 @@ export const PatientsPage: React.FC = () => {
         <PatientDetailView patientId={selectedPatientId} />
       ) : (
         <div style={{ textAlign: 'center', marginTop: 100, color: '#999' }}>
-          <p>Vui lòng tìm kiếm hoặc đăng ký bệnh nhân mới để xem hồ sơ.</p>
+          <p>{t("patients.noPatientSelected")}</p>
         </div>
       )}
 

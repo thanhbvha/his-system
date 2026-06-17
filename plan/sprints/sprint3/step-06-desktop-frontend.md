@@ -53,8 +53,15 @@ Thêm sidebar menu: Tìm kiếm bệnh nhân, Đăng ký, Lịch hẹn hôm nay.
   - Tích hợp API `PUT /api/v1/auth/me/language` (tuân thủ `x-signature` và `jwtAuth`).
   - Giao diện góc trên phải tự động đồng bộ và lưu thiết lập tiếng Anh/Việt trên hệ thống i18n và DB.
 
-### 8. Ngày mai (Next Step): User Profile Page
+### 8. User Profile Page (Đã hoàn thành)
 - **Mục tiêu**: Xây dựng một trang Profile Page cho Desktop App.
 - **Tính năng**: 
   - Ngay sau khi Login thành công, hệ thống sẽ tự động điều hướng (auto redirect) bay thẳng vào màn hình Profile này (thay vì vào Dashboard như cũ).
   - Hiển thị đầy đủ thông tin chi tiết: Thông tin User, Chức vụ/Phân quyền, Thông tin Phòng ban làm việc, Địa chỉ IP đăng nhập hiện tại, Ngày giờ đăng nhập, v.v.
+
+### 9. Đồng bộ Đa ngôn ngữ (i18n) Toàn diện (Đã hoàn thành)
+- **Mục tiêu**: Loại bỏ hoàn toàn tình trạng "nửa Anh nửa Việt", chuẩn hóa i18n cho toàn bộ ứng dụng Desktop.
+- **Kết quả**:
+  - Rà soát và thay thế toàn bộ chuỗi hardcode thành `t("...")` trên toàn bộ các trang (`Login`, `MFAPage`, `MFASetupPage`, `PatientsPage`, `AppointmentsPage`, `AdminDashboardPage`, `DepartmentPage`, `RolePermissionPage`, `UserListPage`) và các Components liên quan.
+  - Tổ chức lại file `vi.json` và `en.json` theo các namespace rõ ràng (`common`, `auth`, `patients`, `appointments`, `admin`) để dễ dàng bảo trì và mở rộng.
+  - Tích hợp thay đổi mượt mà, build thành công và không gây ảnh hưởng đến logic nghiệp vụ hiện có.

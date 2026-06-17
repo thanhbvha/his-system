@@ -1,46 +1,92 @@
 import { create } from "zustand";
+import apiClient from '@/lib/apiClient';
 
-interface Slot {
+export interface Slot {
   id: string;
-  time: string;
-}
-
-interface PatientInfo {
-  name: string;
-  phone: string;
-  dob: string;
+  start_time: string;
+  end_time: string;
+  is_booked: boolean;
 }
 
 interface BookingState {
   step: 1 | 2 | 3 | 4;
-  selectedDepartment: string | null;
+  selectedService: string | null;
   selectedDoctor: string | null;
-  selectedSlot: Slot | null;
-  patientInfo: PatientInfo | null;
+  selectedDate: string | null;
+  selectedSlot: string | null;
+  note: string;
+  
+  availableSlots: Slot[];
+  isLoadingSlots: boolean;
+  isBooking: boolean;
+
   setStep: (step: 1 | 2 | 3 | 4) => void;
-  setDepartment: (dept: string) => void;
-  setDoctor: (doc: string) => void;
-  setSlot: (slot: Slot) => void;
-  setPatientInfo: (info: PatientInfo) => void;
+  setService: (serviceId: string) => void;
+  setDoctor: (doctorId: string) => void;
+  setDate: (date: string) => void;
+  setSlot: (slotId: string) => void;
+  setNote: (note: string) => void;
+  
+  fetchSlots: (doctorId: string, date: string) => Promise<void>;
+  bookAppointment: () => Promise<void>;
   reset: () => void;
 }
 
-export const useBookingStore = create<BookingState>((set) => ({
+export const useBookingStore = create<BookingState>((set, get) => ({
   step: 1,
-  selectedDepartment: null,
+  selectedService: null,
   selectedDoctor: null,
+  selectedDate: null,
   selectedSlot: null,
-  patientInfo: null,
+  note: "",
+  
+  availableSlots: [],
+  isLoadingSlots: false,
+  isBooking: false,
+
   setStep: (step) => set({ step }),
-  setDepartment: (dept) => set({ selectedDepartment: dept }),
-  setDoctor: (doc) => set({ selectedDoctor: doc }),
-  setSlot: (slot) => set({ selectedSlot: slot }),
-  setPatientInfo: (info) => set({ patientInfo: info }),
+  setService: (serviceId) => set({ selectedService: serviceId, selectedDoctor: null, selectedSlot: null, availableSlots: [] }),
+  setDoctor: (doctorId) => set({ selectedDoctor: doctorId, selectedSlot: null, availableSlots: [] }),
+  setDate: (date) => set({ selectedDate: date, selectedSlot: null }),
+  setSlot: (slotId) => set({ selectedSlot: slotId }),
+  setNote: (note) => set({ note }),
+
+  fetchSlots: async (doctorId: string, date: string) => {
+    set({ isLoadingSlots: true });
+    try {
+      const response = await apiClient.get(`/appointments/slots?doctor_id=${doctorId}&date=${date}`);
+      set({ availableSlots: response.data.data });
+    } catch (error) {
+      console.error('Failed to fetch slots', error);
+      set({ availableSlots: [] });
+    } finally {
+      set({ isLoadingSlots: false });
+    }
+  },
+
+  bookAppointment: async () => {
+    const { selectedService, selectedDoctor, selectedDate, selectedSlot, note } = get();
+    set({ isBooking: true });
+    try {
+      await apiClient.post('/appointments', {
+        service_id: selectedService,
+        doctor_id: selectedDoctor,
+        date: selectedDate,
+        slot_id: selectedSlot,
+        note: note
+      });
+    } finally {
+      set({ isBooking: false });
+    }
+  },
+
   reset: () => set({
     step: 1,
-    selectedDepartment: null,
+    selectedService: null,
     selectedDoctor: null,
+    selectedDate: null,
     selectedSlot: null,
-    patientInfo: null,
+    note: "",
+    availableSlots: [],
   }),
 }));

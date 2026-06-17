@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Modal, Input, List, Typography, Space, Button } from 'antd';
 import { SearchOutlined, UserOutlined } from '@ant-design/icons';
+import { useTranslation } from "react-i18next";
 import { usePatientStore, Patient } from '@/store/patientStore';
 
 const { Text } = Typography;
@@ -12,6 +13,7 @@ interface PatientSearchModalProps {
 }
 
 export const PatientSearchModal: React.FC<PatientSearchModalProps> = ({ open, onClose, onSelect }) => {
+  const { t } = useTranslation();
   const [searchTerm, setSearchTerm] = useState('');
   const { searchPatients, searchResults, isLoading } = usePatientStore();
 
@@ -32,14 +34,14 @@ export const PatientSearchModal: React.FC<PatientSearchModalProps> = ({ open, on
 
   return (
     <Modal
-      title="Tìm kiếm Bệnh nhân"
+      title={t("patients.searchTitle")}
       open={open}
       onCancel={onClose}
       footer={null}
       destroyOnClose
     >
       <Input
-        placeholder="Nhập tên, số điện thoại (10 số) hoặc CCCD"
+        placeholder={t("patients.searchPlaceholder")}
         prefix={<SearchOutlined />}
         value={searchTerm}
         onChange={(e) => setSearchTerm(e.target.value)}
@@ -55,7 +57,7 @@ export const PatientSearchModal: React.FC<PatientSearchModalProps> = ({ open, on
             <List.Item
               actions={[
                 <Button key="select" type="primary" size="small" onClick={() => handleSelect(patient)}>
-                  Chọn
+                  {t("common.select")}
                 </Button>
               ]}
             >
@@ -64,14 +66,14 @@ export const PatientSearchModal: React.FC<PatientSearchModalProps> = ({ open, on
                 title={<Text strong>{patient.full_name}</Text>}
                 description={
                   <Space direction="vertical" size={0}>
-                    <Text type="secondary">Mã: {patient.patient_code || 'N/A'} | NS: {patient.dob}</Text>
-                    <Text type="secondary">SĐT: {patient.phone_masked}</Text>
+                    <Text type="secondary">{t("patients.codePrefix")} {patient.patient_code || 'N/A'} | {t("patients.dobPrefix")} {patient.dob}</Text>
+                    <Text type="secondary">{t("patients.phonePrefix")} {patient.phone_masked}</Text>
                   </Space>
                 }
               />
             </List.Item>
           )}
-          locale={{ emptyText: searchTerm.length >= 2 ? 'Không tìm thấy bệnh nhân' : 'Nhập ít nhất 2 ký tự để tìm kiếm' }}
+          locale={{ emptyText: searchTerm.length >= 2 ? t("patients.notFound") : t("patients.searchMinChars") }}
         />
       </div>
     </Modal>

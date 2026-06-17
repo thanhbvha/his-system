@@ -5,6 +5,7 @@ import { usePublicStore } from '@/store/publicStore';
 import { PatientSearchModal } from '../patient/PatientSearchModal';
 import { Patient } from '@/store/patientStore';
 import dayjs from 'dayjs';
+import { useTranslation } from "react-i18next";
 
 const { Option } = Select;
 const { Text } = Typography;
@@ -16,6 +17,7 @@ interface BookingModalProps {
 }
 
 export const BookingModal: React.FC<BookingModalProps> = ({ open, onClose, onSuccess }) => {
+  const { t } = useTranslation();
   const [form] = Form.useForm();
   const { fetchSlots, availableSlots, bookAppointment, isLoading: isAppointmentLoading } = useAppointmentStore();
   const { fetchDoctors, fetchServices, doctors, services, isLoading: isPublicLoading } = usePublicStore();
@@ -46,7 +48,7 @@ export const BookingModal: React.FC<BookingModalProps> = ({ open, onClose, onSuc
 
   const onFinish = async (values: any) => {
     if (!selectedPatient) {
-      message.error("Vui lòng chọn bệnh nhân!");
+      message.error(t("appointments.requirePatient"));
       return;
     }
     
@@ -58,19 +60,19 @@ export const BookingModal: React.FC<BookingModalProps> = ({ open, onClose, onSuc
         slot_id: values.slot_id,
         note: values.note
       });
-      message.success("Đặt lịch thành công!");
+      message.success(t("appointments.bookSuccess"));
       form.resetFields();
       setSelectedPatient(null);
       onSuccess();
     } catch (error: any) {
       if (error.response?.status === 409) {
-        message.error("Slot vừa được đặt, vui lòng chọn giờ khác");
+        message.error(t("appointments.slotTaken"));
         // Refetch slots
         if (selectedDoctor && selectedDate) {
           fetchSlots(selectedDoctor, selectedDate);
         }
       } else {
-        message.error("Đặt lịch thất bại: " + (error.response?.data?.message || error.message));
+        message.error(t("appointments.bookFail") + (error.response?.data?.message || error.message));
       }
     }
   };
@@ -88,7 +90,7 @@ export const BookingModal: React.FC<BookingModalProps> = ({ open, onClose, onSuc
   return (
     <>
       <Modal
-        title="Đặt lịch khám"
+        title={t("appointments.bookNew")}
         open={open}
         onCancel={onClose}
         footer={null}
@@ -97,30 +99,30 @@ export const BookingModal: React.FC<BookingModalProps> = ({ open, onClose, onSuc
       >
         <Form form={form} layout="vertical" onFinish={onFinish}>
           
-          <Form.Item label="Bệnh nhân" required>
+          <Form.Item label={t("appointments.patient")} required>
             <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
               {selectedPatient ? (
                 <Text strong>{selectedPatient.full_name} ({selectedPatient.phone_masked || selectedPatient.phone})</Text>
               ) : (
-                <Text type="secondary">Chưa chọn bệnh nhân</Text>
+                <Text type="secondary">{t("appointments.noPatientSelected")}</Text>
               )}
               <Button onClick={() => setIsPatientSearchOpen(true)}>
-                {selectedPatient ? 'Chọn lại' : 'Tìm bệnh nhân'}
+                {selectedPatient ? t("appointments.reselect") : t("appointments.searchPatient")}
               </Button>
             </div>
           </Form.Item>
 
           <Row gutter={16}>
             <Col span={12}>
-              <Form.Item name="service_id" label="Dịch vụ" rules={[{ required: true }]}>
-                <Select placeholder="Chọn dịch vụ" onChange={handleServiceChange} loading={isPublicLoading}>
+              <Form.Item name="service_id" label={t("appointments.service")} rules={[{ required: true }]}>
+                <Select placeholder={t("appointments.selectService")} onChange={handleServiceChange} loading={isPublicLoading}>
                   {services.map(s => <Option key={s.id} value={s.id}>{s.name}</Option>)}
                 </Select>
               </Form.Item>
             </Col>
             <Col span={12}>
-              <Form.Item name="doctor_id" label="Bác sĩ" rules={[{ required: true }]}>
-                <Select placeholder="Chọn bác sĩ" onChange={setSelectedDoctor} loading={isPublicLoading} disabled={!form.getFieldValue('service_id')}>
+              <Form.Item name="doctor_id" label={t("appointments.doctor")} rules={[{ required: true }]}>
+                <Select placeholder={t("appointments.selectDoctor")} onChange={setSelectedDoctor} loading={isPublicLoading} disabled={!form.getFieldValue('service_id')}>
                   {doctors.map(d => <Option key={d.id} value={d.id}>{d.full_name || (d as any).name}</Option>)}
                 </Select>
               </Form.Item>
@@ -129,7 +131,7 @@ export const BookingModal: React.FC<BookingModalProps> = ({ open, onClose, onSuc
 
           <Row gutter={16}>
             <Col span={12}>
-              <Form.Item name="date" label="Ngày khám" rules={[{ required: true }]}>
+              <Form.Item name="date" label={t("appointments.examDate")} rules={[{ required: true }]}>
                 <DatePicker 
                   format="YYYY-MM-DD" 
                   style={{ width: '100%' }} 
@@ -141,7 +143,7 @@ export const BookingModal: React.FC<BookingModalProps> = ({ open, onClose, onSuc
           </Row>
 
           {selectedDoctor && selectedDate && (
-            <Form.Item name="slot_id" label="Khung giờ" rules={[{ required: true, message: 'Vui lòng chọn khung giờ' }]}>
+            <Form.Item name="slot_id" label={t("appointments.slot")} rules={[{ required: true, message: t("appointments.requireSlot") }]}>
               <Spin spinning={isAppointmentLoading}>
                 <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
                   {availableSlots.length > 0 ? availableSlots.map(slot => (
@@ -153,19 +155,19 @@ export const BookingModal: React.FC<BookingModalProps> = ({ open, onClose, onSuc
                     >
                       {slot.start_time}
                     </Button>
-                  )) : <Text type="secondary">Không có lịch trống trong ngày này</Text>}
+                  )) : <Text type="secondary">{t("appointments.noSlots")}</Text>}
                 </div>
               </Spin>
             </Form.Item>
           )}
 
-          <Form.Item name="note" label="Ghi chú">
+          <Form.Item name="note" label={t("appointments.note")}>
              <Input.TextArea rows={2} />
           </Form.Item>
 
           <Form.Item style={{ textAlign: 'right', marginTop: '20px' }}>
-            <Button onClick={onClose} style={{ marginRight: '10px' }}>Hủy</Button>
-            <Button type="primary" htmlType="submit" loading={isAppointmentLoading}>Đặt lịch</Button>
+            <Button onClick={onClose} style={{ marginRight: '10px' }}>{t("common.cancel")}</Button>
+            <Button type="primary" htmlType="submit" loading={isAppointmentLoading}>{t("appointments.submitBook")}</Button>
           </Form.Item>
         </Form>
       </Modal>

@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
 import apiClient from "@/lib/apiClient";
 import { QRCodeSVG } from "qrcode.react"; // Requires: npm install qrcode.react
+import { useTranslation } from "react-i18next";
 
 import { useAuthStore } from "@/store/authStore";
 
@@ -10,6 +11,7 @@ const { Title, Text, Paragraph } = Typography;
 
 export const MFASetupPage = () => {
   const navigate = useNavigate();
+  const { t } = useTranslation();
   const user = useAuthStore(s => s.user);
   const updateAuthUser = useAuthStore(s => s.updateAuthUser);
   const [loading, setLoading] = useState(false);
@@ -22,7 +24,7 @@ export const MFASetupPage = () => {
         setSetupData(res.data.data);
       })
       .catch(err => {
-        message.error("Lỗi khi tải cấu hình MFA");
+        message.error(t("auth.errors.mfaSetupFailed"));
         console.error(err);
       });
   }, []);
@@ -40,7 +42,7 @@ export const MFASetupPage = () => {
         updateAuthUser({ ...user, mfa_enabled: true });
       }
 
-      message.success("Thiết lập MFA thành công");
+      message.success(t("auth.mfaSetupSuccess"));
       
       const role = user?.role_ids && user.role_ids.length > 0 ? "admin" : "receptionist";
       const getRoleRoute = (r: string) => {
@@ -55,33 +57,33 @@ export const MFASetupPage = () => {
       navigate(getRoleRoute(role)); // Redirect to correct dashboard
     } catch (err: any) {
       console.error(err);
-      message.error("Mã xác thực không đúng");
+      message.error(t("auth.errors.invalidMFA"));
     } finally {
       setLoading(false);
     }
   };
 
   if (!setupData) {
-    return <div style={{ textAlign: "center", marginTop: 100 }}>Loading MFA Setup...</div>;
+    return <div style={{ textAlign: "center", marginTop: 100 }}>{t("common.loading")}</div>;
   }
 
   return (
     <div style={{ display: "flex", justifyContent: "center", alignItems: "center", minHeight: "100vh", backgroundColor: "var(--color-bg)", padding: 20 }}>
       <Card style={{ maxWidth: 500 }}>
-        <Title level={3} style={{ textAlign: "center" }}>Thiết lập Xác thực 2 bước</Title>
+        <Title level={3} style={{ textAlign: "center" }}>{t("auth.mfaSetupTitle")}</Title>
         
         <div style={{ textAlign: "center", margin: "20px 0" }}>
           <QRCodeSVG value={setupData.qr_uri} size={200} />
         </div>
 
         <Paragraph>
-          1. Cài đặt ứng dụng Google Authenticator hoặc Authy.<br />
-          2. Quét mã QR ở trên để thêm tài khoản.<br />
-          3. Lưu lại các mã dự phòng (Backup Codes) ở nơi an toàn.
+          {t("auth.mfaStep1")}<br />
+          {t("auth.mfaStep2")}<br />
+          {t("auth.mfaStep3")}
         </Paragraph>
 
         <div style={{ backgroundColor: "#f5f5f5", padding: 15, borderRadius: 8, marginBottom: 20 }}>
-          <Text strong>Backup Codes (Chỉ hiển thị 1 lần duy nhất):</Text>
+          <Text strong>{t("auth.backupCodesDesc")}</Text>
           <List
             size="small"
             dataSource={setupData.backup_codes}
@@ -91,12 +93,12 @@ export const MFASetupPage = () => {
         </div>
 
         <Form name="mfa_setup" onFinish={onFinish} layout="vertical">
-          <Form.Item label="Nhập mã 6 số để xác nhận" name="code" rules={[{ required: true, len: 6, message: "Mã phải có 6 chữ số!" }]}>
+          <Form.Item label={t("auth.mfaCode")} name="code" rules={[{ required: true, len: 6, message: t("auth.errors.require6Digits") }]}>
             <Input disabled={loading} maxLength={6} style={{ textAlign: 'center', letterSpacing: '0.5em', fontSize: '1.2em' }} />
           </Form.Item>
           <Form.Item>
             <Button type="primary" htmlType="submit" block loading={loading}>
-              Xác nhận & Hoàn tất
+              {t("auth.confirmSetup")}
             </Button>
           </Form.Item>
         </Form>

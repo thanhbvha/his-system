@@ -1,6 +1,7 @@
 import { useEffect } from "react";
 import { Modal, Form, Select, message } from "antd";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useTranslation } from "react-i18next";
 import apiClient from "@/lib/apiClient";
 
 interface AssignRolesModalProps {
@@ -11,6 +12,7 @@ interface AssignRolesModalProps {
 }
 
 export const AssignRolesModal = ({ open, onClose, user, roles }: AssignRolesModalProps) => {
+  const { t } = useTranslation();
   const [form] = Form.useForm();
   const queryClient = useQueryClient();
 
@@ -27,26 +29,26 @@ export const AssignRolesModal = ({ open, onClose, user, roles }: AssignRolesModa
       await apiClient.put(`/admin/users/${user.id}/roles`, values);
     },
     onSuccess: () => {
-      message.success("Cập nhật quyền thành công");
+      message.success(t("admin.roles.updateSuccess"));
       queryClient.invalidateQueries({ queryKey: ["users"] });
       onClose();
     },
     onError: (err: any) => {
-      message.error(err.response?.data?.message || "Cập nhật thất bại");
+      message.error(err.response?.data?.message || t("admin.roles.updateFail"));
     }
   });
 
   return (
     <Modal
-      title={`Cấp quyền cho ${user?.username}`}
+      title={t("admin.roles.assignTo", { username: user?.username })}
       open={open}
       onCancel={onClose}
       onOk={() => form.submit()}
       confirmLoading={updateMutation.isPending}
     >
       <Form form={form} layout="vertical" onFinish={(values) => updateMutation.mutate(values)}>
-        <Form.Item name="role_ids" label="Chọn Quyền (Roles)" rules={[{ required: true }]}>
-          <Select mode="multiple" placeholder="Chọn một hoặc nhiều Role">
+        <Form.Item name="role_ids" label={t("admin.roles.selectRoles")} rules={[{ required: true }]}>
+          <Select mode="multiple" placeholder={t("admin.roles.selectMultiplePlaceholder")}>
             {roles?.map(r => <Select.Option key={r.id} value={r.id}>{r.name}</Select.Option>)}
           </Select>
         </Form.Item>

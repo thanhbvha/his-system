@@ -47,3 +47,13 @@ Dùng Zustand `bookingStore` persist state qua các bước:
 - Nút **Hủy** chỉ hiện nếu `scheduled_at > now + 24h`.
 - Confirm dialog trước khi hủy → `DELETE /appointments/:id`.
 - Empty state + CTA "Đặt lịch ngay".
+
+### 4. Kết quả thực hiện (Đã hoàn thành)
+- **Frontend Pages & Components**: 
+  - Đã hoàn thiện toàn bộ luồng 4 bước (`StepService`, `StepDoctor`, `StepSlot`, `StepConfirm`) trong `BookingPage.tsx`.
+  - Tích hợp `publicStore` và API cho `LandingPage.tsx` để render các dịch vụ và danh sách bác sĩ linh động.
+  - Trang `MyAppointmentsPage.tsx` đã được cập nhật thành các thẻ Sắp tới/Lịch sử với trạng thái màu sắc rõ ràng và tính năng Hủy lịch hẹn.
+- **Backend API (Mock)**:
+  - Bổ sung mock data tạm thời vào `PublicHandler` (`/api/v1/public/doctors`, `/api/v1/public/services`) để UI hiển thị được trước khi ghép với Database thật.
+- **Lỗi 409 Conflict**:
+  - Đã catch lỗi 409 khi đặt trùng slot, tự động thông báo và rollback người dùng về `StepSlot` (Bước 3) sau vài giây để chọn khung giờ khác.

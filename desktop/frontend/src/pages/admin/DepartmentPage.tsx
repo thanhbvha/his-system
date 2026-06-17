@@ -2,10 +2,12 @@ import { useState } from "react";
 import { Table, Button, Modal, Form, Input, message } from "antd";
 import { PlusOutlined } from "@ant-design/icons";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useTranslation } from "react-i18next";
 import apiClient from "@/lib/apiClient";
 
 export const DepartmentPage = () => {
   const queryClient = useQueryClient();
+  const { t } = useTranslation();
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [form] = Form.useForm();
 
@@ -22,29 +24,29 @@ export const DepartmentPage = () => {
       await apiClient.post("/admin/departments", values);
     },
     onSuccess: () => {
-      message.success("Đã thêm Khoa/Phòng ban mới");
+      message.success(t("admin.departments.createSuccess"));
       setIsModalVisible(false);
       form.resetFields();
       queryClient.invalidateQueries({ queryKey: ["departments"] });
     },
     onError: (err: any) => {
-      message.error(err.response?.data?.message || "Có lỗi xảy ra");
+      message.error(err.response?.data?.message || t("common.error"));
     }
   });
 
   const columns = [
-    { title: "Mã khoa", dataIndex: "code", key: "code", width: 150 },
-    { title: "Tên khoa/phòng", dataIndex: "name", key: "name", width: 250 },
-    { title: "Mô tả", dataIndex: "description", key: "description" },
-    { title: "Số nhân viên", dataIndex: "employee_count", key: "employee_count", width: 150, render: (val: number) => val || 0 },
+    { title: t("admin.departments.code"), dataIndex: "code", key: "code", width: 150 },
+    { title: t("admin.departments.name"), dataIndex: "name", key: "name", width: 250 },
+    { title: t("admin.departments.description"), dataIndex: "description", key: "description" },
+    { title: t("admin.departments.employeeCount"), dataIndex: "employee_count", key: "employee_count", width: 150, render: (val: number) => val || 0 },
   ];
 
   return (
     <div>
       <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 16 }}>
-        <h2>Quản lý Khoa / Phòng ban</h2>
+        <h2>{t("admin.departments.title")}</h2>
         <Button type="primary" icon={<PlusOutlined />} onClick={() => setIsModalVisible(true)}>
-          Thêm mới
+          {t("admin.departments.addNew")}
         </Button>
       </div>
 
@@ -57,7 +59,7 @@ export const DepartmentPage = () => {
       />
 
       <Modal
-        title="Thêm Khoa / Phòng ban mới"
+        title={t("admin.departments.addTitle")}
         open={isModalVisible}
         onOk={() => form.submit()}
         onCancel={() => setIsModalVisible(false)}
@@ -66,23 +68,23 @@ export const DepartmentPage = () => {
         <Form form={form} layout="vertical" onFinish={(values) => createMutation.mutate(values)}>
           <Form.Item 
             name="code" 
-            label="Mã khoa" 
-            rules={[{ required: true, message: "Vui lòng nhập mã khoa" }]}
+            label={t("admin.departments.code")}
+            rules={[{ required: true, message: t("admin.departments.requireCode") }]}
           >
-            <Input placeholder="VD: KHOA_NOI" />
+            <Input placeholder={t("admin.departments.codePlaceholder")} />
           </Form.Item>
           <Form.Item 
             name="name" 
-            label="Tên khoa/phòng" 
-            rules={[{ required: true, message: "Vui lòng nhập tên khoa" }]}
+            label={t("admin.departments.name")}
+            rules={[{ required: true, message: t("admin.departments.requireName") }]}
           >
-            <Input placeholder="VD: Khoa Nội tổng hợp" />
+            <Input placeholder={t("admin.departments.namePlaceholder")} />
           </Form.Item>
           <Form.Item 
             name="description" 
-            label="Mô tả" 
+            label={t("admin.departments.description")}
           >
-            <Input.TextArea rows={3} placeholder="Mô tả ngắn gọn về chức năng của khoa/phòng" />
+            <Input.TextArea rows={3} placeholder={t("admin.departments.descPlaceholder")} />
           </Form.Item>
         </Form>
       </Modal>

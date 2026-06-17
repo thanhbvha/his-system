@@ -8,7 +8,7 @@ import { GetPublicKey, SignData } from "../../wailsjs/go/main/App";
 
 export const Login = () => {
   const navigate = useNavigate();
-  const { i18n } = useTranslation();
+  const { t, i18n } = useTranslation();
   const setAuth = useAuthStore((s) => s.setAuth);
   const [loading, setLoading] = useState(false);
 
@@ -67,19 +67,19 @@ export const Login = () => {
       if (user.mfa_enabled === false) {
         navigate("/mfa-setup");
       } else {
-        navigate(getRoleRoute(role));
+        navigate("/profile");
       }
     } catch (err: any) {
       console.error(err);
       if (err.response?.status === 401) {
-        message.error("Tên đăng nhập hoặc mật khẩu không đúng");
+        message.error(t("auth.errors.invalidCredentials"));
       } else if (err.response?.status === 429) {
-        message.error("Quá nhiều lần thử. Vui lòng đợi vài phút.");
+        message.error(t("auth.errors.tooManyAttempts"));
       } else if (err.response?.status === 423) {
-        message.error("Tài khoản bị khóa. Liên hệ quản trị viên.");
+        message.error(t("auth.errors.accountLocked"));
       } else {
         const backendMsg = err.response?.data?.error?.message || err.response?.data?.message;
-        message.error(backendMsg || "Lỗi hệ thống");
+        message.error(backendMsg || t("common.error"));
       }
     } finally {
       setLoading(false);
@@ -88,17 +88,17 @@ export const Login = () => {
 
   return (
     <div style={{ display: "flex", justifyContent: "center", alignItems: "center", height: "100vh", backgroundColor: "var(--color-bg)" }}>
-      <Card title="HIS Login" style={{ width: 350 }}>
+      <Card title={t("auth.loginTitle")} style={{ width: 350 }}>
         <Form name="login" onFinish={onFinish} layout="vertical">
-          <Form.Item label="Username" name="username" rules={[{ required: true, message: "Please input your username!" }]}>
+          <Form.Item label={t("auth.username")} name="username" rules={[{ required: true, message: t("auth.errors.requireUsername") }]}>
             <Input disabled={loading} />
           </Form.Item>
-          <Form.Item label="Password" name="password" rules={[{ required: true, message: "Please input your password!" }]}>
+          <Form.Item label={t("auth.password")} name="password" rules={[{ required: true, message: t("auth.errors.requirePassword") }]}>
             <Input.Password disabled={loading} />
           </Form.Item>
           <Form.Item>
             <Button type="primary" htmlType="submit" block loading={loading}>
-              Đăng nhập
+              {t("auth.loginBtn")}
             </Button>
           </Form.Item>
         </Form>

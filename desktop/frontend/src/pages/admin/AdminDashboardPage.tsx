@@ -1,9 +1,11 @@
 import { Card, Col, Row, Statistic, Spin } from "antd";
 import { UserOutlined, SafetyCertificateOutlined, BankOutlined } from "@ant-design/icons";
 import { useQuery } from "@tanstack/react-query";
+import { useTranslation } from "react-i18next";
 import apiClient from "@/lib/apiClient";
 
 export const AdminDashboardPage = () => {
+  const { t } = useTranslation();
   // Fetch basic stats (we could have a dedicated endpoint, but we'll try to estimate or call multiple if needed)
   // For now, let's just make dummy queries to get meta data if backend supports it.
   
@@ -41,12 +43,12 @@ export const AdminDashboardPage = () => {
 
   return (
     <div>
-      <h2 style={{ marginBottom: 24 }}>Admin Dashboard</h2>
+      <h2 style={{ marginBottom: 24 }}>{t("admin.dashboard.title")}</h2>
       <Row gutter={16}>
         <Col span={8}>
           <Card bordered={false} style={{ boxShadow: "0 2px 8px rgba(0,0,0,0.08)" }}>
             <Statistic
-              title="Tổng số nhân viên"
+              title={t("admin.dashboard.totalUsers")}
               value={totalUsers}
               prefix={<UserOutlined style={{ color: "#1677ff" }} />}
             />
@@ -55,7 +57,7 @@ export const AdminDashboardPage = () => {
         <Col span={8}>
           <Card bordered={false} style={{ boxShadow: "0 2px 8px rgba(0,0,0,0.08)" }}>
             <Statistic
-              title="Tổng số Roles"
+              title={t("admin.dashboard.totalRoles")}
               value={totalRoles}
               prefix={<SafetyCertificateOutlined style={{ color: "#52c41a" }} />}
             />
@@ -64,7 +66,7 @@ export const AdminDashboardPage = () => {
         <Col span={8}>
           <Card bordered={false} style={{ boxShadow: "0 2px 8px rgba(0,0,0,0.08)" }}>
             <Statistic
-              title="Tổng số Khoa/Phòng"
+              title={t("admin.dashboard.totalDepts")}
               value={totalDepts}
               prefix={<BankOutlined style={{ color: "#faad14" }} />}
             />

@@ -2,12 +2,14 @@ import { Button, Form, Input, Card, message } from "antd";
 import { useNavigate, useLocation, Navigate } from "react-router-dom";
 import { useAuthStore } from "@/store/authStore";
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import apiClient from "@/lib/apiClient";
 import { GetPublicKey, SignData } from "../../wailsjs/go/main/App";
 
 export const MFAPage = () => {
   const navigate = useNavigate();
   const location = useLocation();
+  const { t } = useTranslation();
   const setAuth = useAuthStore((s) => s.setAuth);
   const [loading, setLoading] = useState(false);
 
@@ -57,13 +59,13 @@ export const MFAPage = () => {
       const role = user.role_ids && user.role_ids.length > 0 ? "admin" : "receptionist";
       
       setAuth(access_token, refresh_token, user, role as any);
-      navigate(getRoleRoute(role));
+      navigate("/profile");
     } catch (err: any) {
       console.error(err);
       if (err.response?.status === 401 || err.response?.status === 400) {
-        message.error("Mã xác thực không đúng");
+        message.error(t("auth.errors.invalidMFA"));
       } else {
-        message.error("Lỗi hệ thống");
+        message.error(t("common.error"));
       }
     } finally {
       setLoading(false);
@@ -72,19 +74,19 @@ export const MFAPage = () => {
 
   return (
     <div style={{ display: "flex", justifyContent: "center", alignItems: "center", height: "100vh", backgroundColor: "var(--color-bg)" }}>
-      <Card title="Xác thực 2 bước (MFA)" style={{ width: 350 }}>
-        <p>Vui lòng nhập mã 6 số từ ứng dụng Authenticator của bạn.</p>
+      <Card title={t("auth.mfaTitle")} style={{ width: 350 }}>
+        <p>{t("auth.mfaInstruction")}</p>
         <Form name="mfa" onFinish={onFinish} layout="vertical">
-          <Form.Item label="Mã xác thực" name="code" rules={[{ required: true, len: 6, message: "Mã phải có 6 chữ số!" }]}>
+          <Form.Item label={t("auth.mfaCode")} name="code" rules={[{ required: true, len: 6, message: t("auth.errors.require6Digits") }]}>
             <Input disabled={loading} maxLength={6} style={{ textAlign: 'center', letterSpacing: '0.5em', fontSize: '1.2em' }} />
           </Form.Item>
           <Form.Item>
             <Button type="primary" htmlType="submit" block loading={loading}>
-              Xác nhận
+              {t("common.confirm")}
             </Button>
           </Form.Item>
           <div style={{ textAlign: "center", marginTop: 16 }}>
-            <Button type="link" onClick={() => message.info("Chức năng dùng mã dự phòng chưa triển khai")}>Dùng mã dự phòng</Button>
+            <Button type="link" onClick={() => message.info(t("auth.backupCodeNotImplemented"))}>{t("auth.useBackupCode")}</Button>
           </div>
         </Form>
       </Card>

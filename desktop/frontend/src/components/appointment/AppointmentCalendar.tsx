@@ -2,11 +2,13 @@ import React, { useEffect, useState } from 'react';
 import { Calendar, Badge, Modal, List, Typography, Button, Spin, Tag, Space, DatePicker } from 'antd';
 import type { Dayjs } from 'dayjs';
 import dayjs from 'dayjs';
+import { useTranslation } from "react-i18next";
 import { useAppointmentStore, Appointment } from '@/store/appointmentStore';
 
 const { Text } = Typography;
 
 export const AppointmentCalendar: React.FC = () => {
+  const { t } = useTranslation();
   const { fetchByDate, appointments, isLoading, updateStatus } = useAppointmentStore();
   const [selectedDate, setSelectedDate] = useState<Dayjs>(dayjs());
   const [isModalVisible, setIsModalVisible] = useState(false);
@@ -94,7 +96,7 @@ export const AppointmentCalendar: React.FC = () => {
       <Calendar value={selectedDate} onSelect={onSelect} cellRender={cellRender} />
 
       <Modal
-        title={`Lịch hẹn ngày ${selectedDate.format('DD/MM/YYYY')}`}
+        title={t("appointments.calendarTitle", { date: selectedDate.format('DD/MM/YYYY') })}
         open={isModalVisible}
         onCancel={() => setIsModalVisible(false)}
         footer={null}
@@ -108,16 +110,16 @@ export const AppointmentCalendar: React.FC = () => {
               actions={[
                 app.status === 'PENDING' && (
                   <Button key="confirm" type="primary" size="small" onClick={() => handleStatusUpdate(app.id, 'CONFIRMED')}>
-                    Xác nhận
+                    {t("appointments.confirm")}
                   </Button>
                 ),
                 (app.status === 'PENDING' || app.status === 'CONFIRMED') && (
                   <Button key="checkin" type="default" size="small" onClick={() => handleStatusUpdate(app.id, 'CHECKED_IN')}>
-                    Check-in
+                    {t("appointments.checkin")}
                   </Button>
                 ),
                 <Button key="cancel" danger size="small" onClick={() => handleStatusUpdate(app.id, 'CANCELLED')} disabled={app.status === 'COMPLETED' || app.status === 'CANCELLED'}>
-                  Hủy
+                  {t("common.cancel")}
                 </Button>
               ].filter(Boolean)}
             >
@@ -129,11 +131,11 @@ export const AppointmentCalendar: React.FC = () => {
                     <Tag color={getStatusColor(app.status)}>{app.status}</Tag>
                   </Space>
                 }
-                description={`Bác sĩ: ${app.doctor?.full_name} | Dịch vụ: ${app.service?.name} | Ghi chú: ${app.note || 'Không'}`}
+                description={t("appointments.appDesc", { doctor: app.doctor?.full_name, service: app.service?.name, note: app.note || t("common.none") })}
               />
             </List.Item>
           )}
-          locale={{ emptyText: 'Không có lịch hẹn nào' }}
+          locale={{ emptyText: t("appointments.noAppointments") }}
         />
       </Modal>
     </div>

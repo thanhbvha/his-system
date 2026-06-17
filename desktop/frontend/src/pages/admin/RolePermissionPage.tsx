@@ -2,10 +2,12 @@ import { useState, useEffect } from "react";
 import { Table, Checkbox, Button, message, Space } from "antd";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { SaveOutlined } from "@ant-design/icons";
+import { useTranslation } from "react-i18next";
 import apiClient from "@/lib/apiClient";
 
 export const RolePermissionPage = () => {
   const queryClient = useQueryClient();
+  const { t } = useTranslation();
   const [matrixState, setMatrixState] = useState<Record<string, Record<string, boolean>>>({});
   const [dirtyRoles, setDirtyRoles] = useState<Set<string>>(new Set());
 
@@ -47,11 +49,11 @@ export const RolePermissionPage = () => {
       await apiClient.put(`/admin/roles/${roleId}/permissions`, { permissions });
     },
     onSuccess: () => {
-      message.success("Lưu phân quyền thành công!");
+      message.success(t("admin.roles.saveSuccess"));
       queryClient.invalidateQueries({ queryKey: ["roles"] });
     },
     onError: () => {
-      message.error("Lỗi khi lưu phân quyền");
+      message.error(t("admin.roles.saveError"));
     }
   });
 
@@ -73,7 +75,7 @@ export const RolePermissionPage = () => {
 
   const handleSave = async () => {
     if (dirtyRoles.size === 0) {
-      message.info("Không có thay đổi nào để lưu");
+      message.info(t("admin.roles.noChanges"));
       return;
     }
 
@@ -143,9 +145,9 @@ export const RolePermissionPage = () => {
   return (
     <div>
       <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 16 }}>
-        <h2>Ma trận Phân quyền (Roles & Permissions)</h2>
+        <h2>{t("admin.roles.title")}</h2>
         <Space>
-          {dirtyRoles.size > 0 && <span style={{ color: "#faad14" }}>Chưa lưu ({dirtyRoles.size} roles)</span>}
+          {dirtyRoles.size > 0 && <span style={{ color: "#faad14" }}>{t("admin.roles.unsavedChanges", { count: dirtyRoles.size })}</span>}
           <Button 
             type="primary" 
             icon={<SaveOutlined />} 
@@ -153,7 +155,7 @@ export const RolePermissionPage = () => {
             loading={updatePermissionsMutation.isPending}
             disabled={dirtyRoles.size === 0}
           >
-            Lưu thay đổi
+            {t("admin.roles.saveChanges")}
           </Button>
         </Space>
       </div>

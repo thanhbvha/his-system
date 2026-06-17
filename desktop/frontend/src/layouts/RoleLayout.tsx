@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import { Layout, Menu, Button } from "antd";
 import { Outlet, useNavigate, useLocation } from "react-router-dom";
 import { useTranslation } from "react-i18next";
@@ -13,7 +14,8 @@ import {
   SafetyOutlined,
   BankOutlined,
   SolutionOutlined,
-  CalendarOutlined
+  CalendarOutlined,
+  UserOutlined
 } from "@ant-design/icons";
 
 const { Header, Sider, Content } = Layout;
@@ -23,9 +25,16 @@ export const RoleLayout = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const role = useAuthStore((s) => s.role);
+  const user = useAuthStore((s) => s.user);
   const clearAuth = useAuthStore((s) => s.clearAuth);
   const updateAuthUser = useAuthStore((s) => s.updateAuthUser);
   const { sidebarOpen, toggleSidebar } = useUIStore();
+
+  useEffect(() => {
+    if (user?.preferred_language && i18n.language !== user.preferred_language) {
+      i18n.changeLanguage(user.preferred_language);
+    }
+  }, [user?.preferred_language, i18n]);
 
   const handleLogout = () => {
     clearAuth();
@@ -48,10 +57,10 @@ export const RoleLayout = () => {
     
     if (role === "admin") {
        baseItems.push(
-         { key: "/admin/dashboard", label: "Dashboard", icon: <DashboardOutlined /> },
-         { key: "/admin/users", label: "Quản lý User", icon: <TeamOutlined /> },
-         { key: "/admin/roles", label: "Phân quyền", icon: <SafetyOutlined /> },
-         { key: "/admin/departments", label: "Khoa/Phòng ban", icon: <BankOutlined /> },
+         { key: "/admin/dashboard", label: t("nav.adminDashboard"), icon: <DashboardOutlined /> },
+         { key: "/admin/users", label: t("nav.manageUsers"), icon: <TeamOutlined /> },
+         { key: "/admin/roles", label: t("nav.roles"), icon: <SafetyOutlined /> },
+         { key: "/admin/departments", label: t("nav.departments"), icon: <BankOutlined /> },
          { type: 'divider' },
          { key: "/patients", label: t("nav.patients", "Bệnh nhân"), icon: <SolutionOutlined /> },
          { key: "/appointments", label: t("nav.appointments", "Lịch hẹn"), icon: <CalendarOutlined /> }
@@ -85,6 +94,9 @@ export const RoleLayout = () => {
         <Header style={{ padding: 0, background: "#fff", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
           <Button type="text" icon={sidebarOpen ? <MenuFoldOutlined /> : <MenuUnfoldOutlined />} onClick={toggleSidebar} style={{ fontSize: "16px", width: 64, height: 64 }} />
           <div style={{ paddingRight: 24 }}>
+            <Button icon={<UserOutlined />} onClick={() => navigate("/profile")} style={{ marginRight: 16 }}>
+              {t("nav.profile")}
+            </Button>
             <Button onClick={handleLanguageChange} style={{ marginRight: 16 }}>
               {i18n.language === "vi" ? "EN" : "VI"}
             </Button>

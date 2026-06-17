@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Form, Input, DatePicker, Select, Button, message, Space, Card } from 'antd';
 import { usePatientStore } from '@/store/patientStore';
 import dayjs from 'dayjs';
+import { useTranslation } from "react-i18next";
 
 const { Option } = Select;
 
@@ -11,6 +12,7 @@ interface PatientRegFormProps {
 }
 
 export const PatientRegForm: React.FC<PatientRegFormProps> = ({ onSuccess, onCancel }) => {
+  const { t } = useTranslation();
   const [form] = Form.useForm();
   const { createPatient, isLoading } = usePatientStore();
 
@@ -22,16 +24,16 @@ export const PatientRegForm: React.FC<PatientRegFormProps> = ({ onSuccess, onCan
       };
       
       const newPatient = await createPatient(payload);
-      message.success(`Đăng ký thành công! Mã BN: ${newPatient.patient_code || newPatient.id}`);
+      message.success(t("patients.regSuccess") + (newPatient.patient_code || newPatient.id));
       form.resetFields();
       if (onSuccess) onSuccess(newPatient);
     } catch (error: any) {
-      message.error(error.response?.data?.message || 'Đăng ký thất bại');
+      message.error(error.response?.data?.message || t("patients.regFail"));
     }
   };
 
   return (
-    <Card title="Đăng ký Bệnh nhân mới" bordered={false}>
+    <Card title={t("patients.regNewTitle")} bordered={false}>
       <Form
         form={form}
         layout="vertical"
@@ -40,8 +42,8 @@ export const PatientRegForm: React.FC<PatientRegFormProps> = ({ onSuccess, onCan
       >
         <Form.Item
           name="full_name"
-          label="Họ và tên"
-          rules={[{ required: true, message: 'Vui lòng nhập họ tên!' }]}
+          label={t("patients.fullName")}
+          rules={[{ required: true, message: t("patients.requireFullName") }]}
         >
           <Input placeholder="Nguyễn Văn A" />
         </Form.Item>
@@ -49,21 +51,21 @@ export const PatientRegForm: React.FC<PatientRegFormProps> = ({ onSuccess, onCan
         <Space style={{ display: 'flex' }} size="large">
           <Form.Item
             name="dob"
-            label="Ngày sinh"
-            rules={[{ required: true, message: 'Vui lòng chọn ngày sinh!' }]}
+            label={t("patients.dob")}
+            rules={[{ required: true, message: t("patients.requireDob") }]}
           >
             <DatePicker format="DD/MM/YYYY" style={{ width: 200 }} />
           </Form.Item>
 
           <Form.Item
             name="gender"
-            label="Giới tính"
-            rules={[{ required: true, message: 'Vui lòng chọn giới tính!' }]}
+            label={t("patients.gender")}
+            rules={[{ required: true, message: t("patients.requireGender") }]}
           >
             <Select style={{ width: 120 }}>
-              <Option value="MALE">Nam</Option>
-              <Option value="FEMALE">Nữ</Option>
-              <Option value="OTHER">Khác</Option>
+              <Option value="MALE">{t("patients.male")}</Option>
+              <Option value="FEMALE">{t("patients.female")}</Option>
+              <Option value="OTHER">{t("patients.other")}</Option>
             </Select>
           </Form.Item>
         </Space>
@@ -71,10 +73,10 @@ export const PatientRegForm: React.FC<PatientRegFormProps> = ({ onSuccess, onCan
         <Space style={{ display: 'flex' }} size="large">
           <Form.Item
             name="phone"
-            label="Số điện thoại"
+            label={t("patients.phone")}
             rules={[
-              { required: true, message: 'Vui lòng nhập SĐT!' },
-              { pattern: /^[0-9]{10}$/, message: 'SĐT phải gồm 10 chữ số!' }
+              { required: true, message: t("patients.requirePhone") },
+              { pattern: /^[0-9]{10}$/, message: t("patients.invalidPhone") }
             ]}
           >
             <Input placeholder="09xxxxxxxx" maxLength={10} style={{ width: 200 }} />
@@ -82,31 +84,31 @@ export const PatientRegForm: React.FC<PatientRegFormProps> = ({ onSuccess, onCan
 
           <Form.Item
             name="cccd"
-            label="CCCD / CMND"
+            label={t("patients.cccd")}
             rules={[
-              { pattern: /^[0-9]{12}$/, message: 'CCCD phải gồm 12 chữ số!' }
+              { pattern: /^[0-9]{12}$/, message: t("patients.invalidCccd") }
             ]}
           >
             <Input placeholder="001xxxxxxxx" maxLength={12} style={{ width: 200 }} />
           </Form.Item>
         </Space>
 
-        <Form.Item name="email" label="Email" rules={[{ type: 'email', message: 'Email không hợp lệ!' }]}>
+        <Form.Item name="email" label={t("patients.email")} rules={[{ type: 'email', message: t("patients.invalidEmail") }]}>
           <Input placeholder="email@example.com" />
         </Form.Item>
 
-        <Form.Item name="address" label="Địa chỉ liên hệ">
+        <Form.Item name="address" label={t("patients.address")}>
           <Input.TextArea rows={2} placeholder="Số nhà, đường, phường/xã, quận/huyện..." />
         </Form.Item>
 
         <Form.Item>
           <Space>
             <Button type="primary" htmlType="submit" loading={isLoading}>
-              Đăng ký
+              {t("patients.register")}
             </Button>
             {onCancel && (
               <Button onClick={onCancel} disabled={isLoading}>
-                Hủy
+                {t("common.cancel")}
               </Button>
             )}
           </Space>

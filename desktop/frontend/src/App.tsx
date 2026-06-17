@@ -5,6 +5,7 @@ import { Dashboard } from "@/pages/Dashboard";
 import { Login } from "@/pages/Login";
 import { MFAPage } from "@/pages/MFAPage";
 import { MFASetupPage } from "@/pages/MFASetupPage";
+import { ProfilePage } from "@/pages/ProfilePage";
 
 // Admin Pages
 import { AdminDashboardPage } from "@/pages/admin/AdminDashboardPage";
@@ -31,6 +32,7 @@ function App() {
 
           <Route element={<RoleLayout />}>
             <Route path="/" element={<Dashboard />} />
+            <Route path="/profile" element={<ProfilePage />} />
 
             {/* Admin Routes */}
             <Route path="/admin" element={<ProtectedRoute roles={["admin"]} />}>
