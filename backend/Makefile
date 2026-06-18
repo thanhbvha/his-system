@@ -17,3 +17,9 @@ swag:
 
 build:
 	go build -o bin/api cmd/api/main.go
+	
+build-ws:
+	go build -o bin/websocket cmd/websocket/main.go
+
+dev-ws:
+	go run cmd/websocket/main.go

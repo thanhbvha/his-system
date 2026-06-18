@@ -209,8 +209,8 @@ CREATE INDEX idx_queue_today ON queue_entries((created_at AT TIME ZONE 'Asia/Ho_
 ```
 
 ## Kiểm tra hoàn thành
-- [ ] `go build ./...` thành công, không có lỗi compile
-- [ ] Custom WS Adapter hoạt động: Client kết nối WS thành công qua `?token=` và nhận được danh sách queue hiện tại ngay lập tức.
-- [ ] HTTP `POST /queue/checkin` tạo queue_number thành công.
-- [ ] Mọi thay đổi qua HTTP đều tự động gọi `ws.BroadcastToAll()`, dữ liệu được publish tới mọi client qua `go-common/websocket`.
-- [ ] Heartbeat ping/pong (60s mặc định của thư viện) tự động chạy ổn định.
+- [x] `go build ./...` thành công, không có lỗi compile
+- [x] Custom WS Adapter hoạt động: Client kết nối WS thành công qua `?token=` và nhận được danh sách queue hiện tại ngay lập tức.
+- [x] HTTP `POST /queue/checkin` tạo queue_number thành công.
+- [x] Mọi thay đổi qua HTTP đều tự động gọi `ws.BroadcastToAll()`, dữ liệu được publish tới mọi client qua `go-common/websocket`.
+- [x] Heartbeat ping/pong (60s mặc định của thư viện) tự động chạy ổn định.

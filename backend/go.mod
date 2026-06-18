@@ -14,7 +14,7 @@ require (
 	github.com/minio/minio-go/v7 v7.2.0
 	github.com/pquerna/otp v1.5.0
 	github.com/swaggo/swag v1.16.6
-	github.com/thanhbvha/go-common v0.1.1
+	github.com/thanhbvha/go-common v0.1.2
 	go.mongodb.org/mongo-driver v1.17.9
 	go.opentelemetry.io/otel v1.44.0
 	go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracegrpc v1.44.0

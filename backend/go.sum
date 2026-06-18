@@ -192,8 +192,8 @@ github.com/stretchr/testify v1.11.1 h1:7s2iGBzp5EwR7/aIZr8ao5+dra3wiQyKjjFuvgVKu
 github.com/stretchr/testify v1.11.1/go.mod h1:wZwfW3scLgRK+23gO65QZefKpKQRnfz6sD981Nm4B6U=
 github.com/swaggo/swag v1.16.6 h1:qBNcx53ZaX+M5dxVyTrgQ0PJ/ACK+NzhwcbieTt+9yI=
 github.com/swaggo/swag v1.16.6/go.mod h1:ngP2etMK5a0P3QBizic5MEwpRmluJZPHjXcMoj4Xesg=
-github.com/thanhbvha/go-common v0.1.1 h1:TfMMNU01Rq4Nvmq1YBoBGlXcBnRQoyNmNxXwXDhBPas=
-github.com/thanhbvha/go-common v0.1.1/go.mod h1:AhN++QI3C4I7oNhiAQXMM4C4XE/4IYeOtSekAtt2U08=
+github.com/thanhbvha/go-common v0.1.2 h1:Esc/ixyEwXCIvFrKuyv9Bk0fRwKsATx28DMqPAqkQLU=
+github.com/thanhbvha/go-common v0.1.2/go.mod h1:AhN++QI3C4I7oNhiAQXMM4C4XE/4IYeOtSekAtt2U08=
 github.com/tinylib/msgp v1.6.1 h1:ESRv8eL3u+DNHUoSAAQRE50Hm162zqAnBoGv9PzScPY=
 github.com/tinylib/msgp v1.6.1/go.mod h1:RSp0LW9oSxFut3KzESt5Voq4GVWyS+PSulT77roAqEA=
 github.com/valyala/bytebufferpool v1.0.0 h1:GqA5TC/0021Y/b9FG4Oi9Mr3q7XYx6KllzawFIhcdPw=

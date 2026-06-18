@@ -11,7 +11,7 @@ package main
 import (
 	"context"
 	"encoding/base64"
-	"fmt"
+
 	"os"
 	"os/signal"
 	"strconv"
@@ -33,6 +33,7 @@ import (
 	authMod "his-system/internal/identity/bootstrap/auth"
 	patientMod "his-system/internal/patient/bootstrap"
 	publicMod "his-system/internal/public/bootstrap"
+	receptionMod "his-system/internal/reception/bootstrap"
 	"his-system/internal/system/handlers"
 
 	"his-system/pkg/crypto"
@@ -47,8 +48,7 @@ import (
 	commonLogger "github.com/thanhbvha/go-common/logger"
 	commonQueue "github.com/thanhbvha/go-common/queue"
 	commonRedis "github.com/thanhbvha/go-common/redis"
-	commonWSFiber "github.com/thanhbvha/go-common/websocket/adapter/fiber"
-	commonWSCore "github.com/thanhbvha/go-common/websocket/core"
+
 )
 
 func main() {
@@ -109,10 +109,7 @@ func main() {
 	q := commonQueue.New(rdb, commonQueue.Config{})
 	appLogger.InfoAsync("Queue initialized", "dispatch_time", time.Now().Format(time.RFC3339Nano))
 
-	// init websocket manager
-	wsManager := commonWSCore.GetGlobalManager()
-	utils.SafeGo(func() { wsManager.Run() })
-	appLogger.InfoAsync("WebSocket manager running", "dispatch_time", time.Now().Format(time.RFC3339Nano))
+
 
 	// init minio client
 	minioClient, err := storage.NewMinioClient(
@@ -214,6 +211,9 @@ func main() {
 		Rdb:    rdb,
 	}).Register(api.Group("/appointments", jwtAuth))
 
+	// /api/v1/queue
+	receptionMod.NewReceptionModule(pgPool).RegisterRoutes(api.Group("/queue", jwtAuth))
+
 	// /api/v1/public
 	publicMod.NewModule(publicMod.ModuleDeps{}).Register(api.Group("/public"))
 
@@ -225,21 +225,7 @@ func main() {
 		return c.SendFile("./docs/swagger.json")
 	})
 
-	// websocket
-	wsHandler := commonWSFiber.NewHandler(commonWSFiber.Config{
-		Authenticate: func(c *fiber.Ctx) (string, error) {
-			token := c.Query("token")
-			if token == "" {
-				return "", fmt.Errorf("missing token")
-			}
-			return token, nil
-		},
-	})
-	app.Get("/ws", wsHandler.HandleUpgrade)
 
-	wsAPI := app.Group("/api/ws")
-	wsAPI.Get("/stats", wsHandler.HandleStats)
-	wsAPI.All("/shard", wsHandler.HandleShardManagement)
 
 	// run server
 	apiPort := os.Getenv("API_PORT")
