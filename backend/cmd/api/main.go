@@ -34,6 +34,7 @@ import (
 	patientMod "his-system/internal/patient/bootstrap"
 	publicMod "his-system/internal/public/bootstrap"
 	receptionMod "his-system/internal/reception/bootstrap"
+	visitMod "his-system/internal/visit/bootstrap"
 	"his-system/internal/system/handlers"
 
 	"his-system/pkg/crypto"
@@ -213,6 +214,13 @@ func main() {
 
 	// /api/v1/queue
 	receptionMod.NewReceptionModule(pgPool).RegisterRoutes(api.Group("/queue", jwtAuth))
+
+	// /api/v1/visits
+	visitModule := visitMod.NewVisitModule(pgPool, q)
+	visitModule.RegisterRoutes(api.Group("/visits", jwtAuth))
+
+	// /api/v1/icd10
+	api.Get("/icd10/search", jwtAuth, visitModule.Handler.SearchICD10)
 
 	// /api/v1/public
 	publicMod.NewModule(publicMod.ModuleDeps{}).Register(api.Group("/public"))

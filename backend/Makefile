@@ -21,5 +21,11 @@ build:
 build-ws:
 	go build -o bin/websocket cmd/websocket/main.go
 
+build-worker:
+	go build -o bin/worker cmd/worker/main.go
+
 dev-ws:
 	go run cmd/websocket/main.go
+
+dev-worker:
+	go run cmd/worker/main.go

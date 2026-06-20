@@ -1,0 +1,4 @@
+DROP TABLE IF EXISTS icd10_codes;
+DROP TABLE IF EXISTS visit_orders;
+DROP TABLE IF EXISTS visit_vitals;
+DROP TABLE IF EXISTS visits;

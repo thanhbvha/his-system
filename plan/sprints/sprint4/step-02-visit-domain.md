@@ -233,10 +233,10 @@ CREATE INDEX idx_icd10_fts ON icd10_codes USING GIN(description_tsv);
 ```
 
 ## Kiểm tra hoàn thành
-- [ ] `go build ./...` thành công
-- [ ] `POST /visits` tạo visit, trả đúng status `REGISTERED`
-- [ ] `GET /visits?doctor_id=me&date=today` trả đúng worklist
-- [ ] `POST /visits/:id/vitals` lưu vitals, `GET` trả lịch sử
-- [ ] `POST /visits/:id/orders` publish Redis Stream `HIS.VISIT.LabOrderCreated`
-- [ ] `POST /visits/:id/close` publish Redis Stream `HIS.VISIT.VisitClosed`
-- [ ] `GET /icd10/search?q=tim` trả kết quả full-text search
+- [x] `go build ./...` thành công
+- [x] `POST /visits` tạo visit, trả đúng status `REGISTERED`
+- [x] `GET /visits?doctor_id=me&date=today` trả đúng worklist
+- [x] `POST /visits/:id/vitals` lưu vitals, `GET` trả lịch sử
+- [x] `POST /visits/:id/orders` publish Redis Stream `HIS.VISIT.LabOrderCreated`
+- [x] `POST /visits/:id/close` publish Redis Stream `HIS.VISIT.VisitClosed`
+- [x] `GET /icd10/search?q=tim` trả kết quả full-text search
