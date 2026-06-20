@@ -204,8 +204,21 @@
       "requirePassword": "Vui lòng tạo mật khẩu",
       "passwordPlaceholder": "Nhấn nút Generate để tạo",
       "roles": "Quyền (Roles)",
-      "department": "Khoa / Phòng ban",
-      "deptPlaceholder": "Chọn phòng ban"
+      "department": "Khoa / Phòng ban"
     }
+  },
+  "queue": {
+    "title": "Hàng đợi hôm nay",
+    "checkIn": "Check-in mới",
+    "callNext": "Gọi số tiếp",
+    "skip": "Bỏ qua",
+    "waiting": "Đang chờ",
+    "called": "Đang gọi",
+    "noQueue": "Không có bệnh nhân đang chờ",
+    "queueNumber": "Số thứ tự",
+    "checkinSuccess": "Check-in thành công! Số: {{number}}",
+    "searchPatient": "Tìm bệnh nhân",
+    "selectService": "Chọn dịch vụ",
+    "linkAppointment": "Liên kết lịch hẹn (Tùy chọn)"
   }
 }

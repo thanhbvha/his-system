@@ -15,7 +15,8 @@ import {
   BankOutlined,
   SolutionOutlined,
   CalendarOutlined,
-  UserOutlined
+  UserOutlined,
+  OrderedListOutlined
 } from "@ant-design/icons";
 
 const { Header, Sider, Content } = Layout;
@@ -63,13 +64,15 @@ export const RoleLayout = () => {
          { key: "/admin/departments", label: t("nav.departments"), icon: <BankOutlined /> },
          { type: 'divider' },
          { key: "/patients", label: t("nav.patients", "Bệnh nhân"), icon: <SolutionOutlined /> },
-         { key: "/appointments", label: t("nav.appointments", "Lịch hẹn"), icon: <CalendarOutlined /> }
+         { key: "/appointments", label: t("nav.appointments", "Lịch hẹn"), icon: <CalendarOutlined /> },
+         { key: "/queue", label: t("queue.title", "Hàng đợi hôm nay"), icon: <OrderedListOutlined /> }
        );
     } else if (role === "doctor" || role === "receptionist") {
        baseItems.push(
          { key: "/", label: t("nav.dashboard"), icon: <DashboardOutlined /> },
          { key: "/patients", label: t("nav.patients", "Bệnh nhân"), icon: <SolutionOutlined /> },
-         { key: "/appointments", label: t("nav.appointments", "Lịch hẹn"), icon: <CalendarOutlined /> }
+         { key: "/appointments", label: t("nav.appointments", "Lịch hẹn"), icon: <CalendarOutlined /> },
+         { key: "/queue", label: t("queue.title", "Hàng đợi hôm nay"), icon: <OrderedListOutlined /> }
        );
     } else {
        baseItems.push({ key: "/", label: t("nav.dashboard") });

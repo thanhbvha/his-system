@@ -204,8 +204,21 @@
       "requirePassword": "Please generate a password",
       "passwordPlaceholder": "Click Generate",
       "roles": "Roles",
-      "department": "Department",
-      "deptPlaceholder": "Select department"
+      "department": "Department"
     }
+  },
+  "queue": {
+    "title": "Today's Queue",
+    "checkIn": "New Check-in",
+    "callNext": "Call Next",
+    "skip": "Skip",
+    "waiting": "Waiting",
+    "called": "Calling",
+    "noQueue": "No patients waiting",
+    "queueNumber": "Queue No.",
+    "checkinSuccess": "Check-in successful! No: {{number}}",
+    "searchPatient": "Search Patient",
+    "selectService": "Select Service",
+    "linkAppointment": "Link Appointment (Optional)"
   }
 }
