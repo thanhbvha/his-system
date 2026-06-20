@@ -85,8 +85,6 @@ apiClient.interceptors.response.use(
             refresh_token: refreshToken, 
             signature: signature, 
             public_key_pem: publicKeyPem 
-        }, { 
-            headers: { "X-Require-Signature": "false" } 
         });
         
         const newToken = res.data.data.access_token;
@@ -99,7 +97,8 @@ apiClient.interceptors.response.use(
         pendingQueue = [];
         
         originalRequest.headers.Authorization = `Bearer ${newToken}`;
-        return apiClient(originalRequest);
+        // Since we are returning the promise, we MUST await it to catch its errors in this try-catch block!
+        return await apiClient(originalRequest);
       } catch (refreshErr) {
         console.error("Refresh token failed:", refreshErr);
         pendingQueue.forEach(p => p.reject(refreshErr));

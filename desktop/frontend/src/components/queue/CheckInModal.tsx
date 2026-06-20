@@ -18,6 +18,7 @@ export const CheckInModal: React.FC<CheckInModalProps> = ({ visible, onClose }) 
   const [selectedPatient, setSelectedPatient] = useState<any>(null);
   const [selectedService, setSelectedService] = useState<string>("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isSearchOpen, setIsSearchOpen] = useState(false);
 
   const { services, fetchServices } = usePublicStore();
   const { checkIn } = useQueueStore();
@@ -68,13 +69,15 @@ export const CheckInModal: React.FC<CheckInModalProps> = ({ visible, onClose }) 
     {
       title: t("queue.searchPatient"),
       content: (
-        <div className="py-4">
+        <div className="py-12 flex flex-col items-center justify-center">
+          <Text className="text-gray-500 mb-4">Vui lòng tìm kiếm và chọn bệnh nhân để tiếp tục</Text>
+          <Button type="primary" size="large" onClick={() => setIsSearchOpen(true)}>
+            {t("queue.searchPatient")}
+          </Button>
           <PatientSearchModal
-            open={true}
-            onClose={() => {}}
+            open={isSearchOpen}
+            onClose={() => setIsSearchOpen(false)}
             onSelect={handlePatientSelect}
-            // We embed the search modal content directly if possible, but since PatientSearchModal is a Modal itself,
-            // we might need to adjust. Assuming PatientSearchModal can be used as a component or we just build a simplified search here.
           />
         </div>
       )
@@ -135,24 +138,7 @@ export const CheckInModal: React.FC<CheckInModalProps> = ({ visible, onClose }) 
         <Steps current={currentStep} items={steps.map(s => ({ title: s.title }))} className="mb-6" />
         
         <div className="bg-white rounded-md min-h-[300px]">
-          {/* Note: In a real app, we'd extract the inside of PatientSearchModal to be a reusable component.
-              For now, we'll build a simplified search right inside this step to avoid nested modals issue. */}
-          {currentStep === 0 ? (
-            <div className="border rounded-lg p-4">
-               <Text className="text-gray-500 italic">
-                 Do PatientSearchModal là một Modal popup, ta tạm thời để 1 nút mở PatientSearchModal ở đây, 
-                 hoặc nhập form tìm kiếm.
-               </Text>
-               <div className="mt-4 text-center">
-                 {/* Temporary placeholder button to simulate search selection */}
-                 <Button type="dashed" onClick={() => handlePatientSelect({ id: "test-id", full_name: "Bệnh nhân test", patient_code: "BN001" })}>
-                   Giả lập: Chọn Bệnh nhân Test
-                 </Button>
-               </div>
-            </div>
-          ) : (
-             steps[currentStep].content
-          )}
+          {steps[currentStep].content}
         </div>
       </div>
     </Modal>

@@ -8,6 +8,7 @@ import (
 
 type Patient struct {
 	ID                     uuid.UUID
+	PatientCode            string
 	FullName               string
 	DOB                    *time.Time
 	Gender                 string // "MALE" | "FEMALE" | "OTHER"

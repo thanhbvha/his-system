@@ -177,10 +177,38 @@ export const ICD10Search = ({ onSelect }) => {
 }
 ```
 
+### 2. Cập nhật Kiến trúc WebSocket: Phân Shard theo Phòng Khám (Clinic Room-based Sharding)
+
+**Mục tiêu:**
+Thay vì phân Shard bằng cách băm (hash) ngẫu nhiên UserID hoặc gộp toàn bộ vào một `queue_shard` duy nhất, chúng ta sẽ chuyển sang kiến trúc **Phân mảnh theo Phòng khám (Room-based Sharding)** để phù hợp với Domain-Driven Design (DDD).
+
+**Lý do:**
+1. **Phù hợp với nghiệp vụ thực tế:** Bác sĩ, Y tá, và Bệnh nhân quan tâm đến dữ liệu Hàng Đợi (Queue) theo từng phòng khám riêng biệt (Ví dụ: Phòng Khám Nội 1, Phòng Chụp X-Quang 2).
+2. **Tối ưu Hóa Hiệu Năng (Scalability):** Hệ thống không cần Broadcast sự kiện gọi số tới toàn bộ mạng WebSocket. Chỉ những Desktop/Màn hình TV đang trực tại phòng khám đó mới nhận được bản tin qua `shard:room-1`.
+3. **Thống kê Real-time chính xác:** Số lượng bệnh nhân đang chờ, đang khám của từng phòng được khoanh vùng cục bộ và đẩy ra chính xác màn hình ngoài cửa phòng khám.
+
+**Kế hoạch triển khai:**
+1. **Frontend (Desktop App):**
+   - Lấy thông tin **Room ID** mà Bác sĩ/Y tá đang trực (từ `authStore` hoặc `userContext` sau khi chọn phòng khám lúc bắt đầu ca làm việc).
+   - Truyền `room_id` lên Backend khi mở kết nối WebSocket (vd: `ws://.../ws/queue?token=...&room_id=R-101`).
+
+2. **Backend - Tầng Adapter (`pkg/ws/adapter.go`):**
+   - Đọc tham số `room_id` từ query string (hoặc từ thông tin ca trực của JWT payload).
+   - Thiết lập `shardID := "room_" + roomID` thay vì chuỗi cứng `"queue_shard"`.
+   - Nếu Client là Tivi hiển thị của khu vực (chưa login cụ thể), TV đó cũng sẽ connect với `room_id` tương ứng của khu vực.
+
+3. **Backend - Tầng API / Command (`commands/call_queue.go`, `event.go`):**
+   - Các API thay đổi trạng thái hàng đợi (Gọi số, Bỏ qua, Hoàn tất) cần query/trích xuất thông tin `room_id` đang xử lý từ Context/Entity.
+   - Sửa lại hàm `Broadcast` để bắn đích danh Pub/Sub vào Shard của phòng đó:
+     ```go
+     pubsubManager.BroadcastMessage("room_" + cmd.RoomID, data)
+     ```
+
 ## Kiểm tra hoàn thành
 - [ ] `npm run build` thành công
 - [ ] Worklist hiển thị đúng danh sách bệnh nhân của bác sĩ hôm nay
 - [ ] Worklist tự cập nhật khi có check-in mới (WS `queue.updated`)
+- [ ] Kiến trúc Room-based Sharding hoạt động ổn định trên môi trường cluster
 - [ ] Nhập vitals thành công, giá trị bất thường highlight màu đỏ
 - [ ] ICD-10 search: gõ "tim" → trả kết quả, debounce 300ms
 - [ ] Tạo chỉ định xét nghiệm thành công

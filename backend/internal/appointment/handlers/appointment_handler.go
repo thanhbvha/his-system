@@ -57,6 +57,17 @@ func handleError(c *fiber.Ctx, err error) error {
 	return response.Fail(c, appErrors.ErrInternal)
 }
 
+// GetAvailableSlots godoc
+// @Summary Get available slots
+// @Description Retrieve available appointment slots for a doctor on a specific date.
+// @Tags Appointment
+// @Accept json
+// @Produce json
+// @Param doctor_id query string true "Doctor ID"
+// @Param date query string true "Date in YYYY-MM-DD"
+// @Success 200 {object} response.Response
+// @Failure 400,404 {object} response.Response
+// @Router /appointments/slots [get]
 func (h *AppointmentHandler) GetAvailableSlots(c *fiber.Ctx) error {
 	docStr := c.Query("doctor_id")
 	dateStr := c.Query("date")
@@ -85,6 +96,22 @@ func (h *AppointmentHandler) GetAvailableSlots(c *fiber.Ctx) error {
 	return response.OK(c, res)
 }
 
+// List godoc
+// @Summary List appointments
+// @Description List appointments with optional filters.
+// @Tags Appointment
+// @Accept json
+// @Produce json
+// @Param date query string false "Filter by date"
+// @Param doctor_id query string false "Filter by Doctor ID"
+// @Param patient_id query string false "Filter by Patient ID"
+// @Param status query string false "Filter by status"
+// @Param page query int false "Page number" default(1)
+// @Param limit query int false "Items per page" default(20)
+// @Success 200 {object} response.Response
+// @Failure 401,403 {object} response.Response
+// @Router /appointments [get]
+// @Security BearerAuth
 func (h *AppointmentHandler) List(c *fiber.Ctx) error {
 	var date *time.Time
 	if d := c.Query("date"); d != "" {
@@ -158,6 +185,17 @@ type BookReq struct {
 	PatientID   *string `json:"patient_id"`   // Used by staff
 }
 
+// Book godoc
+// @Summary Book appointment
+// @Description Book a new appointment.
+// @Tags Appointment
+// @Accept json
+// @Produce json
+// @Param request body BookReq true "Booking Request Payload"
+// @Success 200 {object} response.Response
+// @Failure 400,401,403,409 {object} response.Response
+// @Router /appointments/book [post]
+// @Security BearerAuth
 func (h *AppointmentHandler) Book(c *fiber.Ctx) error {
 	claims := c.Locals("claims").(auth.Claims)
 
@@ -236,6 +274,18 @@ type CancelReq struct {
 	Reason string `json:"reason"`
 }
 
+// Cancel godoc
+// @Summary Cancel appointment
+// @Description Cancel an existing appointment.
+// @Tags Appointment
+// @Accept json
+// @Produce json
+// @Param id path string true "Appointment ID"
+// @Param request body CancelReq true "Cancellation Reason"
+// @Success 200 {object} response.Response
+// @Failure 400,401,404 {object} response.Response
+// @Router /appointments/{id}/cancel [put]
+// @Security BearerAuth
 func (h *AppointmentHandler) Cancel(c *fiber.Ctx) error {
 	idStr := c.Params("id")
 	id, err := uuid.Parse(idStr)
@@ -257,6 +307,17 @@ func (h *AppointmentHandler) Cancel(c *fiber.Ctx) error {
 	return response.OK(c, fiber.Map{"success": true})
 }
 
+// Confirm godoc
+// @Summary Confirm appointment
+// @Description Confirm an existing appointment.
+// @Tags Appointment
+// @Accept json
+// @Produce json
+// @Param id path string true "Appointment ID"
+// @Success 200 {object} response.Response
+// @Failure 400,401,404 {object} response.Response
+// @Router /appointments/{id}/confirm [put]
+// @Security BearerAuth
 func (h *AppointmentHandler) Confirm(c *fiber.Ctx) error {
 	idStr := c.Params("id")
 	id, err := uuid.Parse(idStr)

@@ -15,9 +15,12 @@ type WSEvent struct {
 
 // Event types
 const (
+	EventQueueSync      = "queue.sync"
+	EventQueueCheckedIn = "queue.checked_in"
 	EventQueueUpdated   = "queue.updated"
 	EventQueueCalled    = "queue.called"
 	EventQueueCompleted = "queue.completed"
+	EventQueueSkipped   = "queue.skipped"
 )
 
 // BroadcastToAll is a helper to broadcast a JSON event to all connected clients globally
@@ -31,5 +34,7 @@ func BroadcastToAll(eventType string, payload interface{}) {
 		return
 	}
 
+	// Tạm thời broadcast vào "default" shard của Manager.
+	// API process chỉ khởi tạo mặc định "default" shard nên lệnh này sẽ đẩy sang Redis qua kênh shard:default
 	manager.BroadcastToAll(eventBytes)
 }

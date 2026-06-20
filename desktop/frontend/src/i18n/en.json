@@ -220,5 +220,25 @@
     "searchPatient": "Search Patient",
     "selectService": "Select Service",
     "linkAppointment": "Link Appointment (Optional)"
+  },
+  "visit": {
+    "worklist": "Patient Worklist",
+    "startVisit": "Start Visit",
+    "closeVisit": "Close Visit",
+    "vitals": "Vitals",
+    "addVitals": "Record Vitals",
+    "orders": "Orders",
+    "addOrder": "Add Order",
+    "history": "Medical History",
+    "bp": "Blood Pressure",
+    "heartRate": "Heart Rate",
+    "temp": "Temperature",
+    "spo2": "SpO2",
+    "weight": "Weight",
+    "height": "Height",
+    "abnormal": "Abnormal",
+    "icd10Search": "Search ICD-10",
+    "confirmClose": "Confirm closing this visit?",
+    "noOrders": "No orders yet"
   }
 }

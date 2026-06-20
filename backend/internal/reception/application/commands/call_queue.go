@@ -22,6 +22,18 @@ func HandleCallQueue(ctx context.Context, cmd CallQueueCommand, repo domain.Queu
 		return err
 	}
 
+	// Auto-skip any currently CALLED patients in the same service type
+	todayQueue, err := repo.FindTodayQueue(ctx, entry.ServiceType)
+	if err == nil {
+		for _, qe := range todayQueue {
+			if qe.Status == domain.StatusCalled && qe.ID != entry.ID {
+				_ = qe.Skip()
+				_ = repo.UpdateStatus(ctx, qe.ID, qe.Status)
+				ws.BroadcastToAll(ws.EventQueueSkipped, qe)
+			}
+		}
+	}
+
 	if err := repo.UpdateStatus(ctx, entry.ID, entry.Status); err != nil {
 		return err
 	}

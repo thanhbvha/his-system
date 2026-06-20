@@ -220,5 +220,25 @@
     "searchPatient": "Tìm bệnh nhân",
     "selectService": "Chọn dịch vụ",
     "linkAppointment": "Liên kết lịch hẹn (Tùy chọn)"
+  },
+  "visit": {
+    "worklist": "Danh sách bệnh nhân",
+    "startVisit": "Bắt đầu khám",
+    "closeVisit": "Kết thúc khám",
+    "vitals": "Sinh hiệu",
+    "addVitals": "Ghi nhận sinh hiệu",
+    "orders": "Chỉ định",
+    "addOrder": "Thêm chỉ định",
+    "history": "Lịch sử khám",
+    "bp": "Huyết áp",
+    "heartRate": "Nhịp tim",
+    "temp": "Nhiệt độ",
+    "spo2": "SpO2",
+    "weight": "Cân nặng",
+    "height": "Chiều cao",
+    "abnormal": "Bất thường",
+    "icd10Search": "Tìm mã ICD-10",
+    "confirmClose": "Xác nhận kết thúc buổi khám?",
+    "noOrders": "Chưa có chỉ định nào"
   }
 }

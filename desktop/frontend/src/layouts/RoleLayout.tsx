@@ -65,7 +65,8 @@ export const RoleLayout = () => {
          { type: 'divider' },
          { key: "/patients", label: t("nav.patients", "Bệnh nhân"), icon: <SolutionOutlined /> },
          { key: "/appointments", label: t("nav.appointments", "Lịch hẹn"), icon: <CalendarOutlined /> },
-         { key: "/queue", label: t("queue.title", "Hàng đợi hôm nay"), icon: <OrderedListOutlined /> }
+         { key: "/queue", label: t("queue.title", "Hàng đợi hôm nay"), icon: <OrderedListOutlined /> },
+         { key: "/visits", label: t("visit.worklist", "Danh sách khám"), icon: <UserOutlined /> }
        );
     } else if (role === "doctor" || role === "receptionist") {
        baseItems.push(
@@ -74,6 +75,9 @@ export const RoleLayout = () => {
          { key: "/appointments", label: t("nav.appointments", "Lịch hẹn"), icon: <CalendarOutlined /> },
          { key: "/queue", label: t("queue.title", "Hàng đợi hôm nay"), icon: <OrderedListOutlined /> }
        );
+       if (role === "doctor") {
+         baseItems.push({ key: "/visits", label: t("visit.worklist", "Danh sách khám"), icon: <UserOutlined /> });
+       }
     } else {
        baseItems.push({ key: "/", label: t("nav.dashboard") });
     }

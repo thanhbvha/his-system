@@ -110,7 +110,7 @@ func (h *SearchPatientsHandler) Handle(ctx context.Context, q SearchPatientsQuer
 			DOB:         dob,
 			Gender:      p.Gender,
 			PhoneMasked: phonePlain,
-			PatientCode: "BN-" + p.ID.String()[:8],
+			PatientCode: p.PatientCode,
 		})
 	}
 

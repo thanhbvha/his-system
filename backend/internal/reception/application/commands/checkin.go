@@ -48,10 +48,13 @@ func HandleCheckIn(ctx context.Context, cmd CheckInCommand, repo domain.QueueRep
 		return nil, fmt.Errorf("failed to save queue entry: %w", err)
 	}
 
-	// Broadcast WS event
-	// We can fetch the updated list or just broadcast the new entry
-	// It's usually better to just broadcast "something changed" or the new state
-	ws.BroadcastToAll(ws.EventQueueUpdated, entry)
+	fullEntry, err := repo.FindByID(ctx, entry.ID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to retrieve full entry: %w", err)
+	}
 
-	return entry, nil
+	// Broadcast WS event
+	ws.BroadcastToAll(ws.EventQueueCheckedIn, fullEntry)
+
+	return fullEntry, nil
 }

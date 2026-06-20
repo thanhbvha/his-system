@@ -1,5 +1,43 @@
 basePath: /api/v1
 definitions:
+  admin.AssignRolesReq:
+    properties:
+      role_ids:
+        items:
+          type: string
+        type: array
+    type: object
+  admin.CreateDeptReq:
+    properties:
+      code:
+        type: string
+      description:
+        type: string
+      name:
+        type: string
+    type: object
+  admin.CreateStaffReq:
+    properties:
+      department_id:
+        type: string
+      email:
+        type: string
+      password:
+        type: string
+      role_ids:
+        items:
+          type: string
+        type: array
+      username:
+        type: string
+    type: object
+  admin.UpdatePermissionsReq:
+    properties:
+      permissions:
+        items:
+          $ref: '#/definitions/domain.Permission'
+        type: array
+    type: object
   auth.CompleteLoginRequest:
     properties:
       challenge_string:
@@ -117,6 +155,8 @@ definitions:
         type: string
       mfa_enabled:
         type: boolean
+      preferred_language:
+        type: string
       role_ids:
         items:
           type: string
@@ -135,6 +175,168 @@ definitions:
         type: string
       needs_register:
         type: boolean
+    type: object
+  domain.OrderType:
+    enum:
+    - LAB
+    - RADIOLOGY
+    - PROCEDURE
+    type: string
+    x-enum-varnames:
+    - OrderLab
+    - OrderRadiology
+    - OrderProcedure
+  domain.Permission:
+    properties:
+      action:
+        type: string
+      id:
+        type: string
+      resource:
+        type: string
+    type: object
+  domain.VisitStatus:
+    enum:
+    - REGISTERED
+    - WAITING
+    - IN_PROGRESS
+    - ORDERED
+    - COMPLETED
+    - CANCELLED
+    type: string
+    x-enum-varnames:
+    - VisitRegistered
+    - VisitWaiting
+    - VisitInProgress
+    - VisitOrdered
+    - VisitCompleted
+    - VisitCancelled
+  handlers.BookReq:
+    properties:
+      doctor_id:
+        type: string
+      note:
+        type: string
+      patient_id:
+        description: Used by staff
+        type: string
+      scheduled_at:
+        description: RFC3339
+        type: string
+      service_id:
+        type: string
+      slot_id:
+        type: string
+    type: object
+  handlers.CancelReq:
+    properties:
+      reason:
+        type: string
+    type: object
+  handlers.CheckInReq:
+    properties:
+      appointment_id:
+        type: string
+      patient_id:
+        type: string
+      service_type:
+        type: string
+    type: object
+  handlers.CreateOrderReq:
+    properties:
+      details:
+        type: string
+      order_type:
+        $ref: '#/definitions/domain.OrderType'
+    type: object
+  handlers.CreatePatientReq:
+    properties:
+      address:
+        type: string
+      cccd:
+        type: string
+      dob:
+        description: YYYY-MM-DD
+        type: string
+      email:
+        type: string
+      full_name:
+        type: string
+      gender:
+        type: string
+      phone:
+        type: string
+    type: object
+  handlers.CreateVisitReq:
+    properties:
+      chief_complaint:
+        type: string
+      doctor_id:
+        type: string
+      patient_id:
+        type: string
+      queue_entry_id:
+        type: string
+    type: object
+  handlers.RecordVitalsReq:
+    properties:
+      bp_diastolic:
+        type: integer
+      bp_systolic:
+        type: integer
+      heart_rate:
+        type: integer
+      height_cm:
+        type: number
+      recorded_by:
+        type: string
+      spo2:
+        type: integer
+      temperature:
+        type: number
+      weight_kg:
+        type: number
+    type: object
+  handlers.UpdateInsuranceReq:
+    properties:
+      bhyt_number:
+        type: string
+      coverage_level:
+        type: string
+      issuing_province:
+        type: string
+      valid_from:
+        type: string
+      valid_to:
+        type: string
+    type: object
+  handlers.UpdatePatientReq:
+    properties:
+      address:
+        type: string
+      avatar_url:
+        type: string
+      blood_type:
+        type: string
+      cccd:
+        type: string
+      dob:
+        type: string
+      email:
+        type: string
+      full_name:
+        type: string
+      gender:
+        type: string
+      is_active:
+        type: boolean
+      phone:
+        type: string
+    type: object
+  handlers.UpdateVisitStatusReq:
+    properties:
+      status:
+        $ref: '#/definitions/domain.VisitStatus'
     type: object
   response.ErrorInfo:
     properties:
@@ -169,6 +371,598 @@ info:
   title: HIS System API
   version: "1.0"
 paths:
+  /admin/departments:
+    get:
+      consumes:
+      - application/json
+      description: Retrieve a list of departments.
+      parameters:
+      - default: false
+        description: Include inactive departments
+        in: query
+        name: include_inactive
+        type: boolean
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.Response'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.Response'
+      security:
+      - BearerAuth: []
+      summary: List departments
+      tags:
+      - Admin (User/Role)
+    post:
+      consumes:
+      - application/json
+      description: Create a new department.
+      parameters:
+      - description: Department Creation Payload
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/admin.CreateDeptReq'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.Response'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.Response'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.Response'
+      security:
+      - BearerAuth: []
+      summary: Create department
+      tags:
+      - Admin (User/Role)
+  /admin/permissions:
+    get:
+      consumes:
+      - application/json
+      description: Retrieve a list of all available system permissions.
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.Response'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.Response'
+      security:
+      - BearerAuth: []
+      summary: List permissions
+      tags:
+      - Admin (User/Role)
+  /admin/roles:
+    get:
+      consumes:
+      - application/json
+      description: Retrieve a list of all roles.
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.Response'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.Response'
+      security:
+      - BearerAuth: []
+      summary: List roles
+      tags:
+      - Admin (User/Role)
+  /admin/roles/{id}/permissions:
+    get:
+      consumes:
+      - application/json
+      description: Retrieve permissions for a specific role.
+      parameters:
+      - description: Role ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.Response'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.Response'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/response.Response'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.Response'
+      security:
+      - BearerAuth: []
+      summary: Get role permissions
+      tags:
+      - Admin (User/Role)
+    put:
+      consumes:
+      - application/json
+      description: Update the permissions assigned to a role.
+      parameters:
+      - description: Role ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Permissions Update Payload
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/admin.UpdatePermissionsReq'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.Response'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.Response'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/response.Response'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.Response'
+      security:
+      - BearerAuth: []
+      summary: Update role permissions
+      tags:
+      - Admin (User/Role)
+  /admin/users:
+    get:
+      consumes:
+      - application/json
+      description: Retrieve a list of staff users.
+      parameters:
+      - default: 1
+        description: Page number
+        in: query
+        name: page
+        type: integer
+      - default: 10
+        description: Items per page
+        in: query
+        name: limit
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.Response'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.Response'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/response.Response'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.Response'
+      security:
+      - BearerAuth: []
+      summary: List users
+      tags:
+      - Admin (User/Role)
+    post:
+      consumes:
+      - application/json
+      description: Create a new staff user.
+      parameters:
+      - description: Staff Creation Payload
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/admin.CreateStaffReq'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.Response'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.Response'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.Response'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/response.Response'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.Response'
+      security:
+      - BearerAuth: []
+      summary: Create staff user
+      tags:
+      - Admin (User/Role)
+  /admin/users/{id}:
+    get:
+      consumes:
+      - application/json
+      description: Retrieve details of a specific staff user.
+      parameters:
+      - description: User ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.Response'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.Response'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.Response'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/response.Response'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/response.Response'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.Response'
+      security:
+      - BearerAuth: []
+      summary: Get user by ID
+      tags:
+      - Admin (User/Role)
+  /admin/users/{id}/deactivate:
+    put:
+      consumes:
+      - application/json
+      description: Deactivate a staff user.
+      parameters:
+      - description: User ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.Response'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.Response'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.Response'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/response.Response'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/response.Response'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.Response'
+      security:
+      - BearerAuth: []
+      summary: Deactivate user
+      tags:
+      - Admin (User/Role)
+  /admin/users/{id}/roles:
+    put:
+      consumes:
+      - application/json
+      description: Assign roles to a staff user.
+      parameters:
+      - description: User ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Role Assignment Payload
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/admin.AssignRolesReq'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.Response'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.Response'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.Response'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/response.Response'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/response.Response'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.Response'
+      security:
+      - BearerAuth: []
+      summary: Assign roles
+      tags:
+      - Admin (User/Role)
+  /appointments:
+    get:
+      consumes:
+      - application/json
+      description: List appointments with optional filters.
+      parameters:
+      - description: Filter by date
+        in: query
+        name: date
+        type: string
+      - description: Filter by Doctor ID
+        in: query
+        name: doctor_id
+        type: string
+      - description: Filter by Patient ID
+        in: query
+        name: patient_id
+        type: string
+      - description: Filter by status
+        in: query
+        name: status
+        type: string
+      - default: 1
+        description: Page number
+        in: query
+        name: page
+        type: integer
+      - default: 20
+        description: Items per page
+        in: query
+        name: limit
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.Response'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.Response'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/response.Response'
+      security:
+      - BearerAuth: []
+      summary: List appointments
+      tags:
+      - Appointment
+  /appointments/{id}/cancel:
+    put:
+      consumes:
+      - application/json
+      description: Cancel an existing appointment.
+      parameters:
+      - description: Appointment ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Cancellation Reason
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/handlers.CancelReq'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.Response'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.Response'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.Response'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/response.Response'
+      security:
+      - BearerAuth: []
+      summary: Cancel appointment
+      tags:
+      - Appointment
+  /appointments/{id}/confirm:
+    put:
+      consumes:
+      - application/json
+      description: Confirm an existing appointment.
+      parameters:
+      - description: Appointment ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.Response'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.Response'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.Response'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/response.Response'
+      security:
+      - BearerAuth: []
+      summary: Confirm appointment
+      tags:
+      - Appointment
+  /appointments/book:
+    post:
+      consumes:
+      - application/json
+      description: Book a new appointment.
+      parameters:
+      - description: Booking Request Payload
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/handlers.BookReq'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.Response'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.Response'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.Response'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/response.Response'
+        "409":
+          description: Conflict
+          schema:
+            $ref: '#/definitions/response.Response'
+      security:
+      - BearerAuth: []
+      summary: Book appointment
+      tags:
+      - Appointment
+  /appointments/slots:
+    get:
+      consumes:
+      - application/json
+      description: Retrieve available appointment slots for a doctor on a specific
+        date.
+      parameters:
+      - description: Doctor ID
+        in: query
+        name: doctor_id
+        required: true
+        type: string
+      - description: Date in YYYY-MM-DD
+        in: query
+        name: date
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.Response'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.Response'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/response.Response'
+      summary: Get available slots
+      tags:
+      - Appointment
   /auth/login/complete:
     post:
       consumes:
@@ -462,6 +1256,518 @@ paths:
       summary: Liveness Check
       tags:
       - Health
+  /icd10:
+    get:
+      consumes:
+      - application/json
+      description: Search for ICD-10 diagnosis codes by description or code.
+      parameters:
+      - description: Search query
+        in: query
+        name: q
+        required: true
+        type: string
+      - default: 20
+        description: Max results
+        in: query
+        name: limit
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.Response'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.Response'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.Response'
+      security:
+      - BearerAuth: []
+      summary: Search ICD-10 codes
+      tags:
+      - Visit (Doctor)
+  /patients:
+    get:
+      consumes:
+      - application/json
+      description: Search and list patients by name, phone, or CCCD.
+      parameters:
+      - description: Search by name
+        in: query
+        name: q
+        type: string
+      - description: Search by phone
+        in: query
+        name: phone
+        type: string
+      - description: Search by CCCD
+        in: query
+        name: cccd
+        type: string
+      - default: 1
+        description: Page number
+        in: query
+        name: page
+        type: integer
+      - default: 20
+        description: Items per page
+        in: query
+        name: limit
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.Response'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.Response'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/response.Response'
+      security:
+      - BearerAuth: []
+      summary: List patients
+      tags:
+      - Patient (Staff)
+    post:
+      consumes:
+      - application/json
+      description: Create a new patient record.
+      parameters:
+      - description: Patient Creation Payload
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/handlers.CreatePatientReq'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.Response'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.Response'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.Response'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/response.Response'
+        "409":
+          description: Conflict
+          schema:
+            $ref: '#/definitions/response.Response'
+      security:
+      - BearerAuth: []
+      summary: Create patient
+      tags:
+      - Patient (Staff)
+  /patients/{id}:
+    get:
+      consumes:
+      - application/json
+      description: Retrieve detailed patient information by their ID.
+      parameters:
+      - description: Patient ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.Response'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.Response'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/response.Response'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/response.Response'
+      security:
+      - BearerAuth: []
+      summary: Get patient by ID
+      tags:
+      - Patient (Staff)
+    put:
+      consumes:
+      - application/json
+      description: Update existing patient information.
+      parameters:
+      - description: Patient ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Patient Update Payload
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/handlers.UpdatePatientReq'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.Response'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.Response'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.Response'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/response.Response'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/response.Response'
+      security:
+      - BearerAuth: []
+      summary: Update patient
+      tags:
+      - Patient (Staff)
+  /patients/me:
+    get:
+      consumes:
+      - application/json
+      description: Retrieve the logged-in patient's profile.
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.Response'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.Response'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/response.Response'
+      security:
+      - BearerAuth: []
+      summary: Get my profile
+      tags:
+      - Patient (Portal)
+    put:
+      consumes:
+      - application/json
+      description: Update the logged-in patient's profile information.
+      parameters:
+      - description: Profile Update Payload
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/handlers.UpdatePatientReq'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.Response'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.Response'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.Response'
+      security:
+      - BearerAuth: []
+      summary: Update my profile
+      tags:
+      - Patient (Portal)
+  /patients/me/insurance:
+    put:
+      consumes:
+      - application/json
+      description: Update the logged-in patient's health insurance details.
+      parameters:
+      - description: Insurance Update Payload
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/handlers.UpdateInsuranceReq'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.Response'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.Response'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.Response'
+      security:
+      - BearerAuth: []
+      summary: Update my insurance
+      tags:
+      - Patient (Portal)
+  /public/clinic-info:
+    get:
+      consumes:
+      - application/json
+      description: Retrieve public information about the clinic.
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.Response'
+      summary: Get clinic info
+      tags:
+      - Public
+  /public/doctors:
+    get:
+      consumes:
+      - application/json
+      description: List public doctors, optionally filtered by service_id.
+      parameters:
+      - description: Filter by service ID
+        in: query
+        name: service_id
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.Response'
+      summary: List doctors
+      tags:
+      - Public
+  /public/services:
+    get:
+      consumes:
+      - application/json
+      description: Retrieve a list of public health services.
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.Response'
+      summary: List services
+      tags:
+      - Public
+  /queue:
+    get:
+      consumes:
+      - application/json
+      description: Retrieve the current queue entries.
+      parameters:
+      - description: Filter by service type
+        in: query
+        name: service_type
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.Response'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.Response'
+      security:
+      - BearerAuth: []
+      summary: Get current queue
+      tags:
+      - Reception (Queue)
+  /queue/{id}/call:
+    post:
+      consumes:
+      - application/json
+      description: Call a specific patient in the queue by queue entry ID.
+      parameters:
+      - description: Queue Entry ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.Response'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.Response'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.Response'
+      security:
+      - BearerAuth: []
+      summary: Call patient from queue
+      tags:
+      - Reception (Queue)
+  /queue/{id}/complete:
+    post:
+      consumes:
+      - application/json
+      description: Mark a queue entry as completed.
+      parameters:
+      - description: Queue Entry ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.Response'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.Response'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.Response'
+      security:
+      - BearerAuth: []
+      summary: Complete queue entry
+      tags:
+      - Reception (Queue)
+  /queue/{id}/skip:
+    post:
+      consumes:
+      - application/json
+      description: Mark a queue entry as skipped.
+      parameters:
+      - description: Queue Entry ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.Response'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.Response'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.Response'
+      security:
+      - BearerAuth: []
+      summary: Skip patient in queue
+      tags:
+      - Reception (Queue)
+  /queue/checkin:
+    post:
+      consumes:
+      - application/json
+      description: Check-in a patient to the queue.
+      parameters:
+      - description: Check-in Request Payload
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/handlers.CheckInReq'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.Response'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.Response'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.Response'
+      security:
+      - BearerAuth: []
+      summary: Check-in patient
+      tags:
+      - Reception (Queue)
+  /queue/stats:
+    get:
+      consumes:
+      - application/json
+      description: Retrieve statistics for the current queue.
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.Response'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.Response'
+      security:
+      - BearerAuth: []
+      summary: Get queue statistics
+      tags:
+      - Reception (Queue)
   /ready:
     get:
       description: Endpoint dùng cho K8s/Docker để biết ứng dụng đã sẵn sàng nhận
@@ -482,6 +1788,309 @@ paths:
       summary: Readiness Check
       tags:
       - Health
+  /visits:
+    get:
+      consumes:
+      - application/json
+      description: Retrieve the visit worklist for a specific doctor.
+      parameters:
+      - description: Doctor ID
+        in: query
+        name: doctor_id
+        required: true
+        type: string
+      - description: Date (YYYY-MM-DD)
+        in: query
+        name: date
+        type: string
+      - description: Filter by Status
+        in: query
+        name: status
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.Response'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.Response'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.Response'
+      security:
+      - BearerAuth: []
+      summary: Get doctor worklist
+      tags:
+      - Visit (Doctor)
+    post:
+      consumes:
+      - application/json
+      description: Create a new clinical visit.
+      parameters:
+      - description: Visit Creation Payload
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/handlers.CreateVisitReq'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.Response'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.Response'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.Response'
+      security:
+      - BearerAuth: []
+      summary: Create visit
+      tags:
+      - Visit (Doctor)
+  /visits/{id}:
+    get:
+      consumes:
+      - application/json
+      description: Retrieve details of a specific visit.
+      parameters:
+      - description: Visit ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.Response'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.Response'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/response.Response'
+      security:
+      - BearerAuth: []
+      summary: Get visit detail
+      tags:
+      - Visit (Doctor)
+  /visits/{id}/close:
+    post:
+      consumes:
+      - application/json
+      description: Mark a visit as closed.
+      parameters:
+      - description: Visit ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.Response'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.Response'
+        "422":
+          description: Unprocessable Entity
+          schema:
+            $ref: '#/definitions/response.Response'
+      security:
+      - BearerAuth: []
+      summary: Close visit
+      tags:
+      - Visit (Doctor)
+  /visits/{id}/orders:
+    get:
+      consumes:
+      - application/json
+      description: Retrieve all orders created during a visit.
+      parameters:
+      - description: Visit ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.Response'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.Response'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.Response'
+      security:
+      - BearerAuth: []
+      summary: Get orders
+      tags:
+      - Visit (Doctor)
+    post:
+      consumes:
+      - application/json
+      description: Create an order (e.g., lab test, prescription) for a visit.
+      parameters:
+      - description: Visit ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Order Creation Payload
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/handlers.CreateOrderReq'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.Response'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.Response'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.Response'
+      security:
+      - BearerAuth: []
+      summary: Create order
+      tags:
+      - Visit (Doctor)
+  /visits/{id}/status:
+    put:
+      consumes:
+      - application/json
+      description: Change the status of a visit.
+      parameters:
+      - description: Visit ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Status Update Payload
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/handlers.UpdateVisitStatusReq'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.Response'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.Response'
+        "422":
+          description: Unprocessable Entity
+          schema:
+            $ref: '#/definitions/response.Response'
+      security:
+      - BearerAuth: []
+      summary: Update visit status
+      tags:
+      - Visit (Doctor)
+  /visits/{id}/vitals:
+    get:
+      consumes:
+      - application/json
+      description: Retrieve vitals recorded for a visit.
+      parameters:
+      - description: Visit ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.Response'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.Response'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.Response'
+      security:
+      - BearerAuth: []
+      summary: Get vitals
+      tags:
+      - Visit (Doctor)
+    post:
+      consumes:
+      - application/json
+      description: Record patient vitals for a visit.
+      parameters:
+      - description: Visit ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Vitals Payload
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/handlers.RecordVitalsReq'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.Response'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.Response'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.Response'
+      security:
+      - BearerAuth: []
+      summary: Record vitals
+      tags:
+      - Visit (Doctor)
 securityDefinitions:
   BearerAuth:
     in: header

@@ -43,7 +43,7 @@ export const PatientDetailView: React.FC<PatientDetailViewProps> = ({ patientId 
           <Descriptions.Item label={t("patients.phone")}>{selectedPatient.phone || selectedPatient.phone_masked}</Descriptions.Item>
           <Descriptions.Item label={t("patients.cccd")}>{selectedPatient.cccd || 'N/A'}</Descriptions.Item>
           <Descriptions.Item label={t("patients.email")}>{selectedPatient.email || 'N/A'}</Descriptions.Item>
-          <Descriptions.Item label={t("patients.address")}>{selectedPatient.address || 'N/A'}</Descriptions.Item>
+          <Descriptions.Item label={t("patients.address")}>{selectedPatient.address_detail || selectedPatient.address || 'N/A'}</Descriptions.Item>
         </Descriptions>
       ),
     },

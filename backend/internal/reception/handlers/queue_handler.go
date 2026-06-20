@@ -23,6 +23,17 @@ func NewQueueHandler(repo domain.QueueRepository) *QueueHandler {
 	return &QueueHandler{repo: repo}
 }
 
+// GetCurrentQueue godoc
+// @Summary Get current queue
+// @Description Retrieve the current queue entries.
+// @Tags Reception (Queue)
+// @Accept json
+// @Produce json
+// @Param service_type query string false "Filter by service type"
+// @Success 200 {object} response.Response
+// @Failure 500 {object} response.Response
+// @Router /queue [get]
+// @Security BearerAuth
 func (h *QueueHandler) GetCurrentQueue(c *fiber.Ctx) error {
 	serviceType := c.Query("service_type")
 	query := queries.GetCurrentQueueQuery{ServiceType: serviceType}
@@ -34,12 +45,25 @@ func (h *QueueHandler) GetCurrentQueue(c *fiber.Ctx) error {
 	return response.OK(c, entries)
 }
 
+type CheckInReq struct {
+	PatientID     uuid.UUID  `json:"patient_id"`
+	ServiceType   string     `json:"service_type"`
+	AppointmentID *uuid.UUID `json:"appointment_id,omitempty"`
+}
+
+// CheckIn godoc
+// @Summary Check-in patient
+// @Description Check-in a patient to the queue.
+// @Tags Reception (Queue)
+// @Accept json
+// @Produce json
+// @Param request body CheckInReq true "Check-in Request Payload"
+// @Success 200 {object} response.Response
+// @Failure 400,500 {object} response.Response
+// @Router /queue/checkin [post]
+// @Security BearerAuth
 func (h *QueueHandler) CheckIn(c *fiber.Ctx) error {
-	var req struct {
-		PatientID     uuid.UUID  `json:"patient_id"`
-		ServiceType   string     `json:"service_type"`
-		AppointmentID *uuid.UUID `json:"appointment_id,omitempty"`
-	}
+	var req CheckInReq
 	if err := c.BodyParser(&req); err != nil {
 		return response.Fail(c, &appErrors.AppError{Code: "BAD_REQUEST", Status: 400, Message: "Invalid request body"})
 	}
@@ -58,6 +82,17 @@ func (h *QueueHandler) CheckIn(c *fiber.Ctx) error {
 	return response.OK(c, entry)
 }
 
+// CallQueue godoc
+// @Summary Call patient from queue
+// @Description Call a specific patient in the queue by queue entry ID.
+// @Tags Reception (Queue)
+// @Accept json
+// @Produce json
+// @Param id path string true "Queue Entry ID"
+// @Success 200 {object} response.Response
+// @Failure 400,500 {object} response.Response
+// @Router /queue/{id}/call [post]
+// @Security BearerAuth
 func (h *QueueHandler) CallQueue(c *fiber.Ctx) error {
 	id, err := uuid.Parse(c.Params("id"))
 	if err != nil {
@@ -72,6 +107,17 @@ func (h *QueueHandler) CallQueue(c *fiber.Ctx) error {
 	return response.OK(c, fiber.Map{"message": "Called successfully"})
 }
 
+// SkipQueue godoc
+// @Summary Skip patient in queue
+// @Description Mark a queue entry as skipped.
+// @Tags Reception (Queue)
+// @Accept json
+// @Produce json
+// @Param id path string true "Queue Entry ID"
+// @Success 200 {object} response.Response
+// @Failure 400,500 {object} response.Response
+// @Router /queue/{id}/skip [post]
+// @Security BearerAuth
 func (h *QueueHandler) SkipQueue(c *fiber.Ctx) error {
 	id, err := uuid.Parse(c.Params("id"))
 	if err != nil {
@@ -86,6 +132,17 @@ func (h *QueueHandler) SkipQueue(c *fiber.Ctx) error {
 	return response.OK(c, fiber.Map{"message": "Skipped successfully"})
 }
 
+// CompleteQueue godoc
+// @Summary Complete queue entry
+// @Description Mark a queue entry as completed.
+// @Tags Reception (Queue)
+// @Accept json
+// @Produce json
+// @Param id path string true "Queue Entry ID"
+// @Success 200 {object} response.Response
+// @Failure 400,500 {object} response.Response
+// @Router /queue/{id}/complete [post]
+// @Security BearerAuth
 func (h *QueueHandler) CompleteQueue(c *fiber.Ctx) error {
 	id, err := uuid.Parse(c.Params("id"))
 	if err != nil {
@@ -100,6 +157,16 @@ func (h *QueueHandler) CompleteQueue(c *fiber.Ctx) error {
 	return response.OK(c, fiber.Map{"message": "Completed successfully"})
 }
 
+// GetQueueStats godoc
+// @Summary Get queue statistics
+// @Description Retrieve statistics for the current queue.
+// @Tags Reception (Queue)
+// @Accept json
+// @Produce json
+// @Success 200 {object} response.Response
+// @Failure 500 {object} response.Response
+// @Router /queue/stats [get]
+// @Security BearerAuth
 func (h *QueueHandler) GetQueueStats(c *fiber.Ctx) error {
 	query := queries.GetQueueStatsQuery{}
 	stats, err := queries.HandleGetQueueStats(c.Context(), query, h.repo)
@@ -138,7 +205,7 @@ func (h *QueueHandler) WSHandlerFactory() *ws.CustomWSHandler {
 		query := queries.GetCurrentQueueQuery{}
 		entries, err := queries.HandleGetCurrentQueue(context.Background(), query, h.repo)
 		if err == nil {
-			sendJSON(ws.WSEvent{Type: ws.EventQueueUpdated, Payload: entries})
+			sendJSON(ws.WSEvent{Type: ws.EventQueueSync, Payload: fiber.Map{"entries": entries}})
 		}
 	}
 	

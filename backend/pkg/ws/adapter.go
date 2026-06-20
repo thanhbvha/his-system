@@ -1,8 +1,6 @@
 package ws
 
 import (
-
-
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/websocket/v2"
 	"github.com/thanhbvha/go-common/logger"
@@ -83,7 +81,7 @@ func (h *CustomWSHandler) HandleUpgrade(c *fiber.Ctx) error {
 		defer h.ConnectionLimiter.RemoveConnection(clientIP)
 
 		manager := core.GetGlobalManager()
-		shardID := manager.GetShardID(userID)
+		shardID := "default" // Tạm thời dùng shard mặc định của Manager cho Hàng đợi
 
 		adapterConn := libadapter.NewConnAdapter(conn)
 
@@ -111,15 +109,15 @@ func (h *CustomWSHandler) HandleUpgrade(c *fiber.Ctx) error {
 		// No, websocket.New expects the func to block. If the func returns, the connection closes!
 		// So we CANNOT run HandleConnection in a goroutine without keeping the func alive.
 		// But if we run manager.HandleConnection, how do we trigger OnConnect?
-		
+
 		// Actually, what we can do is call OnConnect in a separate goroutine immediately before HandleConnection!
 		// But how do we pass `sendJSON`? The manager doesn't give us the `core.Connection`.
 		// But we can just use `manager.BroadcastMessage(shardID, eventBytes)`? No, that broadcasts to the whole shard.
-		
+
 		// Let's create an adapter wrapper that sends the initial message immediately upon WritePump start?
 		// Actually, if we just call OnConnect AFTER manager.HandleConnection, it's too late because it blocks.
 		// If we call it BEFORE manager.HandleConnection, we only have `conn *websocket.Conn`. We can just write directly to `conn`!
-		
+
 		if h.OnConnect != nil {
 			h.OnConnect(userID, func(v interface{}) bool {
 				err := conn.WriteJSON(v)

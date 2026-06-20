@@ -13,6 +13,14 @@ func NewPublicHandler() *PublicHandler {
 	return &PublicHandler{}
 }
 
+// GetClinicInfo godoc
+// @Summary Get clinic info
+// @Description Retrieve public information about the clinic.
+// @Tags Public
+// @Accept json
+// @Produce json
+// @Success 200 {object} response.Response
+// @Router /public/clinic-info [get]
 func (h *PublicHandler) GetClinicInfo(c *fiber.Ctx) error {
 	return response.OK(c, fiber.Map{
 		"name":    "HIS International Clinic",
@@ -21,6 +29,15 @@ func (h *PublicHandler) GetClinicInfo(c *fiber.Ctx) error {
 	})
 }
 
+// ListDoctors godoc
+// @Summary List doctors
+// @Description List public doctors, optionally filtered by service_id.
+// @Tags Public
+// @Accept json
+// @Produce json
+// @Param service_id query string false "Filter by service ID"
+// @Success 200 {object} response.Response
+// @Router /public/doctors [get]
 func (h *PublicHandler) ListDoctors(c *fiber.Ctx) error {
 	serviceID := c.Query("service_id")
 	
@@ -44,6 +61,14 @@ func (h *PublicHandler) ListDoctors(c *fiber.Ctx) error {
 	return response.OK(c, doctors)
 }
 
+// ListServices godoc
+// @Summary List services
+// @Description Retrieve a list of public health services.
+// @Tags Public
+// @Accept json
+// @Produce json
+// @Success 200 {object} response.Response
+// @Router /public/services [get]
 func (h *PublicHandler) ListServices(c *fiber.Ctx) error {
 	services := []fiber.Map{
 		{"id": "srv-1", "name": "General Checkup", "price": 500000, "duration_minutes": 30},

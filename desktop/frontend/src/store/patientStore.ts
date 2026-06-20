@@ -11,6 +11,7 @@ export interface Patient {
   cccd?: string;
   email?: string;
   address?: string;
+  address_detail?: string;
   patient_code?: string;
 }
 
@@ -36,7 +37,15 @@ export const usePatientStore = create<PatientStore>((set) => ({
     }
     set({ isLoading: true });
     try {
-      const res = await apiClient.get(`/patients?q=${encodeURIComponent(query)}`);
+      let url = `/patients?q=${encodeURIComponent(query)}`;
+      // Auto-detect CCCD (12 digits) or Phone (10 digits)
+      if (/^\d{12}$/.test(query)) {
+        url = `/patients?cccd=${encodeURIComponent(query)}`;
+      } else if (/^\d{10,11}$/.test(query)) {
+        url = `/patients?phone=${encodeURIComponent(query)}`;
+      }
+
+      const res = await apiClient.get(url);
       set({ searchResults: res.data.data.items || [] });
     } catch (error) {
       console.error("Failed to search patients:", error);

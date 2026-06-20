@@ -30,20 +30,20 @@ func (r *PatientRepositoryPG) Create(ctx context.Context, patient *domain.Patien
 			$7, $8, $9, $10,
 			$11, $12, $13, $14,
 			$15, $16
-		)`
-	_, err := r.db.Exec(ctx, query,
+		) RETURNING patient_code`
+	err := r.db.QueryRow(ctx, query,
 		patient.ID, patient.FullName, patient.DOB, patient.Gender, patient.BloodType, patient.IsActive,
 		patient.PhoneEncrypted, patient.PhoneHMAC, patient.CCCDEncrypted, patient.CCCDHMAC,
 		patient.EmailEncrypted, patient.EmailHMAC, patient.AddressDetailEncrypted, patient.AvatarURL,
 		patient.CreatedAt, patient.UpdatedAt,
-	)
+	).Scan(&patient.PatientCode)
 	return err
 }
 
 func (r *PatientRepositoryPG) GetByID(ctx context.Context, id uuid.UUID) (*domain.Patient, error) {
 	query := `
 		SELECT 
-			id, full_name, dob, gender, blood_type, is_active,
+			id, patient_code, full_name, dob, gender, blood_type, is_active,
 			phone_encrypted, phone_hmac, cccd_encrypted, cccd_hmac,
 			email_encrypted, email_hmac, address_detail_encrypted, avatar_url,
 			created_at, updated_at
@@ -52,7 +52,7 @@ func (r *PatientRepositoryPG) GetByID(ctx context.Context, id uuid.UUID) (*domai
 
 	var p domain.Patient
 	err := r.db.QueryRow(ctx, query, id).Scan(
-		&p.ID, &p.FullName, &p.DOB, &p.Gender, &p.BloodType, &p.IsActive,
+		&p.ID, &p.PatientCode, &p.FullName, &p.DOB, &p.Gender, &p.BloodType, &p.IsActive,
 		&p.PhoneEncrypted, &p.PhoneHMAC, &p.CCCDEncrypted, &p.CCCDHMAC,
 		&p.EmailEncrypted, &p.EmailHMAC, &p.AddressDetailEncrypted, &p.AvatarURL,
 		&p.CreatedAt, &p.UpdatedAt,
@@ -69,7 +69,7 @@ func (r *PatientRepositoryPG) GetByID(ctx context.Context, id uuid.UUID) (*domai
 func (r *PatientRepositoryPG) GetByPhoneHMAC(ctx context.Context, phoneHMAC string) (*domain.Patient, error) {
 	query := `
 		SELECT 
-			id, full_name, dob, gender, blood_type, is_active,
+			id, patient_code, full_name, dob, gender, blood_type, is_active,
 			phone_encrypted, phone_hmac, cccd_encrypted, cccd_hmac,
 			email_encrypted, email_hmac, address_detail_encrypted, avatar_url,
 			created_at, updated_at
@@ -78,7 +78,7 @@ func (r *PatientRepositoryPG) GetByPhoneHMAC(ctx context.Context, phoneHMAC stri
 
 	var p domain.Patient
 	err := r.db.QueryRow(ctx, query, phoneHMAC).Scan(
-		&p.ID, &p.FullName, &p.DOB, &p.Gender, &p.BloodType, &p.IsActive,
+		&p.ID, &p.PatientCode, &p.FullName, &p.DOB, &p.Gender, &p.BloodType, &p.IsActive,
 		&p.PhoneEncrypted, &p.PhoneHMAC, &p.CCCDEncrypted, &p.CCCDHMAC,
 		&p.EmailEncrypted, &p.EmailHMAC, &p.AddressDetailEncrypted, &p.AvatarURL,
 		&p.CreatedAt, &p.UpdatedAt,
@@ -95,7 +95,7 @@ func (r *PatientRepositoryPG) GetByPhoneHMAC(ctx context.Context, phoneHMAC stri
 func (r *PatientRepositoryPG) GetByCCCDHMAC(ctx context.Context, cccdHMAC string) (*domain.Patient, error) {
 	query := `
 		SELECT 
-			id, full_name, dob, gender, blood_type, is_active,
+			id, patient_code, full_name, dob, gender, blood_type, is_active,
 			phone_encrypted, phone_hmac, cccd_encrypted, cccd_hmac,
 			email_encrypted, email_hmac, address_detail_encrypted, avatar_url,
 			created_at, updated_at
@@ -104,7 +104,7 @@ func (r *PatientRepositoryPG) GetByCCCDHMAC(ctx context.Context, cccdHMAC string
 
 	var p domain.Patient
 	err := r.db.QueryRow(ctx, query, cccdHMAC).Scan(
-		&p.ID, &p.FullName, &p.DOB, &p.Gender, &p.BloodType, &p.IsActive,
+		&p.ID, &p.PatientCode, &p.FullName, &p.DOB, &p.Gender, &p.BloodType, &p.IsActive,
 		&p.PhoneEncrypted, &p.PhoneHMAC, &p.CCCDEncrypted, &p.CCCDHMAC,
 		&p.EmailEncrypted, &p.EmailHMAC, &p.AddressDetailEncrypted, &p.AvatarURL,
 		&p.CreatedAt, &p.UpdatedAt,
@@ -129,7 +129,7 @@ func (r *PatientRepositoryPG) SearchByName(ctx context.Context, q string, page, 
 
 	query := `
 		SELECT 
-			id, full_name, dob, gender, blood_type, is_active,
+			id, patient_code, full_name, dob, gender, blood_type, is_active,
 			phone_encrypted, phone_hmac, cccd_encrypted, cccd_hmac,
 			email_encrypted, email_hmac, address_detail_encrypted, avatar_url,
 			created_at, updated_at
@@ -148,7 +148,7 @@ func (r *PatientRepositoryPG) SearchByName(ctx context.Context, q string, page, 
 	for rows.Next() {
 		var p domain.Patient
 		if err := rows.Scan(
-			&p.ID, &p.FullName, &p.DOB, &p.Gender, &p.BloodType, &p.IsActive,
+			&p.ID, &p.PatientCode, &p.FullName, &p.DOB, &p.Gender, &p.BloodType, &p.IsActive,
 			&p.PhoneEncrypted, &p.PhoneHMAC, &p.CCCDEncrypted, &p.CCCDHMAC,
 			&p.EmailEncrypted, &p.EmailHMAC, &p.AddressDetailEncrypted, &p.AvatarURL,
 			&p.CreatedAt, &p.UpdatedAt,
@@ -187,7 +187,7 @@ func (r *PatientRepositoryPG) List(ctx context.Context, page, limit int) ([]*dom
 
 	query := `
 		SELECT 
-			id, full_name, dob, gender, blood_type, is_active,
+			id, patient_code, full_name, dob, gender, blood_type, is_active,
 			phone_encrypted, phone_hmac, cccd_encrypted, cccd_hmac,
 			email_encrypted, email_hmac, address_detail_encrypted, avatar_url,
 			created_at, updated_at
@@ -205,7 +205,7 @@ func (r *PatientRepositoryPG) List(ctx context.Context, page, limit int) ([]*dom
 	for rows.Next() {
 		var p domain.Patient
 		if err := rows.Scan(
-			&p.ID, &p.FullName, &p.DOB, &p.Gender, &p.BloodType, &p.IsActive,
+			&p.ID, &p.PatientCode, &p.FullName, &p.DOB, &p.Gender, &p.BloodType, &p.IsActive,
 			&p.PhoneEncrypted, &p.PhoneHMAC, &p.CCCDEncrypted, &p.CCCDHMAC,
 			&p.EmailEncrypted, &p.EmailHMAC, &p.AddressDetailEncrypted, &p.AvatarURL,
 			&p.CreatedAt, &p.UpdatedAt,

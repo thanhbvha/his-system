@@ -25,9 +25,9 @@ export interface QueueStats {
 }
 
 export interface WSEvent {
-  event: string;
+  type: string;
   payload: any;
-  timestamp: string;
+  timestamp?: string;
 }
 
 interface CheckInPayload {
@@ -95,25 +95,25 @@ export const useQueueStore = create<QueueState>((set, get) => ({
 
   applyWSEvent: (event: WSEvent) => {
     const { entries } = get();
+    console.log("WS EVENT RECEIVED:", event);
     
-    switch (event.event) {
+    switch (event.type) {
       case "queue.sync":
         // Server sends full state on connect
         set({ entries: event.payload.entries || [] });
         break;
       
       case "queue.checked_in":
-        set({ entries: [...entries, event.payload] });
+        set(state => ({ entries: [...state.entries, event.payload] }));
         break;
 
       case "queue.called":
       case "queue.skipped":
       case "queue.completed":
-        // Update the specific entry status
         const updatedEntry = event.payload;
-        set({
-          entries: entries.map(e => e.id === updatedEntry.id ? updatedEntry : e)
-        });
+        set(state => ({
+          entries: state.entries.map(e => e.id === updatedEntry.id ? updatedEntry : e)
+        }));
         break;
 
       case "queue.stats_updated":

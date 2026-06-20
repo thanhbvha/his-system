@@ -60,6 +60,21 @@ func NewPatientHandler(
 	}
 }
 
+// List godoc
+// @Summary List patients
+// @Description Search and list patients by name, phone, or CCCD.
+// @Tags Patient (Staff)
+// @Accept json
+// @Produce json
+// @Param q query string false "Search by name"
+// @Param phone query string false "Search by phone"
+// @Param cccd query string false "Search by CCCD"
+// @Param page query int false "Page number" default(1)
+// @Param limit query int false "Items per page" default(20)
+// @Success 200 {object} response.Response
+// @Failure 401,403 {object} response.Response
+// @Router /patients [get]
+// @Security BearerAuth
 func (h *PatientHandler) List(c *fiber.Ctx) error {
 	q := c.Query("q")
 	phone := c.Query("phone")
@@ -91,6 +106,17 @@ type CreatePatientReq struct {
 	AddressDetail *string `json:"address"`
 }
 
+// Create godoc
+// @Summary Create patient
+// @Description Create a new patient record.
+// @Tags Patient (Staff)
+// @Accept json
+// @Produce json
+// @Param request body CreatePatientReq true "Patient Creation Payload"
+// @Success 200 {object} response.Response
+// @Failure 400,401,403,409 {object} response.Response
+// @Router /patients [post]
+// @Security BearerAuth
 func (h *PatientHandler) Create(c *fiber.Ctx) error {
 	var req CreatePatientReq
 	if err := c.BodyParser(&req); err != nil {
@@ -125,6 +151,17 @@ func (h *PatientHandler) Create(c *fiber.Ctx) error {
 	})
 }
 
+// GetByID godoc
+// @Summary Get patient by ID
+// @Description Retrieve detailed patient information by their ID.
+// @Tags Patient (Staff)
+// @Accept json
+// @Produce json
+// @Param id path string true "Patient ID"
+// @Success 200 {object} response.Response
+// @Failure 401,403,404 {object} response.Response
+// @Router /patients/{id} [get]
+// @Security BearerAuth
 func (h *PatientHandler) GetByID(c *fiber.Ctx) error {
 	idStr := c.Params("id")
 	id, err := uuid.Parse(idStr)
@@ -156,6 +193,18 @@ type UpdatePatientReq struct {
 	IsActive      bool    `json:"is_active"`
 }
 
+// Update godoc
+// @Summary Update patient
+// @Description Update existing patient information.
+// @Tags Patient (Staff)
+// @Accept json
+// @Produce json
+// @Param id path string true "Patient ID"
+// @Param request body UpdatePatientReq true "Patient Update Payload"
+// @Success 200 {object} response.Response
+// @Failure 400,401,403,404 {object} response.Response
+// @Router /patients/{id} [put]
+// @Security BearerAuth
 func (h *PatientHandler) Update(c *fiber.Ctx) error {
 	idStr := c.Params("id")
 	id, err := uuid.Parse(idStr)
@@ -196,6 +245,16 @@ func (h *PatientHandler) Update(c *fiber.Ctx) error {
 	return response.OK(c, fiber.Map{"id": p.ID})
 }
 
+// GetMyProfile godoc
+// @Summary Get my profile
+// @Description Retrieve the logged-in patient's profile.
+// @Tags Patient (Portal)
+// @Accept json
+// @Produce json
+// @Success 200 {object} response.Response
+// @Failure 401,404 {object} response.Response
+// @Router /patients/me [get]
+// @Security BearerAuth
 func (h *PatientHandler) GetMyProfile(c *fiber.Ctx) error {
 	claims := c.Locals("claims").(auth.Claims)
 
@@ -210,6 +269,17 @@ func (h *PatientHandler) GetMyProfile(c *fiber.Ctx) error {
 	return response.OK(c, result)
 }
 
+// UpdateMyProfile godoc
+// @Summary Update my profile
+// @Description Update the logged-in patient's profile information.
+// @Tags Patient (Portal)
+// @Accept json
+// @Produce json
+// @Param request body UpdatePatientReq true "Profile Update Payload"
+// @Success 200 {object} response.Response
+// @Failure 400,401 {object} response.Response
+// @Router /patients/me [put]
+// @Security BearerAuth
 func (h *PatientHandler) UpdateMyProfile(c *fiber.Ctx) error {
 	claims := c.Locals("claims").(auth.Claims)
 
@@ -254,6 +324,17 @@ type UpdateInsuranceReq struct {
 	IssuingProvince *string `json:"issuing_province"`
 }
 
+// UpdateMyInsurance godoc
+// @Summary Update my insurance
+// @Description Update the logged-in patient's health insurance details.
+// @Tags Patient (Portal)
+// @Accept json
+// @Produce json
+// @Param request body UpdateInsuranceReq true "Insurance Update Payload"
+// @Success 200 {object} response.Response
+// @Failure 400,401 {object} response.Response
+// @Router /patients/me/insurance [put]
+// @Security BearerAuth
 func (h *PatientHandler) UpdateMyInsurance(c *fiber.Ctx) error {
 	claims := c.Locals("claims").(auth.Claims)
 

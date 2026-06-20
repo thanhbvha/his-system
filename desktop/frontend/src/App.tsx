@@ -17,6 +17,7 @@ import { DepartmentPage } from "@/pages/admin/DepartmentPage";
 import { PatientsPage } from "@/pages/PatientsPage";
 import { AppointmentsPage } from "@/pages/AppointmentsPage";
 import { QueuePage } from "@/pages/QueuePage";
+import { VisitPage } from "@/pages/VisitPage";
 
 const ForbiddenPage = () => <div style={{ padding: 24, textAlign: "center", fontSize: 20 }}>403 Forbidden - Bạn không có quyền truy cập</div>;
 
@@ -52,6 +53,10 @@ function App() {
             </Route>
             <Route path="/queue" element={<ProtectedRoute roles={["receptionist", "doctor", "admin"]} />}>
               <Route index element={<QueuePage />} />
+            </Route>
+            <Route path="/visits" element={<ProtectedRoute roles={["doctor", "admin"]} />}>
+              <Route index element={<VisitPage />} />
+              <Route path=":id" element={<VisitPage />} />
             </Route>
             
             {/* Additional routes will be added here in future sprints */}

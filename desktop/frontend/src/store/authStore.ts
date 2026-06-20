@@ -5,7 +5,7 @@ export function isTokenExpired(token: string | null): boolean {
   if (!token) return true;
   try {
     const parts = token.split('.');
-    if (parts.length !== 3) return true;
+    if (parts.length !== 3) return false; // Encrypted token, assume valid until backend returns 401
     const payloadBase64 = parts[1];
     let base64 = payloadBase64.replace(/-/g, '+').replace(/_/g, '/');
     while (base64.length % 4) {
@@ -20,7 +20,10 @@ export function isTokenExpired(token: string | null): boolean {
       const exp = parseInt(match[1], 10);
       return (Date.now() / 1000) >= (exp - 5);
     }
-    return false; // If no exp claim found, assume valid
+    
+    // For encrypted tokens without standard JWT parts, we default to false 
+    // to let the backend dictate expiration via 401 responses.
+    return false;
   } catch (e) {
     console.error("isTokenExpired error:", e);
     // If we can't parse it, return false so we don't spam the backend

@@ -184,7 +184,7 @@ func (h *CompleteLoginHandler) verifySignature(payload string, sigBase64 string,
 
 	block, _ := pem.Decode([]byte(pubKeyPEM))
 	if block == nil {
-		logger.ErrorAsync("CompleteLoginHandler.Handle: failed to parse PEM block containing the public key", slog.String("error", err.Error()), slog.String("dispatch_time", time.Now().Format(time.RFC3339Nano)))
+		logger.ErrorAsync("CompleteLoginHandler.Handle: failed to parse PEM block containing the public key", slog.String("dispatch_time", time.Now().Format(time.RFC3339Nano)))
 		return errors.New("failed to parse PEM block containing the public key")
 	}
 

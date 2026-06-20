@@ -21,6 +21,8 @@ export const PatientSearchModal: React.FC<PatientSearchModalProps> = ({ open, on
     const timer = setTimeout(() => {
       if (searchTerm.length >= 2) {
         searchPatients(searchTerm);
+      } else {
+        searchPatients('');
       }
     }, 300);
 

@@ -23,6 +23,17 @@ func NewAdminDepartmentHandler(
 	}
 }
 
+// List godoc
+// @Summary List departments
+// @Description Retrieve a list of departments.
+// @Tags Admin (User/Role)
+// @Accept json
+// @Produce json
+// @Param include_inactive query boolean false "Include inactive departments" default(false)
+// @Success 200 {object} response.Response
+// @Failure 500 {object} response.Response
+// @Router /admin/departments [get]
+// @Security BearerAuth
 func (h *AdminDepartmentHandler) List(c *fiber.Ctx) error {
 	includeInactive := c.Query("include_inactive") == "true"
 	depts, err := h.deptRepo.List(c.Context(), includeInactive)
@@ -33,14 +44,25 @@ func (h *AdminDepartmentHandler) List(c *fiber.Ctx) error {
 	return response.OK(c, depts)
 }
 
-type createDeptReq struct {
+type CreateDeptReq struct {
 	Code        string `json:"code"`
 	Name        string `json:"name"`
 	Description string `json:"description"`
 }
 
+// Create godoc
+// @Summary Create department
+// @Description Create a new department.
+// @Tags Admin (User/Role)
+// @Accept json
+// @Produce json
+// @Param request body CreateDeptReq true "Department Creation Payload"
+// @Success 200 {object} response.Response
+// @Failure 400,500 {object} response.Response
+// @Router /admin/departments [post]
+// @Security BearerAuth
 func (h *AdminDepartmentHandler) Create(c *fiber.Ctx) error {
-	var req createDeptReq
+	var req CreateDeptReq
 	if err := c.BodyParser(&req); err != nil {
 		return response.Fail(c, appErrors.ErrValidation)
 	}

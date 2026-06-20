@@ -45,8 +45,11 @@ func (r *QueueRepositoryPG) Save(ctx context.Context, entry *domain.QueueEntry) 
 
 func (r *QueueRepositoryPG) FindByID(ctx context.Context, id uuid.UUID) (*domain.QueueEntry, error) {
 	query := `
-		SELECT id, patient_id, visit_id, appointment_id, service_type, queue_number, status, called_at, completed_at, created_at
-		FROM queue_entries WHERE id = $1
+		SELECT q.id, q.patient_id, q.visit_id, q.appointment_id, q.service_type, q.queue_number, q.status, q.called_at, q.completed_at, q.created_at,
+		       p.full_name, p.patient_code
+		FROM queue_entries q
+		LEFT JOIN patients p ON p.id = q.patient_id
+		WHERE q.id = $1
 	`
 	row := r.db.QueryRow(ctx, query, id)
 	return r.scanEntry(row)
@@ -54,16 +57,18 @@ func (r *QueueRepositoryPG) FindByID(ctx context.Context, id uuid.UUID) (*domain
 
 func (r *QueueRepositoryPG) FindTodayQueue(ctx context.Context, serviceType string) ([]*domain.QueueEntry, error) {
 	query := `
-		SELECT id, patient_id, visit_id, appointment_id, service_type, queue_number, status, called_at, completed_at, created_at
-		FROM queue_entries 
-		WHERE (created_at AT TIME ZONE 'Asia/Ho_Chi_Minh')::date = (now() AT TIME ZONE 'Asia/Ho_Chi_Minh')::date
+		SELECT q.id, q.patient_id, q.visit_id, q.appointment_id, q.service_type, q.queue_number, q.status, q.called_at, q.completed_at, q.created_at,
+		       p.full_name, p.patient_code
+		FROM queue_entries q
+		LEFT JOIN patients p ON p.id = q.patient_id
+		WHERE (q.created_at AT TIME ZONE 'Asia/Ho_Chi_Minh')::date = (now() AT TIME ZONE 'Asia/Ho_Chi_Minh')::date
 	`
 	var args []interface{}
 	if serviceType != "" {
-		query += " AND service_type = $1"
+		query += " AND q.service_type = $1"
 		args = append(args, serviceType)
 	}
-	query += " ORDER BY created_at ASC"
+	query += " ORDER BY q.created_at ASC"
 
 	rows, err := r.db.Query(ctx, query, args...)
 	if err != nil {
@@ -126,10 +131,12 @@ func (r *QueueRepositoryPG) GetStats(ctx context.Context) (*domain.QueueStats, e
 
 func (r *QueueRepositoryPG) scanEntry(row pgx.Row) (*domain.QueueEntry, error) {
 	var e domain.QueueEntry
+	var pFullName, pCode *string
 	err := row.Scan(
 		&e.ID, &e.PatientID, &e.VisitID, &e.AppointmentID,
 		&e.ServiceType, &e.QueueNumber, &e.Status,
 		&e.CalledAt, &e.CompletedAt, &e.CreatedAt,
+		&pFullName, &pCode,
 	)
 	if err != nil {
 		if err == pgx.ErrNoRows {
@@ -137,5 +144,14 @@ func (r *QueueRepositoryPG) scanEntry(row pgx.Row) (*domain.QueueEntry, error) {
 		}
 		return nil, err
 	}
+	
+	if pFullName != nil && pCode != nil {
+		e.Patient = &domain.QueuePatient{
+			ID:          e.PatientID,
+			FullName:    *pFullName,
+			PatientCode: *pCode,
+		}
+	}
+	
 	return &e, nil
 }

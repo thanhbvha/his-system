@@ -24,13 +24,26 @@ func NewVisitHandler(repo domain.VisitRepository, q *commonQueue.Queue) *VisitHa
 	return &VisitHandler{repo: repo, q: q}
 }
 
+type CreateVisitReq struct {
+	PatientID      uuid.UUID  `json:"patient_id"`
+	DoctorID       uuid.UUID  `json:"doctor_id"`
+	QueueEntryID   *uuid.UUID `json:"queue_entry_id,omitempty"`
+	ChiefComplaint *string    `json:"chief_complaint,omitempty"`
+}
+
+// CreateVisit godoc
+// @Summary Create visit
+// @Description Create a new clinical visit.
+// @Tags Visit (Doctor)
+// @Accept json
+// @Produce json
+// @Param request body CreateVisitReq true "Visit Creation Payload"
+// @Success 200 {object} response.Response
+// @Failure 400,500 {object} response.Response
+// @Router /visits [post]
+// @Security BearerAuth
 func (h *VisitHandler) CreateVisit(c *fiber.Ctx) error {
-	var req struct {
-		PatientID      uuid.UUID  `json:"patient_id"`
-		DoctorID       uuid.UUID  `json:"doctor_id"`
-		QueueEntryID   *uuid.UUID `json:"queue_entry_id,omitempty"`
-		ChiefComplaint *string    `json:"chief_complaint,omitempty"`
-	}
+	var req CreateVisitReq
 	if err := c.BodyParser(&req); err != nil {
 		return response.Fail(c, &appErrors.AppError{Code: "BAD_REQUEST", Status: 400, Message: "Invalid request body"})
 	}
@@ -47,6 +60,19 @@ func (h *VisitHandler) CreateVisit(c *fiber.Ctx) error {
 	return response.OK(c, v)
 }
 
+// GetWorklist godoc
+// @Summary Get doctor worklist
+// @Description Retrieve the visit worklist for a specific doctor.
+// @Tags Visit (Doctor)
+// @Accept json
+// @Produce json
+// @Param doctor_id query string true "Doctor ID"
+// @Param date query string false "Date (YYYY-MM-DD)"
+// @Param status query string false "Filter by Status"
+// @Success 200 {object} response.Response
+// @Failure 400,500 {object} response.Response
+// @Router /visits [get]
+// @Security BearerAuth
 func (h *VisitHandler) GetWorklist(c *fiber.Ctx) error {
 	doctorIDStr := c.Query("doctor_id")
 	doctorID, err := uuid.Parse(doctorIDStr)
@@ -70,6 +96,17 @@ func (h *VisitHandler) GetWorklist(c *fiber.Ctx) error {
 	return response.OK(c, worklist)
 }
 
+// GetVisitDetail godoc
+// @Summary Get visit detail
+// @Description Retrieve details of a specific visit.
+// @Tags Visit (Doctor)
+// @Accept json
+// @Produce json
+// @Param id path string true "Visit ID"
+// @Success 200 {object} response.Response
+// @Failure 400,404 {object} response.Response
+// @Router /visits/{id} [get]
+// @Security BearerAuth
 func (h *VisitHandler) GetVisitDetail(c *fiber.Ctx) error {
 	id, err := uuid.Parse(c.Params("id"))
 	if err != nil {
@@ -83,14 +120,28 @@ func (h *VisitHandler) GetVisitDetail(c *fiber.Ctx) error {
 	return response.OK(c, detail)
 }
 
+type UpdateVisitStatusReq struct {
+	Status domain.VisitStatus `json:"status"`
+}
+
+// UpdateVisitStatus godoc
+// @Summary Update visit status
+// @Description Change the status of a visit.
+// @Tags Visit (Doctor)
+// @Accept json
+// @Produce json
+// @Param id path string true "Visit ID"
+// @Param request body UpdateVisitStatusReq true "Status Update Payload"
+// @Success 200 {object} response.Response
+// @Failure 400,422 {object} response.Response
+// @Router /visits/{id}/status [put]
+// @Security BearerAuth
 func (h *VisitHandler) UpdateVisitStatus(c *fiber.Ctx) error {
 	id, err := uuid.Parse(c.Params("id"))
 	if err != nil {
 		return response.Fail(c, &appErrors.AppError{Code: "BAD_REQUEST", Status: 400, Message: "Invalid visit ID"})
 	}
-	var req struct {
-		Status domain.VisitStatus `json:"status"`
-	}
+	var req UpdateVisitStatusReq
 	if err := c.BodyParser(&req); err != nil {
 		return response.Fail(c, &appErrors.AppError{Code: "BAD_REQUEST", Status: 400, Message: "Invalid request body"})
 	}
@@ -101,21 +152,35 @@ func (h *VisitHandler) UpdateVisitStatus(c *fiber.Ctx) error {
 	return response.OK(c, fiber.Map{"message": "Status updated"})
 }
 
+type RecordVitalsReq struct {
+	RecordedBy  uuid.UUID `json:"recorded_by"`
+	BpSystolic  *int      `json:"bp_systolic,omitempty"`
+	BpDiastolic *int      `json:"bp_diastolic,omitempty"`
+	HeartRate   *int      `json:"heart_rate,omitempty"`
+	Temperature *float64  `json:"temperature,omitempty"`
+	SpO2        *int      `json:"spo2,omitempty"`
+	WeightKg    *float64  `json:"weight_kg,omitempty"`
+	HeightCm    *float64  `json:"height_cm,omitempty"`
+}
+
+// RecordVitals godoc
+// @Summary Record vitals
+// @Description Record patient vitals for a visit.
+// @Tags Visit (Doctor)
+// @Accept json
+// @Produce json
+// @Param id path string true "Visit ID"
+// @Param request body RecordVitalsReq true "Vitals Payload"
+// @Success 200 {object} response.Response
+// @Failure 400,500 {object} response.Response
+// @Router /visits/{id}/vitals [post]
+// @Security BearerAuth
 func (h *VisitHandler) RecordVitals(c *fiber.Ctx) error {
 	id, err := uuid.Parse(c.Params("id"))
 	if err != nil {
 		return response.Fail(c, &appErrors.AppError{Code: "BAD_REQUEST", Status: 400, Message: "Invalid visit ID"})
 	}
-	var req struct {
-		RecordedBy  uuid.UUID `json:"recorded_by"`
-		BpSystolic  *int      `json:"bp_systolic,omitempty"`
-		BpDiastolic *int      `json:"bp_diastolic,omitempty"`
-		HeartRate   *int      `json:"heart_rate,omitempty"`
-		Temperature *float64  `json:"temperature,omitempty"`
-		SpO2        *int      `json:"spo2,omitempty"`
-		WeightKg    *float64  `json:"weight_kg,omitempty"`
-		HeightCm    *float64  `json:"height_cm,omitempty"`
-	}
+	var req RecordVitalsReq
 	if err := c.BodyParser(&req); err != nil {
 		return response.Fail(c, &appErrors.AppError{Code: "BAD_REQUEST", Status: 400, Message: "Invalid request body"})
 	}
@@ -137,6 +202,17 @@ func (h *VisitHandler) RecordVitals(c *fiber.Ctx) error {
 	return response.OK(c, vital)
 }
 
+// GetVitals godoc
+// @Summary Get vitals
+// @Description Retrieve vitals recorded for a visit.
+// @Tags Visit (Doctor)
+// @Accept json
+// @Produce json
+// @Param id path string true "Visit ID"
+// @Success 200 {object} response.Response
+// @Failure 400,500 {object} response.Response
+// @Router /visits/{id}/vitals [get]
+// @Security BearerAuth
 func (h *VisitHandler) GetVitals(c *fiber.Ctx) error {
 	id, err := uuid.Parse(c.Params("id"))
 	if err != nil {
@@ -149,15 +225,29 @@ func (h *VisitHandler) GetVitals(c *fiber.Ctx) error {
 	return response.OK(c, vitals)
 }
 
+type CreateOrderReq struct {
+	OrderType domain.OrderType `json:"order_type"`
+	Details   string           `json:"details"`
+}
+
+// CreateOrder godoc
+// @Summary Create order
+// @Description Create an order (e.g., lab test, prescription) for a visit.
+// @Tags Visit (Doctor)
+// @Accept json
+// @Produce json
+// @Param id path string true "Visit ID"
+// @Param request body CreateOrderReq true "Order Creation Payload"
+// @Success 200 {object} response.Response
+// @Failure 400,500 {object} response.Response
+// @Router /visits/{id}/orders [post]
+// @Security BearerAuth
 func (h *VisitHandler) CreateOrder(c *fiber.Ctx) error {
 	id, err := uuid.Parse(c.Params("id"))
 	if err != nil {
 		return response.Fail(c, &appErrors.AppError{Code: "BAD_REQUEST", Status: 400, Message: "Invalid visit ID"})
 	}
-	var req struct {
-		OrderType domain.OrderType `json:"order_type"`
-		Details   string           `json:"details"`
-	}
+	var req CreateOrderReq
 	if err := c.BodyParser(&req); err != nil {
 		return response.Fail(c, &appErrors.AppError{Code: "BAD_REQUEST", Status: 400, Message: "Invalid request body"})
 	}
@@ -169,6 +259,17 @@ func (h *VisitHandler) CreateOrder(c *fiber.Ctx) error {
 	return response.OK(c, order)
 }
 
+// GetOrders godoc
+// @Summary Get orders
+// @Description Retrieve all orders created during a visit.
+// @Tags Visit (Doctor)
+// @Accept json
+// @Produce json
+// @Param id path string true "Visit ID"
+// @Success 200 {object} response.Response
+// @Failure 400,500 {object} response.Response
+// @Router /visits/{id}/orders [get]
+// @Security BearerAuth
 func (h *VisitHandler) GetOrders(c *fiber.Ctx) error {
 	id, err := uuid.Parse(c.Params("id"))
 	if err != nil {
@@ -181,6 +282,17 @@ func (h *VisitHandler) GetOrders(c *fiber.Ctx) error {
 	return response.OK(c, orders)
 }
 
+// CloseVisit godoc
+// @Summary Close visit
+// @Description Mark a visit as closed.
+// @Tags Visit (Doctor)
+// @Accept json
+// @Produce json
+// @Param id path string true "Visit ID"
+// @Success 200 {object} response.Response
+// @Failure 400,422 {object} response.Response
+// @Router /visits/{id}/close [post]
+// @Security BearerAuth
 func (h *VisitHandler) CloseVisit(c *fiber.Ctx) error {
 	id, err := uuid.Parse(c.Params("id"))
 	if err != nil {
@@ -193,6 +305,18 @@ func (h *VisitHandler) CloseVisit(c *fiber.Ctx) error {
 	return response.OK(c, fiber.Map{"message": "Visit closed"})
 }
 
+// SearchICD10 godoc
+// @Summary Search ICD-10 codes
+// @Description Search for ICD-10 diagnosis codes by description or code.
+// @Tags Visit (Doctor)
+// @Accept json
+// @Produce json
+// @Param q query string true "Search query"
+// @Param limit query int false "Max results" default(20)
+// @Success 200 {object} response.Response
+// @Failure 400,500 {object} response.Response
+// @Router /icd10 [get]
+// @Security BearerAuth
 func (h *VisitHandler) SearchICD10(c *fiber.Ctx) error {
 	q := c.Query("q")
 	if q == "" {
