@@ -125,21 +125,51 @@ func (r *UserRepositoryPG) UpdateRoles(ctx context.Context, userID uuid.UUID, ro
 	return tx.Commit(ctx)
 }
 
-func (r *UserRepositoryPG) List(ctx context.Context, page, limit int) ([]*domain.User, int64, error) {
+func (r *UserRepositoryPG) List(ctx context.Context, page, limit int, search, searchHMAC string) ([]*domain.User, int64, error) {
 	var total int64
-	err := r.db.QueryRow(ctx, `SELECT COUNT(*) FROM users`).Scan(&total)
-	if err != nil {
-		return nil, 0, err
-	}
+	var err error
 
-	offset := (page - 1) * limit
-	rows, err := r.db.Query(ctx, `
+	baseCountQ := `SELECT COUNT(*) FROM users`
+	baseQ := `
 		SELECT id, username, COALESCE(email_encrypted, ''), COALESCE(email_hmac, ''), password_hash, is_active, COALESCE(mfa_enabled, false), COALESCE(preferred_language, 'vi'), created_at, updated_at 
-		FROM users ORDER BY created_at DESC LIMIT $1 OFFSET $2`, limit, offset)
-	if err != nil {
-		return nil, 0, err
+		FROM users`
+
+	if search != "" {
+		searchPattern := "%" + search + "%"
+		whereClause := ` WHERE username ILIKE $1 OR email_hmac = $2`
+		err = r.db.QueryRow(ctx, baseCountQ+whereClause, searchPattern, searchHMAC).Scan(&total)
+		if err != nil {
+			return nil, 0, err
+		}
+
+		offset := (page - 1) * limit
+		orderLimitOffset := ` ORDER BY created_at DESC LIMIT $3 OFFSET $4`
+		
+		rows, err := r.db.Query(ctx, baseQ+whereClause+orderLimitOffset, searchPattern, searchHMAC, limit, offset)
+		if err != nil {
+			return nil, 0, err
+		}
+		defer rows.Close()
+		return r.scanUsers(ctx, rows, total)
+	} else {
+		err = r.db.QueryRow(ctx, baseCountQ).Scan(&total)
+		if err != nil {
+			return nil, 0, err
+		}
+
+		offset := (page - 1) * limit
+		orderLimitOffset := ` ORDER BY created_at DESC LIMIT $1 OFFSET $2`
+		
+		rows, err := r.db.Query(ctx, baseQ+orderLimitOffset, limit, offset)
+		if err != nil {
+			return nil, 0, err
+		}
+		defer rows.Close()
+		return r.scanUsers(ctx, rows, total)
 	}
-	defer rows.Close()
+}
+
+func (r *UserRepositoryPG) scanUsers(ctx context.Context, rows pgx.Rows, total int64) ([]*domain.User, int64, error) {
 
 	var users []*domain.User
 	var userIDs []uuid.UUID

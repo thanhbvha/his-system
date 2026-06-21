@@ -26,6 +26,6 @@ func HandleSkipQueue(ctx context.Context, cmd SkipQueueCommand, repo domain.Queu
 		return err
 	}
 
-	ws.BroadcastToAll(ws.EventQueueSkipped, entry)
+	ws.BroadcastToRoom(entry.ServiceType, ws.EventQueueSkipped, entry)
 	return nil
 }

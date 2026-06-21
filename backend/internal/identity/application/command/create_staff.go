@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/thanhbvha/go-common/logger"
 	"golang.org/x/crypto/bcrypt"
 
@@ -20,6 +21,7 @@ type CreateStaffCommand struct {
 	Email        string
 	RoleIDs      []uuid.UUID
 	DepartmentID uuid.UUID
+	FullName     string
 }
 
 type CreateStaffResult struct {
@@ -30,10 +32,11 @@ type CreateStaffResult struct {
 type CreateStaffHandler struct {
 	userRepo domain.UserRepository
 	cipher   *crypto.FieldCipher
+	db       *pgxpool.Pool
 }
 
-func NewCreateStaffHandler(userRepo domain.UserRepository, cipher *crypto.FieldCipher) *CreateStaffHandler {
-	return &CreateStaffHandler{userRepo: userRepo, cipher: cipher}
+func NewCreateStaffHandler(userRepo domain.UserRepository, cipher *crypto.FieldCipher, db *pgxpool.Pool) *CreateStaffHandler {
+	return &CreateStaffHandler{userRepo: userRepo, cipher: cipher, db: db}
 }
 
 func (h *CreateStaffHandler) Handle(ctx context.Context, cmd CreateStaffCommand) (*CreateStaffResult, error) {
@@ -67,6 +70,19 @@ func (h *CreateStaffHandler) Handle(ctx context.Context, cmd CreateStaffCommand)
 	if err := h.userRepo.Create(ctx, user); err != nil {
 		logger.ErrorAsync("CreateStaffHandler.Handle: failed to create user", slog.String("error", err.Error()), slog.String("dispatch_time", time.Now().Format(time.RFC3339Nano)))
 		return nil, err
+	}
+
+	// Insert into staff_profiles
+	if cmd.DepartmentID != uuid.Nil || cmd.FullName != "" {
+		_, err := h.db.Exec(ctx, `
+			INSERT INTO staff_profiles (id, user_id, full_name, department_id)
+			VALUES ($1, $2, $3, $4)
+			ON CONFLICT (id) DO NOTHING
+		`, uuid.New(), user.ID, cmd.FullName, cmd.DepartmentID)
+		if err != nil {
+			logger.ErrorAsync("CreateStaffHandler.Handle: failed to create staff profile", slog.String("error", err.Error()))
+			// we can ignore this error or return it. Let's log it.
+		}
 	}
 
 	// TODO: Enqueue Job to send email with password if needed

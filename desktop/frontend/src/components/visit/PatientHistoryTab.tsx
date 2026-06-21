@@ -1,8 +1,7 @@
-import React, { useEffect } from 'react';
-import { Card, Spin, Alert, Timeline, Typography } from 'antd';
+import React from "react";
+import { Spin, Timeline, Typography, Card, Tag } from "antd";
 import { useTranslation } from "react-i18next";
-import { usePatientStore } from '@/store/patientStore';
-import dayjs from 'dayjs';
+import { usePatientStore } from "@/store/patientStore";
 
 const { Text } = Typography;
 
@@ -12,35 +11,48 @@ interface PatientHistoryTabProps {
 
 export const PatientHistoryTab: React.FC<PatientHistoryTabProps> = ({ patientId }) => {
   const { t } = useTranslation();
-  const { selectedPatient, getPatientDetail, isLoading } = usePatientStore();
+  const [history, setHistory] = React.useState<any[]>([]);
+  const [loading, setLoading] = React.useState(true);
+  const getPatientHistory = usePatientStore(state => state.getPatientHistory);
 
-  useEffect(() => {
+  React.useEffect(() => {
+    let mounted = true;
     if (patientId) {
-      getPatientDetail(patientId);
+      setLoading(true);
+      getPatientHistory(patientId).then((data) => {
+        if (mounted) {
+          setHistory(data);
+          setLoading(false);
+        }
+      });
     }
-  }, [patientId, getPatientDetail]);
+    return () => { mounted = false; };
+  }, [patientId, getPatientHistory]);
 
-  if (isLoading) {
-    return <Spin size="large" style={{ display: 'block', margin: '40px auto' }} />;
-  }
-
-  if (!selectedPatient) {
-    return <Alert message={t("patients.notFound")} type="warning" />;
-  }
+  if (loading) return <Spin className="w-full mt-4" />;
+  if (!history.length) return <div className="text-gray-500 mt-4 text-center">{t("visit.noHistory", "Chưa có lịch sử khám bệnh")}</div>;
 
   return (
-    <Card bordered={false}>
-      <Alert message="Chức năng xem chi tiết lịch sử khám (đơn thuốc, kết quả xét nghiệm cũ) sẽ được hoàn thiện trong Sprint 5." type="info" style={{ marginBottom: 24 }} />
+    <Card title={t("visit.history", "Lịch sử khám bệnh")}>
       <Timeline>
-        <Timeline.Item color="blue">
-          <Text strong>{dayjs().format('DD/MM/YYYY')}</Text>
-          <br />
-          <Text>Lần khám hiện tại</Text>
-        </Timeline.Item>
-        {/* In reality we would map through selectedPatient's historical visits */}
-        <Timeline.Item color="gray">
-          <Text type="secondary">Chưa có dữ liệu lịch sử cũ trong hệ thống</Text>
-        </Timeline.Item>
+        {history.map((visit, index) => (
+          <Timeline.Item key={visit.appointment_id || index} color="blue">
+            <div className="font-semibold text-base mb-1">
+              {(() => {
+                try {
+                  return new Intl.DateTimeFormat('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' }).format(new Date(visit.date));
+                } catch {
+                  return visit.date;
+                }
+              })()}
+            </div>
+            <div className="text-gray-700">
+              <div>Bác sĩ: <Text strong>{visit.doctor_name || "Chưa có"}</Text></div>
+              <div>Khoa/Phòng: <Tag color="geekblue">{visit.department_name || "Phòng khám"}</Tag></div>
+              <div className="mt-1">Trạng thái: <Text className="text-blue-600">{visit.status}</Text></div>
+            </div>
+          </Timeline.Item>
+        ))}
       </Timeline>
     </Card>
   );

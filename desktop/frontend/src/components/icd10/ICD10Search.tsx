@@ -1,65 +1,54 @@
-import React, { useState, useMemo, useRef } from 'react';
-import { Select } from 'antd';
+import React, { useState, useMemo } from "react";
+import { AutoComplete, Spin } from "antd";
 import { useTranslation } from "react-i18next";
-import apiClient from '@/lib/apiClient';
-
-function debounce<T extends (...args: any[]) => any>(func: T, wait: number) {
-  let timeout: ReturnType<typeof setTimeout>;
-  return function(this: any, ...args: Parameters<T>) {
-    clearTimeout(timeout);
-    timeout = setTimeout(() => func.apply(this, args), wait);
-  };
-}
+import apiClient from "@/lib/apiClient";
 
 interface ICD10SearchProps {
-  onSelect: (code: string, description: string) => void;
-  style?: React.CSSProperties;
+  onSelect: (code: string) => void;
 }
 
-export const ICD10Search: React.FC<ICD10SearchProps> = ({ onSelect, style }) => {
+export const ICD10Search: React.FC<ICD10SearchProps> = ({ onSelect }) => {
   const { t } = useTranslation();
-  const [options, setOptions] = useState<any[]>([]);
+  const [options, setOptions] = useState<{ label: string; value: string }[]>([]);
   const [fetching, setFetching] = useState(false);
 
-  const fetchOptions = useMemo(
-    () => debounce(async (query: string) => {
+  const timeoutRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const handleSearch = (query: string) => {
+    if (timeoutRef.current) {
+      clearTimeout(timeoutRef.current);
+    }
+
+    timeoutRef.current = setTimeout(async () => {
       if (!query || query.length < 2) {
         setOptions([]);
         return;
       }
       setFetching(true);
       try {
-        const res = await apiClient.get(`/icd10/search?q=${encodeURIComponent(query)}`);
+        const res = await apiClient.get(`/icd10/search?q=${query}`);
         const data = res.data.data || [];
+        
         setOptions(data.map((item: any) => ({
           label: `${item.code} — ${item.description_vi}`,
           value: item.code,
-          itemData: item
         })));
+        setFetching(false);
       } catch (error) {
-        console.error("Failed to search ICD10:", error);
-      } finally {
+        console.error("ICD-10 search error", error);
         setFetching(false);
       }
-    }, 500), // debounce 500ms
-    []
-  );
-
-  const handleSelect = (value: string, option: any) => {
-    onSelect(value, option.itemData.description_vi);
+    }, 500);
   };
 
   return (
-    <Select
-      showSearch
-      placeholder={t("visit.icd10Search", "Tìm mã ICD-10")}
-      filterOption={false}
-      onSearch={fetchOptions}
-      onSelect={handleSelect}
+    <AutoComplete
+      style={{ width: '100%' }}
       options={options}
-      loading={fetching}
-      style={style || { width: '100%' }}
-      allowClear
+      onSearch={handleSearch}
+      onSelect={onSelect}
+      placeholder={t("visit.icd10Search", "Nhập mã hoặc tên bệnh (VD: Tim mạch)")}
+      notFoundContent={fetching ? <Spin size="small" /> : null}
     />
   );
 };

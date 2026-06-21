@@ -7,6 +7,7 @@ import (
 	"github.com/gofiber/fiber/v2"
 	"github.com/google/uuid"
 	commonQueue "github.com/thanhbvha/go-common/queue"
+	"his-system/pkg/auth"
 	appErrors "his-system/pkg/errors"
 	"his-system/pkg/response"
 
@@ -184,9 +185,11 @@ func (h *VisitHandler) RecordVitals(c *fiber.Ctx) error {
 	if err := c.BodyParser(&req); err != nil {
 		return response.Fail(c, &appErrors.AppError{Code: "BAD_REQUEST", Status: 400, Message: "Invalid request body"})
 	}
+	claims := c.Locals("claims").(auth.Claims)
+
 	cmd := commands.RecordVitalsCommand{
 		VisitID:     id,
-		RecordedBy:  req.RecordedBy,
+		RecordedBy:  claims.UserID,
 		BpSystolic:  req.BpSystolic,
 		BpDiastolic: req.BpDiastolic,
 		HeartRate:   req.HeartRate,

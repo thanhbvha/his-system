@@ -6,6 +6,7 @@ import (
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/jackc/pgx/v5/pgxpool"
+	"his-system/pkg/middleware"
 )
 
 type ReceptionModule struct {
@@ -25,11 +26,15 @@ func (m *ReceptionModule) RegisterRoutes(app fiber.Router) {
 	// API routes
 	api := app.Group("/")
 
-	// Assuming these are protected by standard RBAC middleware further up in main.go
-	api.Get("/", m.QueueHandler.GetCurrentQueue)
-	api.Post("/checkin", m.QueueHandler.CheckIn)
-	api.Post("/call/:id", m.QueueHandler.CallQueue)
-	api.Post("/skip/:id", m.QueueHandler.SkipQueue)
-	api.Post("/complete/:id", m.QueueHandler.CompleteQueue)
-	api.Get("/stats", m.QueueHandler.GetQueueStats)
+	// Common read access
+	api.Get("/", middleware.RequireRole("admin", "receptionist", "doctor", "nurse"), m.QueueHandler.GetCurrentQueue)
+	api.Get("/stats", middleware.RequireRole("admin", "receptionist", "doctor", "nurse"), m.QueueHandler.GetQueueStats)
+
+	// Receptionist and Admin can check in
+	api.Post("/checkin", middleware.RequireRole("admin", "receptionist"), m.QueueHandler.CheckIn)
+
+	// Doctors, Nurses, and Admins can manage queue
+	api.Post("/call/:id", middleware.RequireRole("admin", "doctor", "nurse"), m.QueueHandler.CallQueue)
+	api.Post("/skip/:id", middleware.RequireRole("admin", "doctor", "nurse"), m.QueueHandler.SkipQueue)
+	api.Post("/complete/:id", middleware.RequireRole("admin", "doctor", "nurse"), m.QueueHandler.CompleteQueue)
 }

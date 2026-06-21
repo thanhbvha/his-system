@@ -10,7 +10,9 @@
     "select": "Chọn",
     "yes": "Đồng ý",
     "no": "Hủy",
-    "cancel": "Hủy"
+    "cancel": "Hủy",
+    "edit": "Sửa",
+    "success": "Thành công"
   },
   "nav": {
     "dashboard": "Tổng quan",
@@ -24,6 +26,7 @@
   },
   "profile": {
     "title": "Hồ sơ cá nhân",
+    "fullName": "Họ và Tên",
     "unknown": "Không rõ",
     "noEmail": "Chưa có email",
     "noRole": "KHÔNG CÓ QUYỀN",
@@ -204,7 +207,8 @@
       "requirePassword": "Vui lòng tạo mật khẩu",
       "passwordPlaceholder": "Nhấn nút Generate để tạo",
       "roles": "Quyền (Roles)",
-      "department": "Khoa / Phòng ban"
+      "department": "Khoa / Phòng ban",
+      "deptPlaceholder": "Chọn Khoa / Phòng ban"
     }
   },
   "queue": {
@@ -222,7 +226,7 @@
     "linkAppointment": "Liên kết lịch hẹn (Tùy chọn)"
   },
   "visit": {
-    "worklist": "Danh sách bệnh nhân",
+    "worklist": "Danh sách khám",
     "startVisit": "Bắt đầu khám",
     "closeVisit": "Kết thúc khám",
     "vitals": "Sinh hiệu",

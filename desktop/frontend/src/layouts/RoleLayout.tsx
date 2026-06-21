@@ -38,6 +38,9 @@ export const RoleLayout = () => {
   }, [user?.preferred_language, i18n]);
 
   const handleLogout = () => {
+    import("@/lib/queryClient").then(({ queryClient }) => {
+      queryClient.clear();
+    });
     clearAuth();
     navigate("/login");
   };

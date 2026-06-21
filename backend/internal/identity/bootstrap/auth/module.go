@@ -8,6 +8,7 @@ import (
 
 	"his-system/internal/identity/handlers/auth"
 	"his-system/internal/identity/application/command"
+	"his-system/internal/identity/application/query"
 	identityInfra "his-system/internal/identity/infrastructure"
 	"his-system/pkg/crypto"
 	"his-system/pkg/middleware"
@@ -47,7 +48,9 @@ func NewModule(deps ModuleDeps) *Module {
 	refreshWebCmd      := command.NewRefreshWebHandler(patientAuthRepo, deps.Rdb, deps.SignKey, deps.EncKey)
 	logoutWebCmd       := command.NewLogoutWebHandler(deps.Rdb)
 
-	desktopHandler := auth.NewDesktopAuthHandler(initLoginCmd, completeLoginCmd, refreshTokenCmd, logoutCmd, setupMFACmd, verifyMFACmd, updateLangCmd)
+	getMeCmd           := query.NewGetMeHandler(deps.PgPool, deps.Cipher)
+
+	desktopHandler := auth.NewDesktopAuthHandler(initLoginCmd, completeLoginCmd, refreshTokenCmd, logoutCmd, setupMFACmd, verifyMFACmd, updateLangCmd, getMeCmd)
 	webHandler     := auth.NewWebAuthHandler(sendOTPCmd, verifyOTPCmd, registerPatientCmd, refreshWebCmd, logoutWebCmd)
 
 	router := NewRouter(RouterDeps{

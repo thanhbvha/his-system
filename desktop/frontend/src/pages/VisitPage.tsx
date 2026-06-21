@@ -7,7 +7,7 @@ export const VisitPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
 
   if (id) {
-    return <VisitScreen visitId={id} />;
+    return <VisitScreen />;
   }
 
   return <DoctorWorklist />;

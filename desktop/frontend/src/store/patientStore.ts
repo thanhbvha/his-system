@@ -23,6 +23,7 @@ interface PatientStore {
   selectPatient: (patient: Patient | null) => void;
   createPatient: (data: Partial<Patient>) => Promise<Patient>;
   getPatientDetail: (id: string) => Promise<void>;
+  getPatientHistory: (id: string) => Promise<any[]>;
 }
 
 export const usePatientStore = create<PatientStore>((set) => ({
@@ -79,6 +80,19 @@ export const usePatientStore = create<PatientStore>((set) => ({
       set({ selectedPatient: res.data.data });
     } catch (error) {
       console.error("Failed to fetch patient detail:", error);
+    } finally {
+      set({ isLoading: false });
+    }
+  },
+
+  getPatientHistory: async (id: string) => {
+    set({ isLoading: true });
+    try {
+      const res = await apiClient.get(`/patients/${id}/history`);
+      return res.data.data || [];
+    } catch (error) {
+      console.error("Failed to fetch patient history:", error);
+      return [];
     } finally {
       set({ isLoading: false });
     }

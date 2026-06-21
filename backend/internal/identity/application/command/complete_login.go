@@ -41,6 +41,7 @@ type UserPayload struct {
 	ID                string   `json:"id"`
 	Username          string   `json:"username"`
 	RoleIDs           []string `json:"role_ids"`
+	Roles             []string `json:"roles"`
 	MFAEnabled        bool     `json:"mfa_enabled"`
 	PreferredLanguage string   `json:"preferred_language"`
 }
@@ -170,6 +171,7 @@ func (h *CompleteLoginHandler) Handle(ctx context.Context, cmd CompleteLoginComm
 			ID:                user.ID.String(),
 			Username:          user.Username,
 			RoleIDs:           roleIDs,
+			Roles:             roleNames,
 			MFAEnabled:        user.MFAEnabled,
 			PreferredLanguage: user.PreferredLanguage,
 		},

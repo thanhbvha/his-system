@@ -1,9 +1,7 @@
-import React from 'react';
-import { Form, InputNumber, Button, Space, Card, Row, Col, Typography, message } from 'antd';
+import React, { useState } from "react";
+import { Form, InputNumber, Button, Card, Row, Col, Alert, Space } from "antd";
 import { useTranslation } from "react-i18next";
-import { useVisitStore } from '@/store/visitStore';
-
-const { Text } = Typography;
+import { useVisitStore } from "@/store/visitStore";
 
 interface VitalsFormProps {
   visitId: string;
@@ -11,76 +9,107 @@ interface VitalsFormProps {
 
 export const VitalsForm: React.FC<VitalsFormProps> = ({ visitId }) => {
   const { t } = useTranslation();
+  const { recordVitals } = useVisitStore();
   const [form] = Form.useForm();
-  const { recordVitals, isLoading } = useVisitStore();
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [warnings, setWarnings] = useState<string[]>([]);
 
-  const onFinish = async (values: any) => {
-    try {
-      await recordVitals(visitId, values);
-      message.success(t("visit.addVitals", "Ghi nhận sinh hiệu thành công"));
-      form.resetFields();
-    } catch (err) {
-      message.error(t("common.error", "Đã xảy ra lỗi"));
-    }
+  const checkWarnings = (values: any) => {
+    const newWarnings: string[] = [];
+    if (values.bp_systolic > 140 || values.bp_systolic < 90) newWarnings.push("Huyết áp tâm thu bất thường");
+    if (values.bp_diastolic > 90 || values.bp_diastolic < 60) newWarnings.push("Huyết áp tâm trương bất thường");
+    if (values.heart_rate > 100 || values.heart_rate < 60) newWarnings.push("Nhịp tim bất thường");
+    if (values.temperature > 37.5) newWarnings.push("Sốt (Nhiệt độ cao)");
+    if (values.spo2 < 95) newWarnings.push("SpO2 thấp");
+    setWarnings(newWarnings);
   };
 
-  const checkAbnormal = (field: string, value: number | undefined) => {
-    if (value === undefined || value === null) return false;
-    switch (field) {
-      case 'bp_systolic': return value > 140 || value < 90;
-      case 'bp_diastolic': return value > 90 || value < 60;
-      case 'heart_rate': return value > 100 || value < 60;
-      case 'temperature': return value > 37.5;
-      case 'spo2': return value < 95;
-      default: return false;
+  const onValuesChange = (_: any, allValues: any) => {
+    checkWarnings(allValues);
+  };
+
+  const onFinish = async (values: any) => {
+    setIsSubmitting(true);
+    try {
+      await recordVitals(visitId, values);
+      form.resetFields();
+      setWarnings([]);
+    } catch (error) {
+      console.error(error);
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
   return (
-    <Card title={t("visit.addVitals", "Ghi nhận sinh hiệu")} bordered={false}>
-      <Form form={form} layout="vertical" onFinish={onFinish}>
+    <Card title={t("visit.addVitals", "Ghi nhận sinh hiệu")} className="mb-6">
+      {warnings.length > 0 && (
+        <Alert
+          message={t("visit.abnormal", "Cảnh báo chỉ số bất thường")}
+          description={
+            <ul className="pl-4 m-0">
+              {warnings.map((w, i) => <li key={i}>{w}</li>)}
+            </ul>
+          }
+          type="warning"
+          showIcon
+          className="mb-4"
+        />
+      )}
+      
+      <Form 
+        form={form} 
+        layout="vertical" 
+        onFinish={onFinish}
+        onValuesChange={onValuesChange}
+      >
         <Row gutter={16}>
           <Col span={8}>
-            <Form.Item name="bp_systolic" label={`${t("visit.bp", "Huyết áp")} Tâm thu (mmHg)`}>
-              <InputNumber style={{ width: '100%' }} />
+            <Form.Item label={t("visit.bp", "Huyết áp (mmHg)")} className="mb-0">
+              <Space.Compact>
+                <Form.Item name="bp_systolic" style={{ width: '45%', textAlign: 'center' }} rules={[{ required: true }]}>
+                  <InputNumber placeholder="Tâm thu" style={{ width: '100%' }} />
+                </Form.Item>
+                <div style={{ width: '10%', display: 'inline-block', textAlign: 'center', lineHeight: '32px' }}>/</div>
+                <Form.Item name="bp_diastolic" style={{ width: '45%', textAlign: 'center' }} rules={[{ required: true }]}>
+                  <InputNumber placeholder="Tâm trương" style={{ width: '100%' }} />
+                </Form.Item>
+              </Space.Compact>
             </Form.Item>
           </Col>
           <Col span={8}>
-            <Form.Item name="bp_diastolic" label={`${t("visit.bp", "Huyết áp")} Tâm trương (mmHg)`}>
-              <InputNumber style={{ width: '100%' }} />
+            <Form.Item name="heart_rate" label={t("visit.heartRate", "Nhịp tim (bpm)")} rules={[{ required: true }]}>
+              <InputNumber className="w-full" />
             </Form.Item>
           </Col>
           <Col span={8}>
-            <Form.Item name="heart_rate" label={`${t("visit.heartRate", "Nhịp tim")} (bpm)`}>
-              <InputNumber style={{ width: '100%' }} />
-            </Form.Item>
-          </Col>
-          <Col span={8}>
-            <Form.Item name="temperature" label={`${t("visit.temp", "Nhiệt độ")} (°C)`}>
-              <InputNumber style={{ width: '100%' }} step={0.1} />
-            </Form.Item>
-          </Col>
-          <Col span={8}>
-            <Form.Item name="spo2" label={`${t("visit.spo2", "SpO2")} (%)`}>
-              <InputNumber style={{ width: '100%' }} max={100} />
-            </Form.Item>
-          </Col>
-          <Col span={4}>
-            <Form.Item name="weight_kg" label={`${t("visit.weight", "Cân nặng")} (kg)`}>
-              <InputNumber style={{ width: '100%' }} step={0.1} />
-            </Form.Item>
-          </Col>
-          <Col span={4}>
-            <Form.Item name="height_cm" label={`${t("visit.height", "Chiều cao")} (cm)`}>
-              <InputNumber style={{ width: '100%' }} />
+            <Form.Item name="temperature" label={t("visit.temp", "Nhiệt độ (°C)")} rules={[{ required: true }]}>
+              <InputNumber className="w-full" step={0.1} />
             </Form.Item>
           </Col>
         </Row>
-        <Form.Item>
-          <Button type="primary" htmlType="submit" loading={isLoading}>
-            {t("common.confirm", "Xác nhận")}
-          </Button>
-        </Form.Item>
+        
+        <Row gutter={16}>
+          <Col span={8}>
+            <Form.Item name="spo2" label={t("visit.spo2", "SpO2 (%)")}>
+              <InputNumber className="w-full" />
+            </Form.Item>
+          </Col>
+          <Col span={8}>
+            <Form.Item name="weight_kg" label={t("visit.weight", "Cân nặng (kg)")}>
+              <InputNumber className="w-full" step={0.1} />
+            </Form.Item>
+          </Col>
+          <Col span={8}>
+            <Form.Item name="height_cm" label={t("visit.height", "Chiều cao (cm)")}>
+              <InputNumber className="w-full" />
+            </Form.Item>
+          </Col>
+        </Row>
+        
+        <Button type="primary" htmlType="submit" loading={isSubmitting}>
+          {t("common.save", "Lưu")}
+        </Button>
       </Form>
     </Card>
   );

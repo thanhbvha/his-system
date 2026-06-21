@@ -1,5 +1,5 @@
-import { create } from 'zustand';
-import apiClient from '@/lib/apiClient';
+import { create } from "zustand";
+import apiClient from "@/lib/apiClient";
 
 export interface VisitVital {
   id: string;
@@ -22,7 +22,8 @@ export interface VisitOrder {
 
 export interface Visit {
   id: string;
-  patient: { id: string; full_name: string; dob: string; gender: string };
+  queue_entry_id?: string;
+  patient: { id: string; full_name: string; patient_code?: string; dob: string; gender: string };
   doctor: { id: string; full_name: string };
   status: string;
   chief_complaint?: string;
@@ -34,7 +35,7 @@ export interface Visit {
 export interface CreateVisitPayload {
   patient_id: string;
   doctor_id: string;
-  queue_entry_id?: string;
+  queue_entry_id: string;
   chief_complaint?: string;
 }
 
@@ -42,8 +43,9 @@ interface VisitState {
   worklist: Visit[];
   selectedVisit: Visit | null;
   isLoading: boolean;
+  error: string | null;
 
-  fetchWorklist: () => Promise<void>;
+  fetchWorklist: (doctorId?: string, date?: string) => Promise<void>;
   fetchVisitDetail: (visitId: string) => Promise<void>;
   createVisit: (payload: CreateVisitPayload) => Promise<Visit>;
   recordVitals: (visitId: string, vitals: Partial<VisitVital>) => Promise<void>;
@@ -55,86 +57,112 @@ export const useVisitStore = create<VisitState>((set, get) => ({
   worklist: [],
   selectedVisit: null,
   isLoading: false,
+  error: null,
 
-  fetchWorklist: async () => {
-    set({ isLoading: true });
+  fetchWorklist: async (doctorId, date) => {
+    set({ isLoading: true, error: null });
     try {
-      // The API should automatically filter by the currently logged in doctor
-      // For now, we fetch today's active visits
-      const res = await apiClient.get('/visits?status=IN_PROGRESS,WAITING');
-      set({ worklist: res.data.data.items || [] });
-    } catch (error) {
-      console.error("Failed to fetch worklist:", error);
-    } finally {
-      set({ isLoading: false });
+      const params = new URLSearchParams();
+      if (doctorId) params.append('doctor_id', doctorId);
+      if (date) params.append('date', date);
+      
+      const res = await apiClient.get(`/visits?${params.toString()}`);
+      set({ worklist: res.data.data, isLoading: false });
+    } catch (error: any) {
+      set({ error: error.message, isLoading: false });
     }
   },
 
-  fetchVisitDetail: async (visitId: string) => {
-    set({ isLoading: true });
+  fetchVisitDetail: async (visitId) => {
+    const currentVisit = get().selectedVisit;
+    if (currentVisit && currentVisit.id !== visitId) {
+      set({ selectedVisit: null, isLoading: true, error: null });
+    } else {
+      set({ isLoading: true, error: null });
+    }
     try {
       const res = await apiClient.get(`/visits/${visitId}`);
-      set({ selectedVisit: res.data.data });
-    } catch (error) {
-      console.error("Failed to fetch visit detail:", error);
-    } finally {
-      set({ isLoading: false });
+      set({ selectedVisit: res.data.data, isLoading: false });
+    } catch (error: any) {
+      set({ error: error.message, isLoading: false });
     }
   },
 
-  createVisit: async (payload: CreateVisitPayload) => {
-    set({ isLoading: true });
+  createVisit: async (payload) => {
+    set({ isLoading: true, error: null });
     try {
-      const res = await apiClient.post('/visits', payload);
-      const newVisit = res.data.data;
-      // Refresh worklist after creating
-      await get().fetchWorklist();
-      return newVisit;
-    } catch (error) {
-      console.error("Failed to create visit:", error);
-      throw error;
-    } finally {
+      const res = await apiClient.post(`/visits`, payload);
       set({ isLoading: false });
+      return res.data.data;
+    } catch (error: any) {
+      set({ error: error.message, isLoading: false });
+      throw error;
     }
   },
 
-  recordVitals: async (visitId: string, vitals: Partial<VisitVital>) => {
-    set({ isLoading: true });
+  recordVitals: async (visitId, vitals) => {
     try {
-      await apiClient.post(`/visits/${visitId}/vitals`, vitals);
-      await get().fetchVisitDetail(visitId); // Refresh details
-    } catch (error) {
-      console.error("Failed to record vitals:", error);
+      const res = await apiClient.post(`/visits/${visitId}/vitals`, vitals);
+      // Optimistic update
+      const current = get().selectedVisit;
+      if (current && current.id === visitId) {
+        set({
+          selectedVisit: {
+            ...current,
+            vitals: [res.data.data, ...(current.vitals || [])],
+          }
+        });
+      }
+    } catch (error: any) {
+      set({ error: error.message });
       throw error;
-    } finally {
-      set({ isLoading: false });
     }
   },
 
-  createOrder: async (visitId: string, order: { order_type: string; details: string }) => {
-    set({ isLoading: true });
+  createOrder: async (visitId, order) => {
     try {
-      await apiClient.post(`/visits/${visitId}/orders`, order);
-      await get().fetchVisitDetail(visitId); // Refresh details
-    } catch (error) {
-      console.error("Failed to create order:", error);
+      const res = await apiClient.post(`/visits/${visitId}/orders`, order);
+      const current = get().selectedVisit;
+      if (current && current.id === visitId) {
+        set({
+          selectedVisit: {
+            ...current,
+            orders: [res.data.data, ...(current.orders || [])],
+          }
+        });
+      }
+    } catch (error: any) {
+      set({ error: error.message });
       throw error;
-    } finally {
-      set({ isLoading: false });
     }
   },
 
-  closeVisit: async (visitId: string) => {
-    set({ isLoading: true });
+  closeVisit: async (visitId) => {
+    set({ isLoading: true, error: null });
     try {
-      await apiClient.put(`/visits/${visitId}/status`, { status: "COMPLETED" });
-      set({ selectedVisit: null });
-      await get().fetchWorklist();
-    } catch (error) {
-      console.error("Failed to close visit:", error);
+      await apiClient.post(`/visits/${visitId}/close`);
+      const current = get().selectedVisit;
+      
+      // Also complete the queue entry if exists
+      if (current && current.queue_entry_id) {
+        try {
+          await apiClient.post(`/queue/complete/${current.queue_entry_id}`);
+        } catch (queueErr) {
+          console.warn("Failed to complete queue entry:", queueErr);
+        }
+      }
+
+      if (current && current.id === visitId) {
+        set({
+          selectedVisit: { ...current, status: 'COMPLETED' },
+          isLoading: false
+        });
+      } else {
+        set({ isLoading: false });
+      }
+    } catch (error: any) {
+      set({ error: error.message, isLoading: false });
       throw error;
-    } finally {
-      set({ isLoading: false });
     }
-  }
+  },
 }));

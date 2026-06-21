@@ -11,6 +11,7 @@ export interface QueuePatient {
 export interface QueueEntry {
   id: string;
   patient: QueuePatient;
+  visit_id?: string;
   service_type: string;
   queue_number: string;
   status: 'WAITING' | 'CALLED' | 'IN_PROGRESS' | 'DONE' | 'SKIPPED';

@@ -56,7 +56,7 @@ export const MFAPage = () => {
       });
 
       const { access_token, refresh_token, user } = compRes.data.data;
-      const role = user.role_ids && user.role_ids.length > 0 ? "admin" : "receptionist";
+      const role = user.roles && user.roles.length > 0 ? user.roles[0] : "patient";
       
       setAuth(access_token, refresh_token, user, role as any);
       navigate("/profile");
@@ -64,8 +64,13 @@ export const MFAPage = () => {
       console.error(err);
       if (err.response?.status === 401 || err.response?.status === 400) {
         message.error(t("auth.errors.invalidMFA"));
+      } else if (err.response?.status === 429) {
+        message.error(t("auth.errors.tooManyAttempts"));
+      } else if (err.response?.status === 423) {
+        message.error(t("auth.errors.accountLocked"));
       } else {
-        message.error(t("common.error"));
+        const backendMsg = err.response?.data?.error?.message || err.response?.data?.message;
+        message.error(backendMsg || t("common.error"));
       }
     } finally {
       setLoading(false);

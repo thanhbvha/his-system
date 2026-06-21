@@ -26,6 +26,6 @@ func HandleCompleteQueue(ctx context.Context, cmd CompleteQueueCommand, repo dom
 		return err
 	}
 
-	ws.BroadcastToAll(ws.EventQueueCompleted, entry)
+	ws.BroadcastToRoom(entry.ServiceType, ws.EventQueueCompleted, entry)
 	return nil
 }

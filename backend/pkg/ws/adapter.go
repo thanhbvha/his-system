@@ -49,6 +49,10 @@ func (h *CustomWSHandler) HandleUpgrade(c *fiber.Ctx) error {
 			requestID = reqIDStr
 		}
 	}
+	
+	// Must extract query parameters BEFORE returning websocket.New because 
+	// fiber context is recycled after handler returns.
+	roomID := c.Query("room_id")
 
 	return websocket.New(func(conn *websocket.Conn) {
 		defer func() {
@@ -81,7 +85,13 @@ func (h *CustomWSHandler) HandleUpgrade(c *fiber.Ctx) error {
 		defer h.ConnectionLimiter.RemoveConnection(clientIP)
 
 		manager := core.GetGlobalManager()
-		shardID := "default" // Tạm thời dùng shard mặc định của Manager cho Hàng đợi
+		
+		shardID := "default"
+		if roomID != "" {
+			shardID = "room_" + roomID
+		} else {
+			logger.WarnAsync("WebSocket connection upgrade missing room_id, falling back to default shard", "userID", userID)
+		}
 
 		adapterConn := libadapter.NewConnAdapter(conn)
 

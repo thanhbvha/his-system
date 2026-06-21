@@ -7,17 +7,17 @@ import (
 )
 
 type VisitVital struct {
-	ID          uuid.UUID
-	VisitID     uuid.UUID
-	BpSystolic  *int
-	BpDiastolic *int
-	HeartRate   *int
-	Temperature *float64
-	SpO2        *int
-	WeightKg    *float64
-	HeightCm    *float64
-	RecordedAt  time.Time
-	RecordedBy  uuid.UUID
+	ID          uuid.UUID   `json:"id"`
+	VisitID     uuid.UUID   `json:"visit_id"`
+	BpSystolic  *int        `json:"bp_systolic,omitempty"`
+	BpDiastolic *int        `json:"bp_diastolic,omitempty"`
+	HeartRate   *int        `json:"heart_rate,omitempty"`
+	Temperature *float64    `json:"temperature,omitempty"`
+	SpO2        *int        `json:"spo2,omitempty"`
+	WeightKg    *float64    `json:"weight_kg,omitempty"`
+	HeightCm    *float64    `json:"height_cm,omitempty"`
+	RecordedAt  time.Time   `json:"recorded_at"`
+	RecordedBy  uuid.UUID   `json:"recorded_by"`
 }
 
 // Alerts returns a list of clinical alert messages for abnormal values.

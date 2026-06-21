@@ -16,6 +16,8 @@ type AdminUserHandler struct {
 	createStaffCmd command.CreateStaffHandler
 	deactivateCmd  command.DeactivateUserHandler
 	assignRolesCmd command.AssignUserRolesHandler
+	updateProfileCmd command.UpdateStaffProfileHandler
+	updateEmailCmd command.UpdateUserEmailHandler
 }
 
 func NewAdminUserHandler(
@@ -24,6 +26,8 @@ func NewAdminUserHandler(
 	createStaffCmd *command.CreateStaffHandler,
 	deactivateCmd *command.DeactivateUserHandler,
 	assignRolesCmd *command.AssignUserRolesHandler,
+	updateProfileCmd *command.UpdateStaffProfileHandler,
+	updateEmailCmd *command.UpdateUserEmailHandler,
 ) *AdminUserHandler {
 	return &AdminUserHandler{
 		getUserByIDCmd: *getUserByIDCmd,
@@ -31,6 +35,8 @@ func NewAdminUserHandler(
 		createStaffCmd: *createStaffCmd,
 		deactivateCmd:  *deactivateCmd,
 		assignRolesCmd: *assignRolesCmd,
+		updateProfileCmd: *updateProfileCmd,
+		updateEmailCmd: *updateEmailCmd,
 	}
 }
 
@@ -49,8 +55,9 @@ func NewAdminUserHandler(
 func (h *AdminUserHandler) List(c *fiber.Ctx) error {
 	page := c.QueryInt("page", 1)
 	limit := c.QueryInt("limit", 10)
+	search := c.Query("search", "")
 
-	res, err := h.listUsersCmd.Handle(c.Context(), query.ListUsersQuery{Page: page, Limit: limit})
+	res, err := h.listUsersCmd.Handle(c.Context(), query.ListUsersQuery{Page: page, Limit: limit, Search: search})
 	if err != nil {
 		return response.Fail(c, appErrors.ErrInternal)
 	}
@@ -98,6 +105,7 @@ type CreateStaffReq struct {
 	Email        string      `json:"email"`
 	RoleIDs      []uuid.UUID `json:"role_ids"`
 	DepartmentID uuid.UUID   `json:"department_id"`
+	FullName     string      `json:"full_name"`
 }
 
 // Create godoc
@@ -123,6 +131,7 @@ func (h *AdminUserHandler) Create(c *fiber.Ctx) error {
 		Email:        req.Email,
 		RoleIDs:      req.RoleIDs,
 		DepartmentID: req.DepartmentID,
+		FullName:     req.FullName,
 	})
 
 	if err != nil {
@@ -197,6 +206,68 @@ func (h *AdminUserHandler) AssignRoles(c *fiber.Ctx) error {
 	}
 	if res == nil {
 		return response.Fail(c, appErrors.ErrNotFound)
+	}
+
+	return response.OK(c, nil)
+}
+
+type UpdateProfileReq struct {
+	FullName     string      `json:"full_name"`
+	DepartmentID uuid.UUID   `json:"department_id"`
+	RoleIDs      []uuid.UUID `json:"role_ids"`
+	Email        string      `json:"email"`
+}
+
+// UpdateProfile godoc
+// @Summary Update profile
+// @Description Update staff profile details and roles.
+// @Tags Admin (User/Role)
+// @Accept json
+// @Produce json
+// @Param id path string true "User ID"
+// @Param request body UpdateProfileReq true "Profile Update Payload"
+// @Success 200 {object} response.Response
+// @Failure 400,401,403,404,500 {object} response.Response
+// @Router /admin/users/{id}/profile [put]
+// @Security BearerAuth
+func (h *AdminUserHandler) UpdateProfile(c *fiber.Ctx) error {
+	id, err := uuid.Parse(c.Params("id"))
+	if err != nil {
+		return response.Fail(c, appErrors.ErrValidation)
+	}
+
+	var req UpdateProfileReq
+	if err := c.BodyParser(&req); err != nil {
+		return response.Fail(c, appErrors.ErrValidation)
+	}
+
+	err = h.updateProfileCmd.Handle(c.Context(), command.UpdateStaffProfileCommand{
+		UserID:       id,
+		FullName:     req.FullName,
+		DepartmentID: req.DepartmentID,
+	})
+	if err != nil {
+		return response.Fail(c, appErrors.ErrInternal)
+	}
+
+	if len(req.RoleIDs) > 0 {
+		_, err = h.assignRolesCmd.Handle(c.Context(), command.AssignUserRolesCommand{
+			UserID:  id,
+			RoleIDs: req.RoleIDs,
+		})
+		if err != nil {
+			return response.Fail(c, appErrors.ErrInternal)
+		}
+	}
+
+	if req.Email != "" {
+		err = h.updateEmailCmd.Handle(c.Context(), command.UpdateUserEmailCommand{
+			UserID: id,
+			Email:  req.Email,
+		})
+		if err != nil {
+			return response.Fail(c, appErrors.ErrInternal)
+		}
 	}
 
 	return response.OK(c, nil)

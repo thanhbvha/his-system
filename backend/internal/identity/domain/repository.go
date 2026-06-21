@@ -13,7 +13,7 @@ type UserRepository interface {
 	GetByEmailHMAC(ctx context.Context, emailHMAC string) (*User, error)
 	Update(ctx context.Context, user *User) error
 	UpdateRoles(ctx context.Context, userID uuid.UUID, roleIDs []uuid.UUID) error
-	List(ctx context.Context, page, limit int) ([]*User, int64, error)
+	List(ctx context.Context, page, limit int, search, searchHMAC string) ([]*User, int64, error)
 }
 
 type RoleRepository interface {

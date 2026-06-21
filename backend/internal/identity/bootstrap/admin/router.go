@@ -45,6 +45,7 @@ func (r *Router) Register(root fiber.Router) {
 		middleware.RequirePermission("user:assign_role", r.rdb, r.roleRepo),
 		r.userHandler.AssignRoles,
 	)
+	users.Put("/:id/profile", r.userHandler.UpdateProfile)
 
 	roles := root.Group("/roles")
 	roles.Get("/", r.roleHandler.List)

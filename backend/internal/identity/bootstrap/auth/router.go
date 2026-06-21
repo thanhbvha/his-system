@@ -61,6 +61,10 @@ func (r *Router) Register(root fiber.Router) {
 		middleware.RequestSignature(r.deviceRepo),
 		r.desktopHandler.SetupMFA,
 	)
+	root.Get("/me",
+		jwtAuth,
+		r.desktopHandler.GetMe,
+	)
 	root.Put("/me/language",
 		jwtAuth,
 		middleware.RequestSignature(r.deviceRepo),

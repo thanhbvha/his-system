@@ -26,12 +26,19 @@ type VisitStartedPayload struct {
 }
 
 func HandleCreateVisit(ctx context.Context, cmd CreateVisitCommand, repo domain.VisitRepository, q *commonQueue.Queue) (*domain.Visit, error) {
+	if cmd.QueueEntryID != nil {
+		existingVisit, err := repo.FindByQueueEntryID(ctx, *cmd.QueueEntryID)
+		if err == nil && existingVisit != nil {
+			return existingVisit, nil
+		}
+	}
+
 	v := &domain.Visit{
 		PatientID:      cmd.PatientID,
 		DoctorID:       cmd.DoctorID,
 		QueueEntryID:   cmd.QueueEntryID,
 		ChiefComplaint: cmd.ChiefComplaint,
-		Status:         domain.VisitRegistered,
+		Status:         domain.VisitInProgress,
 		CreatedAt:      time.Now(),
 		UpdatedAt:      time.Now(),
 	}

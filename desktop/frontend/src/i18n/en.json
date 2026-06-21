@@ -10,7 +10,9 @@
     "select": "Select",
     "yes": "Yes",
     "no": "No",
-    "cancel": "Cancel"
+    "cancel": "Cancel",
+    "edit": "Edit",
+    "success": "Success"
   },
   "nav": {
     "dashboard": "Dashboard",
@@ -24,6 +26,7 @@
   },
   "profile": {
     "title": "User Profile",
+    "fullName": "Full Name",
     "unknown": "Unknown",
     "noEmail": "No email provided",
     "noRole": "NO ROLE",
@@ -204,7 +207,8 @@
       "requirePassword": "Please generate a password",
       "passwordPlaceholder": "Click Generate",
       "roles": "Roles",
-      "department": "Department"
+      "department": "Department",
+      "deptPlaceholder": "Select Department"
     }
   },
   "queue": {

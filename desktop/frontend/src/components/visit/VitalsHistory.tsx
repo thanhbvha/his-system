@@ -1,8 +1,7 @@
-import React from 'react';
-import { Timeline, Typography, Card, Tag } from 'antd';
+import React from "react";
+import { Timeline, Typography, Card } from "antd";
 import { useTranslation } from "react-i18next";
-import { VisitVital } from '@/store/visitStore';
-import dayjs from 'dayjs';
+import { VisitVital } from "@/store/visitStore";
 
 const { Text } = Typography;
 
@@ -14,59 +13,46 @@ export const VitalsHistory: React.FC<VitalsHistoryProps> = ({ vitals }) => {
   const { t } = useTranslation();
 
   if (!vitals || vitals.length === 0) {
-    return <Card bordered={false}><Text type="secondary">{t("common.none", "Không")}</Text></Card>;
+    return (
+      <Card title={t("visit.vitals", "Lịch sử sinh hiệu")}>
+        <Text type="secondary">Chưa có dữ liệu sinh hiệu</Text>
+      </Card>
+    );
   }
 
-  const checkAbnormal = (field: string, value: number | undefined) => {
-    if (value === undefined || value === null) return false;
-    switch (field) {
-      case 'bp_systolic': return value > 140 || value < 90;
-      case 'bp_diastolic': return value > 90 || value < 60;
-      case 'heart_rate': return value > 100 || value < 60;
-      case 'temperature': return value > 37.5;
-      case 'spo2': return value < 95;
-      default: return false;
-    }
-  };
-
-  const renderValue = (field: string, value: number | undefined, unit: string) => {
-    if (value === undefined || value === null) return null;
-    const isAbnormal = checkAbnormal(field, value);
-    return (
-      <span style={{ marginRight: 16 }}>
-        <Text type="secondary">{t(`visit.${field}`, field)}: </Text>
-        <Text type={isAbnormal ? 'danger' : undefined} strong={isAbnormal}>
-          {value} {unit}
-        </Text>
-        {isAbnormal && <Tag color="error" style={{ marginLeft: 4 }}>{t("visit.abnormal", "Bất thường")}</Tag>}
-      </span>
-    );
-  };
-
   return (
-    <Card title={t("visit.history", "Lịch sử khám")} bordered={false}>
+    <Card title={t("visit.vitals", "Lịch sử sinh hiệu")}>
       <Timeline>
-        {vitals.map(v => (
-          <Timeline.Item key={v.id}>
-            <div style={{ marginBottom: 4 }}>
-              <Text strong>{dayjs(v.recorded_at).format('DD/MM/YYYY HH:mm')}</Text>
+        {vitals.map(vital => (
+          <Timeline.Item key={vital.id}>
+            <div className="font-semibold mb-1">
+              {(() => {
+                try {
+                  return new Intl.DateTimeFormat('vi-VN', { hour: '2-digit', minute: '2-digit', day: '2-digit', month: '2-digit', year: 'numeric' }).format(new Date(vital.recorded_at));
+                } catch {
+                  return vital.recorded_at;
+                }
+              })()}
             </div>
-            <div>
-              {v.bp_systolic && v.bp_diastolic && (
-                <span style={{ marginRight: 16 }}>
-                  <Text type="secondary">{t("visit.bp", "Huyết áp")}: </Text>
-                  <Text 
-                    type={checkAbnormal('bp_systolic', v.bp_systolic) || checkAbnormal('bp_diastolic', v.bp_diastolic) ? 'danger' : undefined}
-                  >
-                    {v.bp_systolic}/{v.bp_diastolic} mmHg
-                  </Text>
-                </span>
+            <div className="grid grid-cols-2 gap-2 text-sm">
+              {vital.bp_systolic && vital.bp_diastolic && (
+                <div>HA: <Text strong>{vital.bp_systolic}/{vital.bp_diastolic}</Text> mmHg</div>
               )}
-              {renderValue('heart_rate', v.heart_rate, 'bpm')}
-              {renderValue('temperature', v.temperature, '°C')}
-              {renderValue('spo2', v.spo2, '%')}
-              {renderValue('weight_kg', v.weight_kg, 'kg')}
-              {renderValue('height_cm', v.height_cm, 'cm')}
+              {vital.heart_rate && (
+                <div>Mạch: <Text strong>{vital.heart_rate}</Text> bpm</div>
+              )}
+              {vital.temperature && (
+                <div>Nhiệt độ: <Text strong>{vital.temperature}</Text> °C</div>
+              )}
+              {vital.spo2 && (
+                <div>SpO2: <Text strong>{vital.spo2}</Text>%</div>
+              )}
+              {vital.weight_kg && (
+                <div>Cân nặng: <Text strong>{vital.weight_kg}</Text> kg</div>
+              )}
+              {vital.height_cm && (
+                <div>Chiều cao: <Text strong>{vital.height_cm}</Text> cm</div>
+              )}
             </div>
           </Timeline.Item>
         ))}

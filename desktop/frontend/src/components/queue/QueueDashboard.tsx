@@ -13,7 +13,7 @@ const { Title } = Typography;
 
 export const QueueDashboard: React.FC = () => {
   const { t } = useTranslation();
-  const token = useAuthStore(state => state.token);
+  const { token, role } = useAuthStore();
   const { entries, isLoading, fetchQueue, callNext, skip } = useQueueStore();
   const { services, fetchServices } = usePublicStore();
   
@@ -75,6 +75,7 @@ export const QueueDashboard: React.FC = () => {
                   entries={entriesByService[service.id] || []}
                   onCallNext={callNext}
                   onSkip={skip}
+                  readOnly={role !== 'admin'}
                 />
               </div>
             ))}

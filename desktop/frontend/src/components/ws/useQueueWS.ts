@@ -44,7 +44,15 @@ export function useQueueWS(token: string | null) {
     if (wsRef.current?.readyState === WebSocket.OPEN) return;
 
     const wsUrl = import.meta.env.VITE_WS_URL || "ws://localhost:8081/ws/queue";
-    const ws = new WebSocket(`${wsUrl}?token=${wsToken}`);
+    const authState = useAuthStore.getState();
+    let roomId = authState.roomId || "global_reception";
+    
+    // Receptionists should always listen to the global queue
+    if (authState.role === "receptionist") {
+      roomId = "global_reception";
+    }
+
+    const ws = new WebSocket(`${wsUrl}?token=${wsToken}&room_id=${roomId}`);
     
     ws.onmessage = (e) => {
       try {

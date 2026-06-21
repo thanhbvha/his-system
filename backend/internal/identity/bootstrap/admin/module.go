@@ -31,17 +31,19 @@ func NewModule(deps ModuleDeps) *Module {
 	deptRepo   := identityInfra.NewDepartmentRepositoryPG(deps.PgPool)
 
 	getUserByIDQuery  := identityQuery.NewGetUserByIDHandler(userRepo, roleRepo, deps.Cipher)
-	listUsersQuery    := identityQuery.NewListUsersHandler(userRepo, roleRepo, deps.Cipher)
+	listUsersQuery    := identityQuery.NewListUsersHandler(userRepo, roleRepo, deps.Cipher, deps.PgPool)
 	getRolePermsQuery := identityQuery.NewGetRolePermissionsHandler(roleRepo)
 	listPermsQuery    := identityQuery.NewListPermissionsHandler(roleRepo)
 
-	createStaffCmd     := command.NewCreateStaffHandler(userRepo, deps.Cipher)
+	createStaffCmd     := command.NewCreateStaffHandler(userRepo, deps.Cipher, deps.PgPool)
 	deactivateCmd      := command.NewDeactivateUserHandler(userRepo, deviceRepo)
 	assignRolesCmd     := command.NewAssignUserRolesHandler(userRepo)
+	updateProfileCmd   := command.NewUpdateStaffProfileHandler(deps.PgPool)
+	updateEmailCmd     := command.NewUpdateUserEmailHandler(userRepo, deps.Cipher)
 	updateRolePermsCmd := command.NewUpdateRolePermissionsHandler(roleRepo, deps.Rdb)
 	createDeptCmd      := command.NewCreateDepartmentHandler(deptRepo)
 
-	userHandler := admin.NewAdminUserHandler(getUserByIDQuery, listUsersQuery, createStaffCmd, deactivateCmd, assignRolesCmd)
+	userHandler := admin.NewAdminUserHandler(getUserByIDQuery, listUsersQuery, createStaffCmd, deactivateCmd, assignRolesCmd, updateProfileCmd, updateEmailCmd)
 	roleHandler := admin.NewAdminRoleHandler(roleRepo, getRolePermsQuery, updateRolePermsCmd, listPermsQuery)
 	deptHandler := admin.NewAdminDepartmentHandler(deptRepo, createDeptCmd)
 

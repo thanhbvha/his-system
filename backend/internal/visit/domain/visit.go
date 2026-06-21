@@ -19,16 +19,16 @@ const (
 )
 
 type Visit struct {
-	ID             uuid.UUID
-	PatientID      uuid.UUID
-	DoctorID       uuid.UUID
-	QueueEntryID   *uuid.UUID
-	Status         VisitStatus
-	ChiefComplaint *string
-	StartedAt      *time.Time
-	CompletedAt    *time.Time
-	CreatedAt      time.Time
-	UpdatedAt      time.Time
+	ID             uuid.UUID    `json:"id"`
+	PatientID      uuid.UUID    `json:"patient_id"`
+	DoctorID       uuid.UUID    `json:"doctor_id"`
+	QueueEntryID   *uuid.UUID   `json:"queue_entry_id,omitempty"`
+	Status         VisitStatus  `json:"status"`
+	ChiefComplaint *string      `json:"chief_complaint,omitempty"`
+	StartedAt      *time.Time   `json:"started_at,omitempty"`
+	CompletedAt    *time.Time   `json:"completed_at,omitempty"`
+	CreatedAt      time.Time    `json:"created_at"`
+	UpdatedAt      time.Time    `json:"updated_at"`
 }
 
 func (v *Visit) Start() error {
@@ -43,8 +43,8 @@ func (v *Visit) Start() error {
 }
 
 func (v *Visit) Complete() error {
-	if v.Status != VisitInProgress && v.Status != VisitOrdered {
-		return errors.New("visit can only be completed from IN_PROGRESS or ORDERED status")
+	if v.Status != VisitInProgress && v.Status != VisitOrdered && v.Status != VisitRegistered {
+		return errors.New("visit can only be completed from REGISTERED, IN_PROGRESS or ORDERED status")
 	}
 	v.Status = VisitCompleted
 	now := time.Now()

@@ -104,6 +104,9 @@ apiClient.interceptors.response.use(
         pendingQueue.forEach(p => p.reject(refreshErr));
         pendingQueue = [];
         useAuthStore.getState().clearAuth();
+        import("@/lib/queryClient").then(({ queryClient }) => {
+          queryClient.clear();
+        });
         window.location.hash = "/login";
         // Return the original 401 error so the calling function can handle it properly
         return Promise.reject(err);

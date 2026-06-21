@@ -4,7 +4,7 @@ CREATE TABLE IF NOT EXISTS queue_entries (
     visit_id        UUID,
     appointment_id  UUID REFERENCES appointments(id),
     service_type    VARCHAR(50) NOT NULL DEFAULT 'GENERAL',
-    queue_number    VARCHAR(10) NOT NULL,
+    queue_number    VARCHAR(20) NOT NULL,
     status          VARCHAR(20) NOT NULL DEFAULT 'WAITING',
     called_at       TIMESTAMPTZ,
     completed_at    TIMESTAMPTZ,

@@ -12,13 +12,13 @@ type GetVisitDetailQuery struct {
 }
 
 type VisitDetail struct {
-	*domain.Visit
+	*domain.VisitDetailProjection
 	Vitals []*domain.VisitVital `json:"vitals"`
 	Orders []*domain.VisitOrder `json:"orders"`
 }
 
 func HandleGetVisitDetail(ctx context.Context, q GetVisitDetailQuery, repo domain.VisitRepository) (*VisitDetail, error) {
-	v, err := repo.FindByID(ctx, q.VisitID)
+	v, err := repo.FindDetailByID(ctx, q.VisitID)
 	if err != nil {
 		return nil, err
 	}
@@ -33,5 +33,5 @@ func HandleGetVisitDetail(ctx context.Context, q GetVisitDetailQuery, repo domai
 		return nil, err
 	}
 
-	return &VisitDetail{Visit: v, Vitals: vitals, Orders: orders}, nil
+	return &VisitDetail{VisitDetailProjection: v, Vitals: vitals, Orders: orders}, nil
 }

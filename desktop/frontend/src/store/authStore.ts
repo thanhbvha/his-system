@@ -40,6 +40,7 @@ export interface User {
   mfa_enabled?: boolean;
   preferred_language?: string;
   role_ids?: string[];
+  roles?: string[];
 }
 
 interface AuthState {
@@ -47,9 +48,11 @@ interface AuthState {
   refreshToken: string | null;
   user: User | null;
   role: "admin" | "doctor" | "nurse" | "receptionist" | "pharmacist" | null;
+  roomId: string | null;
   setAuth: (token: string, refreshToken: string, user: User, role: AuthState["role"]) => void;
   setToken: (token: string) => void;
   setTokens: (token: string, refreshToken: string) => void;
+  setRoomId: (roomId: string) => void;
   updateAuthUser: (user: Partial<User>) => void;
   clearAuth: () => void;
 }
@@ -61,12 +64,14 @@ export const useAuthStore = create<AuthState>()(
       refreshToken: null,
       user: null,
       role: null,
+      roomId: "global_reception", // Default to global_reception for Receptionists
       setAuth: (token, refreshToken, user, role) => set({ token, refreshToken, user, role }),
       setToken: (token) => set({ token }),
       setTokens: (token, refreshToken) => set({ token, refreshToken }),
+      setRoomId: (roomId) => set({ roomId }),
       updateAuthUser: (updates) => set((state) => ({ user: state.user ? { ...state.user, ...updates } : null })),
       clearAuth: () => {
-        set({ token: null, refreshToken: null, user: null, role: null });
+        set({ token: null, refreshToken: null, user: null, role: null, roomId: null });
         localStorage.clear();
         sessionStorage.clear();
       },

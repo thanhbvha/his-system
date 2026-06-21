@@ -205,12 +205,12 @@ Thay vì phân Shard bằng cách băm (hash) ngẫu nhiên UserID hoặc gộp 
      ```
 
 ## Kiểm tra hoàn thành
-- [ ] `npm run build` thành công
-- [ ] Worklist hiển thị đúng danh sách bệnh nhân của bác sĩ hôm nay
-- [ ] Worklist tự cập nhật khi có check-in mới (WS `queue.updated`)
-- [ ] Kiến trúc Room-based Sharding hoạt động ổn định trên môi trường cluster
-- [ ] Nhập vitals thành công, giá trị bất thường highlight màu đỏ
-- [ ] ICD-10 search: gõ "tim" → trả kết quả, debounce 300ms
-- [ ] Tạo chỉ định xét nghiệm thành công
-- [ ] Nút "Kết thúc khám" → visit status = COMPLETED
-- [ ] i18n hoạt động đúng khi đổi ngôn ngữ
+- [x] `npm run build` thành công
+- [x] Worklist hiển thị đúng danh sách bệnh nhân của bác sĩ hôm nay
+- [x] Worklist tự cập nhật khi có check-in mới (WS `queue.updated`)
+- [x] Kiến trúc Room-based Sharding hoạt động ổn định trên môi trường cluster
+- [x] Nhập vitals thành công, giá trị bất thường highlight màu đỏ
+- [x] ICD-10 search: gõ "tim" → trả kết quả, debounce 300ms
+- [x] Tạo chỉ định xét nghiệm thành công
+- [x] Nút "Kết thúc khám" → visit status = COMPLETED
+- [x] i18n hoạt động đúng khi đổi ngôn ngữ

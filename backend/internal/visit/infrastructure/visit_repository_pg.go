@@ -40,12 +40,47 @@ func (r *VisitRepositoryPG) FindByID(ctx context.Context, id uuid.UUID) (*domain
 	return scanVisit(row)
 }
 
+func (r *VisitRepositoryPG) FindByQueueEntryID(ctx context.Context, queueEntryID uuid.UUID) (*domain.Visit, error) {
+	q := `SELECT id, patient_id, doctor_id, queue_entry_id, status, chief_complaint, started_at, completed_at, created_at, updated_at FROM visits WHERE queue_entry_id=$1 ORDER BY created_at DESC LIMIT 1`
+	row := r.db.QueryRow(ctx, q, queueEntryID)
+	return scanVisit(row)
+}
+
+func (r *VisitRepositoryPG) FindDetailByID(ctx context.Context, id uuid.UUID) (*domain.VisitDetailProjection, error) {
+	q := `
+		SELECT v.id, v.patient_id, v.doctor_id, v.queue_entry_id, v.status, v.chief_complaint, 
+		       v.started_at, v.completed_at, v.created_at, v.updated_at,
+		       p.id, COALESCE(p.full_name, ''), COALESCE(p.patient_code, ''), COALESCE(p.dob::text, ''), COALESCE(p.gender, ''),
+		       u.id, COALESCE(sp.full_name, '')
+		FROM visits v
+		LEFT JOIN patients p ON p.id = v.patient_id
+		LEFT JOIN users u ON u.id = v.doctor_id
+		LEFT JOIN staff_profiles sp ON sp.user_id = u.id
+		WHERE v.id = $1
+	`
+	row := r.db.QueryRow(ctx, q, id)
+	var dp domain.VisitDetailProjection
+	err := row.Scan(
+		&dp.ID, &dp.PatientID, &dp.DoctorID, &dp.QueueEntryID, &dp.Status,
+		&dp.ChiefComplaint, &dp.StartedAt, &dp.CompletedAt, &dp.CreatedAt, &dp.UpdatedAt,
+		&dp.Patient.ID, &dp.Patient.FullName, &dp.Patient.PatientCode, &dp.Patient.Dob, &dp.Patient.Gender,
+		&dp.Doctor.ID, &dp.Doctor.FullName,
+	)
+	if err != nil {
+		if err == pgx.ErrNoRows {
+			return nil, fmt.Errorf("visit not found")
+		}
+		return nil, err
+	}
+	return &dp, nil
+}
+
 func (r *VisitRepositoryPG) FindWorklist(ctx context.Context, doctorID uuid.UUID, date time.Time, status domain.VisitStatus) ([]*domain.VisitWithPatient, error) {
 	q := `
 		SELECT v.id, v.patient_id, v.doctor_id, v.queue_entry_id, v.status, v.chief_complaint,
 		       v.started_at, v.completed_at, v.created_at, v.updated_at,
 		       COALESCE(p.full_name, '') as patient_full_name,
-		       COALESCE(p.phone, '') as patient_phone
+		       COALESCE(p.phone_encrypted, '') as patient_phone
 		FROM visits v
 		LEFT JOIN patients p ON p.id = v.patient_id
 		WHERE v.doctor_id = $1
@@ -113,7 +148,7 @@ func (r *VisitRepositoryPG) FindVitalsByVisitID(ctx context.Context, visitID uui
 	}
 	defer rows.Close()
 
-	var result []*domain.VisitVital
+	result := make([]*domain.VisitVital, 0)
 	for rows.Next() {
 		var vt domain.VisitVital
 		if err := rows.Scan(
@@ -145,7 +180,7 @@ func (r *VisitRepositoryPG) FindOrdersByVisitID(ctx context.Context, visitID uui
 	}
 	defer rows.Close()
 
-	var result []*domain.VisitOrder
+	result := make([]*domain.VisitOrder, 0)
 	for rows.Next() {
 		var o domain.VisitOrder
 		if err := rows.Scan(&o.ID, &o.VisitID, &o.OrderType, &o.RefID, &o.Details, &o.Status, &o.CreatedAt); err != nil {

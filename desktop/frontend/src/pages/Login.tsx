@@ -54,9 +54,8 @@ export const Login = () => {
 
       const { access_token, refresh_token, user } = compRes.data.data;
       
-      // Usually user object from backend doesn't contain 'role' explicitly at the top level or contains 'roles'
-      // We'll extract role from the first role in the array
-      const role = user.role_ids && user.role_ids.length > 0 ? "admin" : "receptionist"; // TODO: Map real roles
+      // We extract role from the first role in the array returned by backend
+      const role = user.roles && user.roles.length > 0 ? user.roles[0] : "patient";
       
       setAuth(access_token, refresh_token, user, role as any);
 

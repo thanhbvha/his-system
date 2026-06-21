@@ -60,6 +60,10 @@ func (r *Router) Register(root fiber.Router) {
 		middleware.RequireRole("admin", "receptionist", "doctor", "nurse"),
 		r.handler.GetByID,
 	)
+	root.Get("/:id/history",
+		middleware.RequireRole("admin", "receptionist", "doctor", "nurse"),
+		r.handler.GetHistory,
+	)
 	root.Put("/:id",
 		middleware.RequireRole("receptionist", "admin"),
 		sig,

@@ -29,7 +29,7 @@ func HandleCallQueue(ctx context.Context, cmd CallQueueCommand, repo domain.Queu
 			if qe.Status == domain.StatusCalled && qe.ID != entry.ID {
 				_ = qe.Skip()
 				_ = repo.UpdateStatus(ctx, qe.ID, qe.Status)
-				ws.BroadcastToAll(ws.EventQueueSkipped, qe)
+				ws.BroadcastToRoom(qe.ServiceType, ws.EventQueueSkipped, qe)
 			}
 		}
 	}
@@ -39,6 +39,6 @@ func HandleCallQueue(ctx context.Context, cmd CallQueueCommand, repo domain.Queu
 	}
 
 	// Broadcast WS event
-	ws.BroadcastToAll(ws.EventQueueCalled, entry)
+	ws.BroadcastToRoom(entry.ServiceType, ws.EventQueueCalled, entry)
 	return nil
 }

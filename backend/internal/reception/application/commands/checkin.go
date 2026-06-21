@@ -18,22 +18,25 @@ type CheckInCommand struct {
 
 func HandleCheckIn(ctx context.Context, cmd CheckInCommand, repo domain.QueueRepository) (*domain.QueueEntry, error) {
 	// Prefix generation (e.g. GENERAL -> KB, LAB -> XN, RADIOLOGY -> CD)
-	prefix := "KB"
+	basePrefix := "KB"
 	switch cmd.ServiceType {
 	case "LAB":
-		prefix = "XN"
+		basePrefix = "XN"
 	case "RADIOLOGY":
-		prefix = "CD"
+		basePrefix = "CD"
 	case "PHARMACY":
-		prefix = "DT"
+		basePrefix = "DT"
 	}
+
+	dateStr := time.Now().Format("060102") // YYMMDD format
+	prefix := basePrefix + dateStr
 
 	seq, err := repo.GetNextSequence(ctx, prefix)
 	if err != nil {
 		return nil, fmt.Errorf("failed to generate queue number: %w", err)
 	}
 
-	queueNumber := fmt.Sprintf("%s%03d", prefix, seq)
+	queueNumber := fmt.Sprintf("%s%05d", prefix, seq)
 
 	entry := &domain.QueueEntry{
 		PatientID:     cmd.PatientID,
@@ -54,7 +57,7 @@ func HandleCheckIn(ctx context.Context, cmd CheckInCommand, repo domain.QueueRep
 	}
 
 	// Broadcast WS event
-	ws.BroadcastToAll(ws.EventQueueCheckedIn, fullEntry)
+	ws.BroadcastToRoom(fullEntry.ServiceType, ws.EventQueueCheckedIn, fullEntry)
 
 	return fullEntry, nil
 }

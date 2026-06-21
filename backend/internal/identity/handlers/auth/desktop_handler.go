@@ -6,6 +6,7 @@ import (
 	"github.com/gofiber/fiber/v2"
 
 	"his-system/internal/identity/application/command"
+	"his-system/internal/identity/application/query"
 	appErrors "his-system/pkg/errors"
 	"his-system/pkg/middleware"
 	"his-system/pkg/response"
@@ -30,6 +31,7 @@ type DesktopAuthHandler struct {
 	setupMFAHandler      *command.SetupMFAHandler
 	verifyMFAHandler     *command.VerifyMFAHandler
 	updateLangHandler    *command.UpdateLanguageHandler
+	getMeHandler         *query.GetMeHandler
 }
 
 func NewDesktopAuthHandler(
@@ -40,6 +42,7 @@ func NewDesktopAuthHandler(
 	setupMFA *command.SetupMFAHandler,
 	verifyMFA *command.VerifyMFAHandler,
 	updateLang *command.UpdateLanguageHandler,
+	getMe *query.GetMeHandler,
 ) *DesktopAuthHandler {
 	return &DesktopAuthHandler{
 		initLoginHandler:     init,
@@ -49,6 +52,7 @@ func NewDesktopAuthHandler(
 		setupMFAHandler:      setupMFA,
 		verifyMFAHandler:     verifyMFA,
 		updateLangHandler:    updateLang,
+		getMeHandler:         getMe,
 	}
 }
 
@@ -289,4 +293,30 @@ func (h *DesktopAuthHandler) UpdateLanguage(c *fiber.Ctx) error {
 	}
 
 	return response.OK(c, fiber.Map{"success": true})
+}
+
+// GetMe godoc
+// @Summary Get Current User Profile
+// @Description Fetch current user profile including staff and department info
+// @Tags Auth (Desktop)
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Success 200 {object} query.GetMeResult
+// @Failure 401 {object} response.Response
+// @Router /auth/me [get]
+func (h *DesktopAuthHandler) GetMe(c *fiber.Ctx) error {
+	claims, ok := middleware.GetClaims(c)
+	if !ok {
+		return response.Fail(c, &appErrors.AppError{Code: "UNAUTHORIZED", Status: 401})
+	}
+
+	res, err := h.getMeHandler.Handle(c.Context(), query.GetMeQuery{
+		UserID: claims.UserID,
+	})
+	if err != nil {
+		return handleErr(c, err)
+	}
+
+	return response.OK(c, res)
 }

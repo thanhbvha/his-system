@@ -1,10 +1,10 @@
 import { useState } from "react";
 import { Table, Button, Input, Tag, Popconfirm, message, Space, Select, Avatar } from "antd";
-import { UserOutlined, PlusOutlined, LockOutlined, SafetyCertificateOutlined } from "@ant-design/icons";
+import { UserOutlined, PlusOutlined, LockOutlined, SafetyCertificateOutlined, EditOutlined } from "@ant-design/icons";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
 import apiClient from "@/lib/apiClient";
-import { UserCreateModal } from "@/components/admin/UserCreateModal";
+import { UserFormModal } from "@/components/admin/UserFormModal";
 import { AssignRolesModal } from "@/components/admin/AssignRolesModal";
 
 export const UserListPage = () => {
@@ -12,7 +12,8 @@ export const UserListPage = () => {
   const { t } = useTranslation();
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState("");
-  const [isCreateOpen, setIsCreateOpen] = useState(false);
+  const [isFormOpen, setIsFormOpen] = useState(false);
+  const [editUser, setEditUser] = useState<any>(null);
   
   const [assignUser, setAssignUser] = useState<any>(null);
 
@@ -52,6 +53,16 @@ export const UserListPage = () => {
     onError: () => message.error(t("admin.userList.updateError"))
   });
 
+  const handleEdit = (record: any) => {
+    setEditUser(record);
+    setIsFormOpen(true);
+  };
+
+  const handleCreate = () => {
+    setEditUser(null);
+    setIsFormOpen(true);
+  };
+
   const columns = [
     {
       title: t("admin.userList.avatar"),
@@ -59,8 +70,15 @@ export const UserListPage = () => {
       key: "avatar",
       render: (val: string) => <Avatar icon={<UserOutlined />} style={{ backgroundColor: '#1677ff' }} />
     },
+    { 
+      title: t("profile.fullName") || "Họ và Tên", 
+      dataIndex: "full_name", 
+      key: "full_name",
+      render: (val: string, record: any) => val || record.username 
+    },
     { title: t("admin.userList.username"), dataIndex: "username", key: "username" },
-    { title: t("admin.userList.email"), dataIndex: "email", key: "email" }, // Assuming backend decrypts and returns email
+    { title: t("admin.userCreate.department") || "Phòng ban", dataIndex: "department_name", key: "department_name" },
+    { title: t("admin.userList.email"), dataIndex: "email", key: "email" },
     { 
       title: t("admin.userList.roles"), 
       dataIndex: "roles", 
@@ -84,6 +102,13 @@ export const UserListPage = () => {
       key: "action",
       render: (_: any, record: any) => (
         <Space>
+          <Button 
+            size="small" 
+            icon={<EditOutlined />} 
+            onClick={() => handleEdit(record)}
+          >
+            {t("common.edit") || "Sửa"}
+          </Button>
           <Button 
             size="small" 
             icon={<SafetyCertificateOutlined />} 
@@ -117,7 +142,7 @@ export const UserListPage = () => {
             allowClear
             style={{ width: 300 }}
           />
-          <Button type="primary" icon={<PlusOutlined />} onClick={() => setIsCreateOpen(true)}>
+          <Button type="primary" icon={<PlusOutlined />} onClick={handleCreate}>
             {t("admin.userList.addUser")}
           </Button>
         </Space>
@@ -136,11 +161,12 @@ export const UserListPage = () => {
         }}
       />
 
-      <UserCreateModal 
-        open={isCreateOpen} 
-        onClose={() => setIsCreateOpen(false)} 
+      <UserFormModal 
+        open={isFormOpen} 
+        onClose={() => setIsFormOpen(false)} 
         roles={rolesData || []}
         departments={deptsData || []}
+        editUser={editUser}
       />
 
       <AssignRolesModal

@@ -180,6 +180,34 @@ func (h *PatientHandler) GetByID(c *fiber.Ctx) error {
 	return response.OK(c, result)
 }
 
+// GetHistory godoc
+// @Summary Get patient history
+// @Description Retrieve the visit history of a specific patient.
+// @Tags Patient (Staff)
+// @Accept json
+// @Produce json
+// @Param id path string true "Patient ID"
+// @Success 200 {object} response.Response
+// @Failure 400,401,403,404 {object} response.Response
+// @Router /patients/{id}/history [get]
+// @Security BearerAuth
+func (h *PatientHandler) GetHistory(c *fiber.Ctx) error {
+	idStr := c.Params("id")
+	id, err := uuid.Parse(idStr)
+	if err != nil {
+		return handleError(c, err)
+	}
+
+	result, err := h.getHistoryQuery.Handle(c.Context(), query.GetPatientHistoryQuery{
+		PatientID: id,
+	})
+	if err != nil {
+		return handleError(c, err)
+	}
+
+	return response.OK(c, result)
+}
+
 type UpdatePatientReq struct {
 	FullName      string  `json:"full_name"`
 	DOB           string  `json:"dob"`

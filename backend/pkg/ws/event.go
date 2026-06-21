@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 
 	"github.com/thanhbvha/go-common/logger"
-	"github.com/thanhbvha/go-common/websocket/core"
+	"github.com/thanhbvha/go-common/websocket/pubsub"
 )
 
 // WSEvent defines the payload format broadcasted to clients
@@ -23,9 +23,8 @@ const (
 	EventQueueSkipped   = "queue.skipped"
 )
 
-// BroadcastToAll is a helper to broadcast a JSON event to all connected clients globally
-func BroadcastToAll(eventType string, payload interface{}) {
-	manager := core.GetGlobalManager()
+// BroadcastToRoom is a helper to broadcast a JSON event to a specific Room Shard
+func BroadcastToRoom(roomID string, eventType string, payload interface{}) {
 	event := WSEvent{Type: eventType, Payload: payload}
 
 	eventBytes, err := json.Marshal(event)
@@ -34,7 +33,22 @@ func BroadcastToAll(eventType string, payload interface{}) {
 		return
 	}
 
-	// Tạm thời broadcast vào "default" shard của Manager.
-	// API process chỉ khởi tạo mặc định "default" shard nên lệnh này sẽ đẩy sang Redis qua kênh shard:default
-	manager.BroadcastToAll(eventBytes)
+	pubsubManager := pubsub.GetGlobalPubSub()
+	data := map[string]interface{}{
+		"message": string(eventBytes),
+	}
+
+	shardID := "default"
+	if roomID != "" {
+		shardID = "room_" + roomID
+	}
+	
+	// Broadcast to the specific room shard
+	_ = pubsubManager.BroadcastMessage(shardID, data)
+	
+	// ALWAYS broadcast to global_reception shard so the Front Desk Receptionists 
+	// can see all real-time updates across all clinic rooms.
+	if shardID != "room_global_reception" {
+		_ = pubsubManager.BroadcastMessage("room_global_reception", data)
+	}
 }
